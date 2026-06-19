@@ -2193,14 +2193,45 @@ function resetToExamples(){
   location.reload();
 }
 
-// Au premier chargement ou si version différente → forcer les exemples
+// Au premier chargement ou si version différente → mise à jour partielle SEULEMENT
 (function seedIfNeeded(){
   const v = localStorage.getItem('wecan_version');
   if(v !== DATA_VERSION){
-    // Effacer les vieilles données pour forcer les exemples par défaut
-    ['agencies','employees','pointages','shifts','approbations','conversations','chatMessages','pushNotifications'].forEach(k=>
-      localStorage.removeItem('wecan_'+k)
-    );
+    // ⚠️ NE JAMAIS effacer employees ni agencies — conserver les vraies données
+    // Effacer uniquement les données de démo (pointages/shifts d'exemple)
+    const hasRealEmployees = (()=>{
+      try{
+        const raw = localStorage.getItem('wecan_employees');
+        if(!raw) return false;
+        const arr = JSON.parse(raw);
+        // Considérer "réels" si > 1 employé OU si l'id 1 n'est pas "Karim Bensalem"
+        if(!Array.isArray(arr) || arr.length===0) return false;
+        const first = arr[0];
+        const isDemo = first && first.prenom==='Karim' && first.nom==='Bensalem';
+        return arr.length > 1 || !isDemo;
+      }catch(e){ return false; }
+    })();
+
+    if(!hasRealEmployees){
+      // Première installation : effacer tout pour charger les exemples
+      ['agencies','employees','pointages','shifts','approbations','conversations','chatMessages','pushNotifications'].forEach(k=>
+        localStorage.removeItem('wecan_'+k)
+      );
+    } else {
+      // Mise à jour de version : garder employees+agencies, effacer seulement les exemples de démo
+      ['pointages','shifts','conversations','chatMessages','pushNotifications'].forEach(k=>{
+        const raw = localStorage.getItem('wecan_'+k);
+        if(raw){
+          try{
+            const arr = JSON.parse(raw);
+            // Si ce sont des données de démo (ids < 100), les effacer
+            if(Array.isArray(arr) && arr.length && arr[0].id < 100){
+              localStorage.removeItem('wecan_'+k);
+            }
+          }catch(e){}
+        }
+      });
+    }
     localStorage.setItem('wecan_version', DATA_VERSION);
   }
 })();
