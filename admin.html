@@ -592,6 +592,41 @@ const db = firebase.database();
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         <span data-t="nav_branches">Agences</span>
       </div>
+      <script>
+window.linkQRCodeToAgency = function(qrCode, agencyId) {
+  if (!qrCode || !agencyId) return false;
+  db.ref('qrcodes/' + qrCode).set({agencyId: agencyId, createdAt: new Date().toISOString()});
+  return true;
+};
+window.validateQRCodeAtAgency = function(qrCode, agencyId, userLat, userLng) {
+  return new Promise((resolve) => {
+    db.ref('qrcodes/' + qrCode).once('value', snap => {
+      const qrData = snap.val();
+      if (!qrData || qrData.agencyId !== agencyId) {
+        resolve({valid: false, reason: 'QR code not associated with this agency'});
+        return;
+      }
+      db.ref('agencies/' + agencyId).once('value', agSnap => {
+        const agency = agSnap.val();
+        if (!agency || !agency.lat || !agency.lng || !agency.radius) {
+          resolve({valid: false, reason: 'Agency geolocation not configured'});
+          return;
+        }
+        const R = 6371000;
+        const φ1 = userLat * Math.PI / 180;
+        const φ2 = parseFloat(agency.lat) * Math.PI / 180;
+        const Δφ = (parseFloat(agency.lat) - userLat) * Math.PI / 180;
+        const Δλ = (parseFloat(agency.lng) - userLng) * Math.PI / 180;
+        const a = Math.sin(Δφ/2)*Math.sin(Δφ/2) + Math.cos(φ1)*Math.cos(φ2)*Math.sin(Δλ/2)*Math.sin(Δλ/2);
+        const c = 2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        const distance = R * c;
+        const isWithinRadius = distance <= parseFloat(agency.radius);
+        resolve({valid: isWithinRadius, distance: distance, radius: parseFloat(agency.radius), agency: agency});
+      });
+    });
+  });
+};
+      </script>
       <div class="nav-item" onclick="showPage('employees',this)" title="Employees">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
         <span data-t="nav_employees">Employees</span>
