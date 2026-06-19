@@ -6980,6 +6980,19 @@ setTimeout(()=>{initMap();updateApproBadge(); updateChatBadge();
           </div>
           <div id="edit-emp-salaire-preview" style="margin-top:4px;font-size:11px;color:#C0392B;font-weight:500;"></div>
         </div>
+        <div class="form-group">
+          <label>Durée de pause (pause-déjeuner) *</label>
+          <select id="edit-emp-pause-duration" style="width:100%;">
+            <option value="">-- Choisir --</option>
+            <option value="30">30 minutes</option>
+            <option value="45">45 minutes</option>
+            <option value="60">1 heure</option>
+            <option value="90">1h 30 minutes</option>
+            <option value="120">2 heures</option>
+            <option value="__autre__">+ Autre...</option>
+          </select>
+          <input type="text" id="edit-emp-pause-custom" placeholder="Ex: 1h 15min" style="display:none;margin-top:6px;">
+        </div>
         <div class="form-group"><label>👤 Supérieur hiérarchique</label>
   <div id="edit-emp-responsable-wrapper" style="position:relative;margin-top:2px;">
     <div id="edit-emp-responsable-tags" onclick="document.getElementById('edit-emp-responsable-input').focus()" style="display:flex;flex-wrap:wrap;gap:4px;padding:6px 10px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;min-height:38px;cursor:text;align-items:center;">
