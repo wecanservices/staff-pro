@@ -701,7 +701,7 @@ const db = firebase.database();
 // ===== GLOBALS =====
 const GK = localStorage.getItem('groq_api_key') || ['gsk_2HCrxRhJwN5','fJduE9lzOWGdyb3FY92xEl','g0gU3YRyMXKfrVLlAWc'].join('');
 const GU = 'https://api.groq.com/openai/v1/chat/completions';
-const DV = '3.3';
+const DV = '3.6';
 
 function ld(k,fb){try{const d=localStorage.getItem('wecan_'+k);return d?JSON.parse(d):fb;}catch(e){return fb;}}
 function sv(k,d){
@@ -895,23 +895,52 @@ setInterval(tickClock,1000);tickClock();
 function doPoint(ag,method,typeOvr,lat,lng){
   const type=typeOvr||'Entree';
   let pts=ld('pointages',[]);
-  const p={id:Date.now(),empId:ME.id,empName:ME.prenom+' '+ME.nom,agenceId:ag?ag.id:'',agenceName:ag?ag.name||ag.nom:'',type,method,time:now(),date:tday(),ok:true,lat,lng};
-  pts.push(p);sv('pointages',pts);
-  showToast('✅ '+type+' enregistree ('+method+') - '+now());
+  // Always use employee's assigned agency for name/id
+  const assignedAg = agencies.find(a=>String(a.id)===String(ME.agenceId)) || ag;
+  const agenceId   = assignedAg ? assignedAg.id : (ag?ag.id:'');
+  const agenceName = assignedAg ? (assignedAg.name||assignedAg.nom||assignedAg.id) : (ag?ag.name||ag.nom:'');
+  const p={id:Date.now(),empId:ME.id,empName:ME.prenom+' '+ME.nom,agenceId,agenceName,type,method,time:now(),date:tday(),ok:true,lat,lng};
+  pts.push(p);
+  sv('pointages',pts);
+  // Sync to Firebase so admin platform sees the pointage
+  try{ db.ref('wecan/pointages').set(pts); }catch(e){}
+  showToast('✅ '+type+' - '+agenceName+' - '+now());
   renderPtSummary();renderPtHist();updPt();updHomePt();
 }
 
 function gps(typeOverride){
+  // GPS pointage - for field workers (livreurs) only
   if(!navigator.geolocation){showToast('GPS non disponible');return;}
-  showToast('📍 Localisation...');
+  showToast('📍 Localisation GPS...');
   navigator.geolocation.getCurrentPosition(pos=>{
     const lat=pos.coords.latitude,lng=pos.coords.longitude;
-    const ag=agencies.find(a=>{
+    // Use employee's assigned agency
+    const assignedAg = agencies.find(a=>a.id===ME.agenceId);
+    const nearestAg = agencies.find(a=>{
       const d=Math.sqrt(Math.pow((lat-a.lat)*111000,2)+Math.pow((lng-a.lng)*111000*Math.cos(a.lat*Math.PI/180),2));
-      return d<=a.rayon;
+      return d<=(a.rayon||300)*3;
     });
-    doPoint(ag||agencies[0],'GPS',typeOverride,lat,lng);
-  },()=>{showToast('Erreur GPS - simulation');doPoint(agencies[0],'GPS',typeOverride,agencies[0].lat,agencies[0].lng);});
+    const ag = assignedAg || nearestAg || agencies[0];
+    // Auto-detect next type
+    const todayPts = ld('pointages',[]).filter(p=>p.empId===ME.id&&p.date===tday());
+    const hasEntree=todayPts.some(p=>p.type==='Entree');
+    const hasSortie=todayPts.some(p=>p.type==='Sortie');
+    const hasDebPause=todayPts.filter(p=>p.type==='Debut pause').length;
+    const hasFinPause=todayPts.filter(p=>p.type==='Fin pause').length;
+    let auto='Entree';
+    if(typeOverride){auto=typeOverride;}
+    else if(!hasEntree){auto='Entree';}
+    else if(hasDebPause>hasFinPause){auto='Fin pause';}
+    else if(!hasSortie){auto='Sortie';}
+    else{showToast('Deja pointe complet');return;}
+    doPoint(ag,'GPS',auto,lat,lng);
+  },()=>{
+    showToast('Erreur GPS');
+    const ag=agencies.find(a=>a.id===ME.agenceId)||agencies[0];
+    const todayPts=ld('pointages',[]).filter(p=>p.empId===ME.id&&p.date===tday());
+    const auto=typeOverride||(todayPts.some(p=>p.type==='Entree')?'Sortie':'Entree');
+    doPoint(ag,'GPS',auto,ag.lat,ag.lng);
+  },{timeout:8000,enableHighAccuracy:true});
 }
 
 function startScan(){
@@ -931,10 +960,42 @@ function onQR(text){
   stopScan();
   const parts=text.split('|');
   if(parts[0]==='WECAN'&&parts.length>=6){
-    const code=parts[1],nom=parts[2],lat=parseFloat(parts[3]),lng=parseFloat(parts[4]),rayon=parseInt(parts[5]);
-    const ag=agencies.find(a=>a.id===code)||{id:code,nom,lat,lng,rayon};
-    doPoint(ag,'QR',null,lat,lng);
-  }else{showToast('QR invalide');}
+    const code=parts[1];
+    // Use employee's ASSIGNED agency, not the scanned QR agency
+    const assignedAgId = ME.agenceId || code;
+    const ag = agencies.find(a=>a.id===assignedAgId) || agencies.find(a=>a.id===code) || {id:code,nom:parts[2],lat:parseFloat(parts[3]),lng:parseFloat(parts[4]),rayon:parseInt(parts[5])};
+    // Auto-detect next pointage type
+    const todayPts = ld('pointages',[]).filter(p=>p.empId===ME.id&&p.date===tday());
+    const hasEntree  = todayPts.some(p=>p.type==='Entree');
+    const hasSortie  = todayPts.some(p=>p.type==='Sortie');
+    const hasDebPause= todayPts.filter(p=>p.type==='Debut pause').length;
+    const hasFinPause= todayPts.filter(p=>p.type==='Fin pause').length;
+    let nextType = 'Entree';
+    if(!hasEntree){ nextType='Entree'; }
+    else if(hasDebPause>hasFinPause){ nextType='Fin pause'; }
+    else if(!hasSortie){ nextType='Sortie'; }
+    else { showToast('Deja pointe complet - journee terminee'); return; }
+    // Get GPS position for the record
+    if(navigator.geolocation){
+      showToast('📍 Verification position...');
+      navigator.geolocation.getCurrentPosition(pos=>{
+        const lat=pos.coords.latitude,lng=pos.coords.longitude;
+        // Check if within agency radius (warn if outside but still allow QR)
+        const agLat=parseFloat(ag.lat)||parseFloat(parts[3]);
+        const agLng=parseFloat(ag.lng)||parseFloat(parts[4]);
+        const agRayon=parseInt(ag.rayon||ag.radius||parts[5]||300);
+        const dist=Math.sqrt(Math.pow((lat-agLat)*111000,2)+Math.pow((lng-agLng)*111000*Math.cos(agLat*Math.PI/180),2));
+        const inZone = dist<=agRayon*2; // double tolerance for mobile GPS accuracy
+        if(!inZone){ showToast('⚠️ Position eloignee de '+Math.round(dist)+'m - pointage enregistre quand meme'); }
+        doPoint(ag,'QR',nextType,lat,lng);
+      },()=>{
+        // GPS unavailable: still allow QR pointage with agency coords
+        doPoint(ag,'QR',nextType,parseFloat(parts[3]),parseFloat(parts[4]));
+      },{timeout:5000,enableHighAccuracy:true});
+    } else {
+      doPoint(ag,'QR',nextType,parseFloat(parts[3]),parseFloat(parts[4]));
+    }
+  }else{showToast('QR invalide - format attendu: WECAN|code|nom|lat|lng|rayon');}
 }
 
 function renderPtSummary(){
@@ -1423,26 +1484,35 @@ function openSubAdminSection(section){
 
 // ===== ESPACE MANAGER =====
 function openManagerSpace(){
-  if(ME.role!=='admin'){showToast('Acces refuse');return;}
+  const isAdmin = ME.role==='admin';
+  const isSubAdmin = ME.permissions && ME.permissions.length > 0;
+  if(!isAdmin && !isSubAdmin){showToast('Acces refuse - contacter votre responsable');return;}
   document.getElementById('mgr-space').classList.add('open');
   renderMgrList();
 }
 function closeMgrSpace(){document.getElementById('mgr-space').classList.remove('open');}
 
 function getMgrRequests(){
-  let reqs=ld('mgr_requests',[]);
-  if(!reqs.length){
-    reqs=[
-      {id:'r1',type:'conge',empId:2,empName:'Amira Hadj Ali',poste:'Agent de tri',status:'pending',date:'15/06/2026',detail:{debut:'20/06/2026',fin:'25/06/2026',jours:6,motif:'Vacances annuelles',typeConge:'annuel'}},
-      {id:'r2',type:'hsup',empId:3,empName:'Yacine Meziane',poste:'Livreur',status:'pending',date:'14/06/2026',detail:{date_hsup:'13/06/2026',heures:3,motif:'Livraisons urgentes',majoration:1.25}},
-      {id:'r3',type:'sortie',empId:5,empName:'Ryad Ouali',poste:'Developpeur',status:'approved',date:'12/06/2026',detail:{date:'12/06/2026',heure:'14:00',retour:'16:00',duree:120,motif:'Consultation medicale'}},
-      {id:'r4',type:'document',empId:4,empName:'Sonia Belaid',poste:'Comptable',status:'pending',date:'11/06/2026',detail:{docType:'Attestation Travail',usage:'Visa',urgent:true}},
-      {id:'r5',type:'conge',empId:5,empName:'Ryad Ouali',poste:'Developpeur',status:'rejected',date:'10/06/2026',detail:{debut:'15/06/2026',fin:'20/06/2026',jours:6,motif:'Voyage personnel',typeConge:'annuel'}},
-      {id:'r6',type:'hsup',empId:2,empName:'Amira Hadj Ali',poste:'Agent de tri',status:'pending',date:'09/06/2026',detail:{date_hsup:'08/06/2026',heures:2,motif:'Inventaire fin de mois',majoration:1.25}}
-    ];
-    sv('mgr_requests',reqs);
-  }
-  return reqs;
+  // Merge mgr_requests + wecan_approbations (from Firebase) for manager view
+  const local = ld('mgr_requests',[]);
+  const firebase_appros_raw = ld('approbations',[]);
+  const firebase_appros = Array.isArray(firebase_appros_raw) ? firebase_appros_raw : Object.values(firebase_appros_raw||{});
+  // Merge: add firebase items not already in local
+  const merged = [...local];
+  firebase_appros.filter(a=>a&&a.id).forEach(a=>{
+    if(!merged.find(r=>r.id===a.id)) merged.push(a);
+  });
+  // Filter: only show employees from same agency (if sous-admin) or all (if admin)
+  const myAgId = ME.agenceId;
+  const emps = ld('employees',[]);
+  const sameAgEmpIds = emps.filter(e=>String(e.agenceId)===String(myAgId)).map(e=>e.id);
+  // Admin sees all, sous-admin sees same agency, exclude own requests
+  const filtered = merged.filter(r=>{
+    if(r.empId === ME.id) return false; // exclude own requests
+    if(ME.role==='admin') return true;
+    return sameAgEmpIds.includes(r.empId);
+  });
+  return filtered.length ? filtered : merged.filter(r=>r.empId!==ME.id);
 }
 
 function switchMgrTab(tab,btn){
@@ -1563,6 +1633,14 @@ function mgrAction(status){
     if(eH&&eR) r.detail.duree=toMins2(eR)-toMins2(eH);
   }
   sv('mgr_requests',all);
+  // Sync approbations to Firebase so admin platform sees the update
+  try{
+    const appros = ld('approbations',[]);
+    const arr = Array.isArray(appros)?appros:Object.values(appros||{});
+    const ai = arr.findIndex(x=>x.id===mgrSelectedId);
+    if(ai>=0){arr[ai]=r; localStorage.setItem('wecan_approbations',JSON.stringify(arr)); db.ref('wecan/approbations').set(arr);}
+    else{ arr.push(r); localStorage.setItem('wecan_approbations',JSON.stringify(arr)); db.ref('wecan/approbations').set(arr); }
+  }catch(fbErr){}
   // Sync emp_leaves
   let lv=ld('emp_leaves',[]);
   const li=lv.findIndex(x=>x.id===mgrSelectedId);

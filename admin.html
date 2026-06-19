@@ -2182,7 +2182,7 @@ function nowTime(){return new Date().toLocaleTimeString('fr-DZ',{hour:'2-digit',
 
 
 // ── VERSION / RESET ──
-const DATA_VERSION = '3.5';
+const DATA_VERSION = '3.6';
 
 function resetToExamples(){
   if(!confirm('Réinitialiser toutes les données avec les exemples par défaut ?')) return;
@@ -5753,6 +5753,17 @@ function renderDashStats(){
             ${hSupMins>0?`<span style="background:#EDE9FE;color:#7C3AED;padding:2px 7px;border-radius:10px;font-size:9px;font-weight:600;">➕ +${minsToStr(hSupMins)}</span>`:''}
             <span style="background:#FDEDEC;color:#C0392B;padding:2px 7px;border-radius:10px;font-size:9px;font-weight:600;font-family:monospace;">${sal.toLocaleString('fr-DZ')} DA</span>
           </div>
+          ${(()=>{
+            const lastPtWithPos = [...empTodayPts].reverse().find(p=>p.lat&&p.lng);
+            if(!lastPtWithPos) return '';
+            const mapsUrl = 'https://www.google.com/maps?q='+lastPtWithPos.lat+','+lastPtWithPos.lng;
+            const methodIcon = lastPtWithPos.method==='QR'?'📷':'📍';
+            return `<div style="margin-top:6px;padding:5px 8px;background:#f0f9ff;border-radius:8px;display:flex;align-items:center;gap:6px;border:1px solid #bae6fd;">
+              <span style="font-size:11px;">${methodIcon}</span>
+              <span style="font-size:9px;color:#0369a1;font-weight:600;flex:1;">${lastPtWithPos.agenceName||'Position GPS'} · ${lastPtWithPos.time}</span>
+              <a href="${mapsUrl}" target="_blank" style="font-size:9px;color:#0369a1;font-weight:700;text-decoration:none;background:#dbeafe;padding:2px 6px;border-radius:5px;">🗺️ Voir</a>
+            </div>`;
+          })()}
         </div>`;
       }).join('')}
     </div>
@@ -5870,15 +5881,103 @@ function initChat(){
     });
   }catch(e){}
   updateChatBadge();
-  // Attach button handlers via delegation (avoids inline onclick escaping issues)
+  // Attach button handlers via delegation
   document.querySelectorAll('.new-conv-btn').forEach(btn=>{
     btn.removeEventListener('click', handleNewConvBtn);
     btn.addEventListener('click', handleNewConvBtn);
   });
+  // ← Listener temps réel: messages envoyés par les employés depuis employe.html
+  startEmpOutboxListener();
+  // ← Listener temps réel: nouveaux messages pour conversations déjà ouvertes
+  startChatMessagesListener();
 }
 function handleNewConvBtn(e){
   const mode = e.currentTarget.getAttribute('data-mode');
   if(mode) openNewConv(mode);
+}
+
+let _empOutboxListeners = {};
+function startEmpOutboxListener(){
+  try{
+    db.ref('wecan/emp_outbox').on('child_added', empSnap=>{
+      const empId = parseInt(empSnap.key);
+      if(_empOutboxListeners[empId]) return;
+      _empOutboxListeners[empId] = true;
+      db.ref('wecan/emp_outbox/'+empId+'/msgs').on('child_added', msgSnap=>{
+        const msg = msgSnap.val();
+        if(!msg||!msg.text) return;
+        // Trouver la conversation admin avec cet employé
+        let conv = conversations.find(c=>c.type==='direct'&&c.participants&&c.participants.includes(empId));
+        if(!conv){
+          // Créer une conversation automatiquement
+          const emp = employees.find(e=>e.id===empId)||{id:empId,prenom:'Employé',nom:'#'+empId,poste:''};
+          conv = {
+            id: nextConvId++,
+            type:'direct',
+            name: emp.prenom+' '+emp.nom,
+            sub: emp.poste||'',
+            participants:[1, empId],
+            lastMsg: msg.text,
+            lastTime: msg.time||'--:--',
+            unread: 0,
+            avatar: (emp.prenom||'?')[0]+(emp.nom||'?')[0]
+          };
+          conversations.push(conv);
+          saveData('conversations', conversations);
+          try{ db.ref('wecan/conversations').set(conversations); }catch(e){}
+        }
+        // Vérifier si le message existe déjà
+        const convId = conv.id;
+        if(!chatMessages[convId]) chatMessages[convId]=[];
+        const dup = chatMessages[convId].find(m=>m.ts===msg.ts&&m.from===msg.from);
+        if(!dup){
+          const chatMsg = {from:empId, name:msg.empName||msg.name||'Employé', text:msg.text, time:msg.time||'--:--', date:msg.date||'', ts:msg.ts||Date.now()};
+          chatMessages[convId].push(chatMsg);
+          conv.lastMsg = msg.text;
+          conv.lastTime = msg.time||'--:--';
+          if(activeConvId !== convId) conv.unread = (conv.unread||0)+1;
+          saveData('chatMessages', chatMessages);
+          saveData('conversations', conversations);
+          try{ db.ref('wecan/chatMessages/'+convId).set(chatMessages[convId]); }catch(e){}
+          // Rafraichir UI
+          if(document.getElementById('page-chat')?.classList.contains('active')){
+            renderConvList();
+            if(activeConvId===convId) renderMessages(convId);
+          }
+          updateChatBadge();
+        }
+      });
+    });
+  }catch(e){}
+}
+
+let _chatMsgListeners = {};
+function startChatMessagesListener(){
+  try{
+    db.ref('wecan/chatMessages').on('value', snap=>{
+      const val = snap.val();
+      if(!val||typeof val!=='object') return;
+      let changed = false;
+      Object.entries(val).forEach(([convKey, rawMsgs])=>{
+        const convId = parseInt(convKey);
+        const msgs = Array.isArray(rawMsgs)?rawMsgs:Object.values(rawMsgs||{});
+        if(!chatMessages[convId]) chatMessages[convId]=[];
+        const before = chatMessages[convId].length;
+        msgs.filter(m=>m&&m.text).forEach(m=>{
+          if(!chatMessages[convId].find(x=>x.ts===m.ts&&x.from===m.from)){
+            chatMessages[convId].push(m);
+            changed = true;
+          }
+        });
+      });
+      if(changed){
+        saveData('chatMessages', chatMessages);
+        if(activeConvId && document.getElementById('page-chat')?.classList.contains('active')){
+          renderMessages(activeConvId);
+        }
+      }
+    });
+  }catch(e){}
 }
 
 function updateChatBadge(){
