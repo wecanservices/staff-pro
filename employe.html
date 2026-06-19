@@ -538,7 +538,8 @@ const db = firebase.database();
       <button class="theme-btn" onclick="setTh(this,'auto')">⚙️ Auto</button>
     </div>
   </div>
-  <div class="card">
+  <!-- document section hidden: use demandes tab instead -->
+  <div class="card" style="display:none">
     <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleDocSec()">
       <span style="font-weight:700">📄 Demandes de documents</span>
       <span>›</span>
@@ -1167,6 +1168,10 @@ function subRequest(){
   const req={id,type,empId:ME.id,empName:ME.prenom+' '+ME.nom,poste:ME.poste,status:'pending',date:tday(),detail};
   let reqs=getMgrRequests();reqs.push(req);sv('mgr_requests',reqs);
   leaves=ld('emp_leaves',[]);leaves.push(req);sv('emp_leaves',leaves);
+  try{
+    const allAppros=JSON.parse(localStorage.getItem('wecan_approbations')||'[]');
+    if(!Array.isArray(allAppros)) { const arr=Object.values(allAppros); arr.push(req); db.ref('wecan/approbations').set(arr); } else { allAppros.push(req); db.ref('wecan/approbations').set(allAppros); }
+  }catch(fbErr){}
   closeLF();showToast('✅ Demande envoyee');
   renderLeaves();renderHome();
   hsPhotoData=null;document.getElementById('hs-photo-preview').style.display='none';document.getElementById('hs-photo-btns').style.display='flex';

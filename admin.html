@@ -637,7 +637,7 @@ const db = firebase.database();
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         <span data-t="nav_help">Help</span>
       </div>
-      <div style="text-align:center;padding:8px 0 4px;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.5px;">STAFF PRO Admin<br>v3.4</div>
+      <div style="text-align:center;padding:8px 0 4px;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.5px;">STAFF PRO Admin<br>v3.5</div>
     </div>
     <div class="nav-globe">
       <div class="globe-btn">
@@ -781,8 +781,8 @@ const db = firebase.database();
                 <div style="height:1px;background:#e2e8f0;margin:4px 0 10px;"></div>
                 <div style="font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">Pause (optionnel)</div>
               </div>
-              <div class="form-group"><label>Début de pause</label><input type="time" id="sh-pause-debut" value="12:00"></div>
-              <div class="form-group"><label>Fin de pause</label><input type="time" id="sh-pause-fin" value="13:00"></div>
+              <div class="form-group"><label>Heure de debut pause</label><input type="time" id="sh-pause-debut" value="12:00"></div>
+              <div class="form-group"><label>Duree de pause</label><select id="sh-pause-duree" style="padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;width:100%;"><option value="0">Pas de pause</option><option value="15">15 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60" selected>1 heure</option><option value="90">1h 30</option><option value="120">2 heures</option></select><input type="hidden" id="sh-pause-fin" value="13:00"></div>
             </div>
             <div style="margin-top:14px;">
               <div style="font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">Jours de travail</div>
@@ -896,7 +896,7 @@ const db = firebase.database();
               </div>
               <!-- Section 4 : Statut + Contrat -->
               <div style="background:#f8fafc;border:1px solid #e9eef5;border-radius:12px;padding:14px 16px;margin-bottom:10px;"><div class="form-grid" style="gap:10px;">
-                <div class="form-group"><label data-t="emp_statut">Statut</label><select id="emp-status"><option>Online</option><option>Offline</option><option>Congé</option><option>Maladie</option><option>Maternité</option></select></div>
+                <div class="form-group"><label data-t="emp_statut">Statut</label><select id="emp-status"><option>Online</option><option>Offline</option><option>Congé</option><option>Maladie</option><option>Maternité</option><option>Externe</option></select></div>
                 <div class="form-group"><label>📋 Contrat</label><select id="emp-contrat"><option>CDI</option><option>CDD</option><option>Période d'essai</option><option>Libre</option><option>Freelance</option></select></div>
               </div></div>
               <!-- Section 5 : Salaire + Supérieur hiérarchique -->
@@ -2013,24 +2013,26 @@ function fbInitSync(){
   db.ref('wecan/approbations').on('value', snap=>{
     const val = snap.val();
     if(!val) return;
-    const localRaw = localStorage.getItem('wecan_approbations');
-    const serialized = JSON.stringify(val);
-    if(localRaw !== serialized){
-      localStorage.setItem('wecan_approbations', serialized);
-      approbations = val;
-      try{ renderApprobations(); updateApproBadge(); }catch(e){}
-    }
+    const arr = Array.isArray(val) ? val : Object.values(val);
+    const incoming = arr.filter(a=>a&&a.id);
+    if(!incoming.length) return;
+    incoming.forEach(a=>{ if(!approbations.find(x=>x.id===a.id)){ approbations.push(a); } else { const idx=approbations.findIndex(x=>x.id===a.id); if(approbations[idx].status==='pending'&&a.status!=='pending') approbations[idx]=a; } });
+    saveData('approbations', approbations);
+    try{ renderApprobations(); updateApproBadge(); }catch(e){}
   });
   // Écouter les pointages créés depuis employe.html
   db.ref('wecan/pointages').on('value', snap=>{
     const val = snap.val();
     if(!val) return;
-    const serialized = JSON.stringify(val);
-    if(localStorage.getItem('wecan_pointages') !== serialized){
-      localStorage.setItem('wecan_pointages', serialized);
-      pointages = val;
-      try{ renderPointage && renderPointage(); updateStats(); }catch(e){}
-    }
+    const arr = Array.isArray(val) ? val : Object.values(val);
+    const incoming = arr.filter(p=>p&&p.id&&p.empId);
+    if(!incoming.length) return;
+    incoming.forEach(p=>{ if(!pointages.find(x=>x.id===p.id)){ pointages.push(p); }});
+    saveData('pointages', pointages);
+    try{
+      if(document.getElementById('page-pointage').classList.contains('active')) renderPointageDetail();
+      if(document.getElementById('page-reports').classList.contains('active')) renderPointages();
+    }catch(e){}
   });
   // Écouter les messages des employés depuis employe.html
   let _knownOutbox = {};
@@ -2180,7 +2182,7 @@ function nowTime(){return new Date().toLocaleTimeString('fr-DZ',{hour:'2-digit',
 
 
 // ── VERSION / RESET ──
-const DATA_VERSION = '3.4';
+const DATA_VERSION = '3.5';
 
 function resetToExamples(){
   if(!confirm('Réinitialiser toutes les données avec les exemples par défaut ?')) return;
@@ -2891,11 +2893,7 @@ function populateFilterAgency(){
 }
 
 function renderPointages(){
-  // Set default date = today
   const dtEl=document.getElementById('rpt-date');
-  if(dtEl&&!dtEl.value){
-    dtEl.value=new Date().toISOString().split('T')[0];
-  }
 
   const agFilter  = document.getElementById('filter-agency')?.value||'';
   const typeFilter= document.getElementById('rpt-filter-type')?.value||'';
@@ -3180,7 +3178,8 @@ function getFormValues(){
     debut: document.getElementById('sh-debut').value,
     fin: document.getElementById('sh-fin').value,
     pauseDebut: document.getElementById('sh-pause-debut').value,
-    pauseFin: document.getElementById('sh-pause-fin').value,
+    pauseDuree: parseInt(document.getElementById('sh-pause-duree')?document.getElementById('sh-pause-duree').value:'60')||60,
+    pauseFin: (function(){ const d=document.getElementById('sh-pause-debut').value||'12:00'; const mins=parseInt(document.getElementById('sh-pause-duree')?document.getElementById('sh-pause-duree').value:'60')||60; if(!mins) return ''; const parts=d.split(':').map(Number); const t=parts[0]*60+parts[1]+mins; return String(Math.floor(t/60)%24).padStart(2,'0')+':'+String(t%60).padStart(2,'0'); })(),
     workDays: [...document.querySelectorAll('#sh-work-days input:checked')].map(i=>i.value),
     restDays: [...document.querySelectorAll('#sh-rest-days input:checked')].map(i=>i.value),
   };
@@ -3212,7 +3211,7 @@ function editShift(id){
   document.getElementById('sh-debut').value = s.debut;
   document.getElementById('sh-fin').value = s.fin;
   document.getElementById('sh-pause-debut').value = s.pauseDebut || '12:00';
-  document.getElementById('sh-pause-fin').value = s.pauseFin || '13:00';
+  (function(){ const el=document.getElementById('sh-pause-duree'); if(!el) return; let dur=s.pauseDuree||0; if(!dur&&s.pauseDebut&&s.pauseFin){ const p1=s.pauseDebut.split(':').map(Number); const p2=s.pauseFin.split(':').map(Number); dur=(p2[0]*60+p2[1])-(p1[0]*60+p1[1]); } const opts=[0,15,30,45,60,90,120]; el.value=opts.reduce((a,b)=>Math.abs(b-dur)<Math.abs(a-dur)?b:a,opts[0]); })();
   document.querySelectorAll('#sh-work-days input').forEach(i=>{ i.checked = s.workDays.includes(i.value); });
   document.querySelectorAll('#sh-rest-days input').forEach(i=>{ i.checked = s.restDays.includes(i.value); });
   c.scrollIntoView({behavior:'smooth', block:'start'});
@@ -3275,11 +3274,9 @@ function renderShifts(){
           <div class="shift-time" style="background:#FEF9C3;border-color:#FDE68A;flex:1.4;">
             <div style="font-size:10px;font-weight:700;color:#92400E;margin-bottom:2px;">☕ PAUSE</div>
             <div style="display:flex;align-items:center;justify-content:center;gap:4px;">
-              <span style="font-size:13px;font-weight:700;color:#92400E;font-family:monospace;">${s.pauseDebut||'--:--'}</span>
-              <span style="color:#B45309;font-size:11px;">→</span>
-              <span style="font-size:13px;font-weight:700;color:#92400E;font-family:monospace;">${s.pauseFin||'--:--'}</span>
+              <span style="font-size:16px;font-weight:700;color:#92400E;font-family:monospace;">${s.pauseDuree?s.pauseDuree+'min':(s.pauseDebut&&s.pauseFin?calcDuration(s.pauseDebut,s.pauseFin):'--')}</span>
             </div>
-            <div style="font-size:9px;color:#B45309;margin-top:2px;">${s.pauseDebut&&s.pauseFin ? calcDuration(s.pauseDebut,s.pauseFin) : ''}</div>
+            <div style="font-size:9px;color:#B45309;margin-top:2px;">${s.pauseDebut||'--:--'}</div>
           </div>
           <div class="shift-arrow">→</div>
           <div class="shift-time">
@@ -3473,7 +3470,7 @@ function buildDayRecords(){
   const map = {};
   pointages.forEach(p=>{
     const key = p.empId+'_'+p.date;
-    if(!map[key]) map[key] = {empId:p.empId, empName:p.empName, agenceId:p.agenceId, agenceName:p.agenceName, date:p.date, method:p.method, pts:[]};
+    if(!map[key]){const empRec=employees.find(e=>e.id===p.empId);const assignedAgId=empRec?empRec.agenceId:p.agenceId;const assignedAg=agencies.find(a=>a.id===assignedAgId);const assignedAgName=assignedAg?(assignedAg.name||assignedAg.nom||assignedAg.id):(p.agenceName||p.agenceId);map[key]={empId:p.empId,empName:p.empName,agenceId:assignedAgId,agenceName:assignedAgName,date:p.date,method:p.method,pts:[]};}
     map[key].pts.push(p);
     if(p.method==='QR') map[key].method='QR';
   });
@@ -3988,13 +3985,13 @@ function switchApproTab(tab, el){
 
 function approveRequest(id){
   const a = approbations.find(x=>x.id===id);
-  if(a){ a.status='approved'; saveData('approbations',approbations); renderApprobations(); updateApproBadge(); updateChatBadge();
+  if(a){ a.status='approved'; saveData('approbations',approbations); try{db.ref('wecan/approbations').set(approbations);}catch(e){} renderApprobations(); updateApproBadge(); updateChatBadge();
   if(document.getElementById('page-adjust').classList.contains('active')) updateRamadanStatus(); }
 }
 
 function rejectRequest(id){
   const a = approbations.find(x=>x.id===id);
-  if(a){ a.status='rejected'; saveData('approbations',approbations); renderApprobations(); updateApproBadge(); updateChatBadge();
+  if(a){ a.status='rejected'; saveData('approbations',approbations); try{db.ref('wecan/approbations').set(approbations);}catch(e){} renderApprobations(); updateApproBadge(); updateChatBadge();
   if(document.getElementById('page-adjust').classList.contains('active')) updateRamadanStatus(); }
 }
 
@@ -4089,11 +4086,13 @@ function renderApprobations(){
     const canEdit = isPending && (a.type==='conge' || a.type==='sortie' || a.type==='pret' || a.type==='recuperation');
     const statusHtml = isPending
       ? `<div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;">
+          <button style="padding:4px 10px;border-radius:8px;border:1px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:11px;cursor:pointer;" onclick="openApproDetail(${a.id})">👁 Voir</button>
           ${canEdit ? `<button class="btn-edit-appro" onclick="editApproRequest(${a.id})">✏️ Modifier</button>` : ''}
           <button class="btn-approve" onclick="approveRequest(${a.id})">✅ Approuver</button>
           <button class="btn-reject"  onclick="rejectRequest(${a.id})">❌ Rejeter</button>
         </div>`
       : `<div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;">
+          <button style="padding:4px 10px;border-radius:8px;border:1px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:11px;cursor:pointer;" onclick="openApproDetail(${a.id})">👁 Voir</button>
           <span class="appro-status ${a.status}">${a.status==='approved'?t('status_approved'):t('status_rejected')}</span>
         </div>`;
 
@@ -4118,6 +4117,40 @@ function renderApprobations(){
   }).join('');
 }
 
+
+
+function openApproDetail(id){
+  const a = approbations.find(x=>x.id===id);
+  if(!a) return;
+  const cfg = APPRO_CONFIG[a.type]||{icon:'📋',label:a.type,bg:'#f8fafc',color:'#475569'};
+  let rows = [];
+  if(a.type==='conge'){ rows=[['Du',a.detail.debut],['Au',a.detail.fin],['Jours',a.detail.jours],['Motif',a.detail.motif]]; }
+  else if(a.type==='hsup'){ rows=[['Date',a.detail.date_hsup],['Heures',a.detail.heures],['Majoration',a.detail.majoration],['Motif',a.detail.motif]]; }
+  else if(a.type==='sortie'){ rows=[['Heure sortie',a.detail.heure],['Retour',a.detail.retour],['Duree',a.detail.duree],['Motif',a.detail.motif]]; }
+  else if(a.type==='document'){ rows=[['Document',a.detail.docType],['Usage',a.detail.usage],['Urgent',a.detail.urgent?'Oui':'Non']]; }
+  else if(a.type==='pret'){ rows=[['Montant',fmtDA(a.detail.montant)],['Mensualites',a.detail.mensualites],['Mensuel',fmtDA(a.detail.montantMensuel)],['Motif',a.detail.motif]]; }
+  else if(a.type==='recuperation'){ rows=[['Absence',a.detail.dateAbsence],['Recup',a.detail.dateRecup],['Heures',a.detail.heures],['Motif',a.detail.motif]]; }
+  const rowsHtml = rows.map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #f1f5f9;font-size:13px;"><span style="color:#64748b;font-weight:600;">${k}</span><span style="color:#1e293b;">${v||'-'}</span></div>`).join('');
+  const statusColor = a.status==='approved'?'#3B6D11':a.status==='rejected'?'#A32D2D':'#854F0B';
+  const statusBg    = a.status==='approved'?'#EAF3DE':a.status==='rejected'?'#FCEBEB':'#FAEEDA';
+  const statusLabel = a.status==='approved'?'Approuve':a.status==='rejected'?'Rejete':'En attente';
+  const modal = document.createElement('div');
+  modal.style.cssText='position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;padding:16px;';
+  modal.innerHTML=`<div style="background:#fff;border-radius:16px;padding:24px;max-width:440px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.25);">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div style="display:flex;align-items:center;gap:10px;"><span style="font-size:26px;">${cfg.icon}</span><div><div style="font-size:15px;font-weight:700;color:#1e293b;">${cfg.label}</div><div style="font-size:11px;color:#64748b;">${a.empName} · ${a.date}</div></div></div>
+      <span style="background:${statusBg};color:${statusColor};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;">${statusLabel}</span>
+    </div>
+    <div style="border-radius:10px;border:1px solid #e2e8f0;padding:0 12px;">${rowsHtml}</div>
+    <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end;">
+      ${a.status==='pending'?`<button onclick="approveRequest(${a.id});this.closest('.appro-detail-modal').remove()" style="padding:8px 16px;border-radius:8px;border:none;background:#EAF3DE;color:#3B6D11;font-weight:600;cursor:pointer;">✅ Approuver</button><button onclick="rejectRequest(${a.id});this.closest('.appro-detail-modal').remove()" style="padding:8px 16px;border-radius:8px;border:none;background:#FCEBEB;color:#A32D2D;font-weight:600;cursor:pointer;">❌ Rejeter</button>`:''}
+      <button onclick="this.closest('[style*=fixed]').remove()" style="padding:8px 16px;border-radius:8px;border:none;background:#f1f5f9;color:#475569;font-weight:600;cursor:pointer;">Fermer</button>
+    </div>
+  </div>`;
+  modal.classList.add('appro-detail-modal');
+  document.body.appendChild(modal);
+  modal.onclick=function(ev){ if(ev.target===modal) modal.remove(); };
+}
 
 function editApproRequest(id){
   const a = approbations.find(x=>x.id===id);
