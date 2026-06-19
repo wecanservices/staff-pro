@@ -607,6 +607,52 @@ const db = firebase.database();
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         <span data-t="nav_pointage">Pointage</span>
       </div>
+      <script>
+function validateGeoLocation(lat, lng, branchLat, branchLng, radiusMeters) {
+  const R = 6371000;
+  const φ1 = lat * Math.PI / 180;
+  const φ2 = branchLat * Math.PI / 180;
+  const Δφ = (branchLat - lat) * Math.PI / 180;
+  const Δλ = (branchLng - lng) * Math.PI / 180;
+  const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const distance = R * c;
+  return distance <= radiusMeters;
+}
+const originalPointageFunction = window.pointageEnter || function() {};
+window.pointageEnter = function(empId) {
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(function(position) {
+      const userLat = position.coords.latitude;
+      const userLng = position.coords.longitude;
+      db.ref('employees/' + empId).once('value', function(snap) {
+        const emp = snap.val();
+        if (emp && emp.agence) {
+          db.ref('agencies/' + emp.agence).once('value', function(agSnap) {
+            const ag = agSnap.val();
+            if (ag && ag.lat && ag.lng && ag.radius) {
+              const isWithinRadius = validateGeoLocation(userLat, userLng, parseFloat(ag.lat), parseFloat(ag.lng), parseFloat(ag.radius));
+              if (!isWithinRadius) {
+                alert('❌ Erreur géographique: Vous êtes hors du territoire de l\'agence ' + ag.name + '. Rapprochez-vous pour pointer.');
+                return;
+              }
+              originalPointageFunction(empId);
+            } else {
+              originalPointageFunction(empId);
+            }
+          });
+        } else {
+          originalPointageFunction(empId);
+        }
+      });
+    }, function(error) {
+      alert('Erreur de localisation: ' + error.message);
+    });
+  } else {
+    alert('La géolocalisation n\'est pas disponible.');
+  }
+};
+      </script>
       <div class="nav-item" onclick="showPage('trajet',this)" title="Trajet">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 12l4-4M3 12l4 4M21 12l-4-4M21 12l-4 4"/></svg>
         <span data-t="nav_trajet">Trajet</span>
