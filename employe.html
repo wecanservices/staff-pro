@@ -1766,7 +1766,7 @@ function openSubAdminSection(section){
 // ===== ESPACE MANAGER =====
 function openManagerSpace(){
   const isAdmin = ME.role==='admin';
-  const isSubAdmin = ME.permissions && ME.permissions.length > 0;
+  const isSubAdmin = ME.role==='subadmin' && ME.permissions && ME.permissions.length > 0;
   if(!isAdmin && !isSubAdmin){showToast('Acces refuse - contacter votre responsable');return;}
   document.getElementById('mgr-space').classList.add('open');
   renderMgrList();
