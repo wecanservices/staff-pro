@@ -379,6 +379,38 @@ input:focus, select:focus, textarea:focus {
   border-color: #E84040 !important;
   background: linear-gradient(135deg, #FFF0F0, #FEE2E2) !important;
 }
+
+/* ── GEOFENCE ALERTS ── */
+#geo-alert{position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,0.55);display:none;align-items:flex-end;justify-content:center;padding-bottom:0;}
+#geo-alert.show{display:flex;animation:fadeInBg .3s;}
+#geo-alert-card{width:100%;max-width:430px;background:#1e293b;border-radius:28px 28px 0 0;padding:24px 20px 40px;color:#fff;box-shadow:0 -8px 40px rgba(0,0,0,.4);}
+.geo-alert-icon{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 12px;animation:geoPulse 1.5s infinite;}
+@keyframes geoPulse{0%,100%{box-shadow:0 0 0 0 rgba(192,57,43,.5);}50%{box-shadow:0 0 0 14px rgba(192,57,43,0);}}
+.geo-alert-title{text-align:center;font-size:17px;font-weight:700;margin-bottom:4px;}
+.geo-alert-sub{text-align:center;font-size:13px;color:#94a3b8;margin-bottom:20px;}
+/* Swipe button */
+#geo-swipe-wrap{position:relative;height:56px;background:#ffffff18;border-radius:28px;margin-bottom:16px;overflow:hidden;user-select:none;}
+#geo-swipe-track{position:absolute;left:4px;top:4px;width:48px;height:48px;border-radius:50%;background:#C0392B;display:flex;align-items:center;justify-content:center;cursor:grab;transition:background .2s;touch-action:none;}
+#geo-swipe-track.success{background:#16a34a;cursor:default;}
+#geo-swipe-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#ffffffaa;pointer-events:none;letter-spacing:.5px;}
+#geo-swipe-arrow{font-size:22px;color:#fff;}
+/* Choices panel */
+#geo-choices{display:none;flex-direction:column;gap:8px;margin-top:4px;}
+#geo-choices.show{display:flex;}
+.geo-choice-btn{padding:14px;border-radius:14px;border:none;font-size:14px;font-weight:600;cursor:pointer;text-align:center;transition:transform .1s;}
+.geo-choice-btn:active{transform:scale(.97);}
+#geo-dismiss{display:block;text-align:center;color:#64748b;font-size:13px;margin-top:10px;cursor:pointer;padding:6px;}
+/* Alerte périmètre dépassé (rouge) */
+#geo-blocked-alert{position:fixed;bottom:100px;left:0;right:0;z-index:7000;display:none;justify-content:center;padding:0 16px;}
+#geo-blocked-alert.show{display:flex;animation:slideUp .4s;}
+#geo-blocked-card{background:#7f1d1d;color:#fff;border-radius:18px;padding:16px 18px;max-width:360px;width:100%;box-shadow:0 4px 24px rgba(0,0,0,.3);}
+.gbc-title{font-size:14px;font-weight:700;margin-bottom:4px;}
+.gbc-sub{font-size:12px;color:#fca5a5;}
+.gbc-dist{font-size:22px;font-weight:800;color:#fca5a5;font-family:monospace;margin:8px 0 4px;}
+.gbc-bar-wrap{height:6px;background:#ffffff22;border-radius:3px;overflow:hidden;}
+.gbc-bar{height:6px;background:#ef4444;border-radius:3px;transition:width 1s;}
+@keyframes fadeInBg{from{opacity:0;}to{opacity:1;}}
+@keyframes slideUp{from{transform:translateY(30px);opacity:0;}to{transform:translateY(0);opacity:1;}}
 </style>
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -892,6 +924,250 @@ function tickClock(){
 setInterval(tickClock,1000);tickClock();
 
 // ===== POINTAGE =====
+
+// ══════════════════════════════════════════════════════════════
+// GÉOFENCING — Surveillance périmètre en temps réel
+// ══════════════════════════════════════════════════════════════
+let _geoWatchId   = null;
+let _geoWasInside = null;    // null=inconnu, true=dedans, false=dehors
+let _geoAlertOpen = false;
+let _geoAlertType = null;    // 'entry' | 'exit'
+let _geoChoiceCb  = null;    // callback après swipe
+let _blockedTimer = null;
+
+function geoDist(lat,lng,agLat,agLng){
+  return Math.sqrt(
+    Math.pow((lat-agLat)*111000,2)+
+    Math.pow((lng-agLng)*111000*Math.cos(agLat*Math.PI/180),2)
+  );
+}
+
+function getMyAgency(){
+  return agencies.find(a=>String(a.id)===String(ME?.agenceId)) || agencies[0];
+}
+
+function startGeoWatch(){
+  if(!navigator.geolocation||_geoWatchId!==null) return;
+  _geoWatchId = navigator.geolocation.watchPosition(pos=>{
+    const {latitude:lat, longitude:lng, accuracy} = pos.coords;
+    const ag = getMyAgency();
+    if(!ag) return;
+    const agLat = parseFloat(ag.lat||0);
+    const agLng = parseFloat(ag.lng||0);
+    const rayon = parseInt(ag.rayon||ag.radius||300);
+    if(!agLat||!agLng) return;
+
+    const dist = geoDist(lat,lng,agLat,agLng);
+    const inside = dist <= rayon * 1.5; // 1.5× tolérance GPS mobile
+
+    // ── Passage DEHORS → DEDANS : alerte Entrée ──
+    if(inside && _geoWasInside===false && !_geoAlertOpen){
+      const todayPts = ld('pointages',[]).filter(p=>p.empId===ME.id&&p.date===tday());
+      const hasEntree = todayPts.some(p=>p.type==='Entree');
+      if(!hasEntree){
+        hideBlockedAlert();
+        showGeoAlert('entry', null, lat, lng, ag);
+      }
+    }
+
+    // ── Passage DEDANS → DEHORS : alerte Sortie ──
+    if(!inside && _geoWasInside===true && !_geoAlertOpen){
+      const todayPts = ld('pointages',[]).filter(p=>p.empId===ME.id&&p.date===tday());
+      const hasEntree = todayPts.some(p=>p.type==='Entree');
+      const hasSortie = todayPts.some(p=>p.type==='Sortie');
+      const inPause   = todayPts.filter(p=>p.type==='Debut pause').length > todayPts.filter(p=>p.type==='Fin pause').length;
+      if(hasEntree && !hasSortie){
+        showGeoAlert('exit', null, lat, lng, ag);
+      }
+    }
+
+    // ── Mise à jour alerte périmètre dépassé (si hors zone) ──
+    if(!inside && !_geoAlertOpen){
+      showBlockedAlert(Math.round(dist), rayon);
+    } else if(inside){
+      hideBlockedAlert();
+    }
+
+    _geoWasInside = inside;
+  }, err=>{
+    console.warn('GeoWatch error', err.code);
+  }, {
+    enableHighAccuracy: true,
+    maximumAge: 10000,
+    timeout: 15000
+  });
+}
+
+function stopGeoWatch(){
+  if(_geoWatchId!==null){
+    navigator.geolocation.clearWatch(_geoWatchId);
+    _geoWatchId = null;
+  }
+}
+
+// ──────────────────────────────────────────────────────────────
+// ALERTE style appel téléphonique
+// ──────────────────────────────────────────────────────────────
+function showGeoAlert(type, choices, lat, lng, ag){
+  _geoAlertOpen = true;
+  _geoAlertType = type;
+  const el    = document.getElementById('geo-alert');
+  const icon  = document.getElementById('geo-alert-icon');
+  const title = document.getElementById('geo-alert-title');
+  const sub   = document.getElementById('geo-alert-sub');
+  const choicesEl = document.getElementById('geo-choices');
+
+  // Vibration (si supportée)
+  try{ navigator.vibrate && navigator.vibrate([300,100,300]); }catch(e){}
+
+  if(type==='entry'){
+    icon.textContent = '🏢';
+    icon.style.background = '#16a34a33';
+    title.textContent = 'Vous êtes arrivé !';
+    sub.textContent = 'Glissez pour enregistrer votre entrée';
+    choicesEl.classList.remove('show');
+    choicesEl.innerHTML = '';
+    _geoChoiceCb = ()=>{
+      doPoint(ag,'GPS','Entree',lat,lng);
+      closeGeoAlert();
+    };
+  } else if(type==='exit'){
+    icon.textContent = '🚶';
+    icon.style.background = '#C0392B33';
+    title.textContent = 'Vous quittez la zone';
+    sub.textContent = 'Glissez pour choisir votre statut';
+    choicesEl.classList.remove('show');
+    choicesEl.innerHTML = '';
+    _geoChoiceCb = ()=>{
+      // Après swipe → afficher les choix
+      sub.textContent = 'Que se passe-t-il ?';
+      document.getElementById('geo-swipe-wrap').style.display='none';
+      document.getElementById('geo-dismiss').style.display='none';
+      const exitChoices = [
+        {label:'🏠  Fin de journée — Sortie', color:'#C0392B', bg:'#FDEDEC', type:'Sortie'},
+        {label:'🛒  Je vais acheter', color:'#854F0B', bg:'#FAEEDA', type:'Debut pause'},
+        {label:'☕  Pause déjeuner / café', color:'#92400E', bg:'#FEF9C3', type:'Debut pause'},
+        {label:'🏥  Sortie médicale', color:'#0369a1', bg:'#e0f2fe', type:'Debut pause'},
+        {label:'🚗  Déplacement terrain', color:'#6b21a8', bg:'#f3e8ff', type:'Debut pause'},
+        {label:'❌  Annuler', color:'#64748b', bg:'#f1f5f9', type:'cancel'},
+      ];
+      choicesEl.innerHTML = exitChoices.map(ch=>
+        `<button class="geo-choice-btn" style="background:${ch.bg};color:${ch.color};" onclick="onGeoChoice('${ch.type}','${ch.label}')">${ch.label}</button>`
+      ).join('');
+      choicesEl.classList.add('show');
+    };
+  }
+
+  // Reset swipe
+  const track = document.getElementById('geo-swipe-track');
+  const wrap  = document.getElementById('geo-swipe-wrap');
+  const dismiss = document.getElementById('geo-dismiss');
+  track.style.left = '4px';
+  track.classList.remove('success');
+  document.getElementById('geo-swipe-arrow').textContent = '→';
+  wrap.style.display = 'block';
+  dismiss.style.display = 'block';
+
+  el.classList.add('show');
+  initSwipe(track, wrap, ()=>{ if(_geoChoiceCb){_geoChoiceCb();_geoChoiceCb=null;} });
+}
+
+function onGeoChoice(type, label){
+  if(!ME) return;
+  if(type==='cancel'){ closeGeoAlert(); return; }
+  const ag = getMyAgency();
+  navigator.geolocation.getCurrentPosition(pos=>{
+    doPoint(ag,'GPS',type,pos.coords.latitude,pos.coords.longitude);
+  },()=>{
+    doPoint(ag,'GPS',type,parseFloat(ag.lat||0),parseFloat(ag.lng||0));
+  },{timeout:5000,enableHighAccuracy:true});
+  closeGeoAlert();
+}
+
+function closeGeoAlert(){
+  document.getElementById('geo-alert').classList.remove('show');
+  _geoAlertOpen = false;
+  _geoAlertType = null;
+  _geoChoiceCb  = null;
+}
+
+// ──────────────────────────────────────────────────────────────
+// SWIPE INTERACTION — glisser de gauche à droite
+// ──────────────────────────────────────────────────────────────
+function initSwipe(track, wrap, onSuccess){
+  const wrapW  = ()=>wrap.getBoundingClientRect().width;
+  const maxX   = ()=>wrapW()-56;
+  let dragging = false, startX=0, curX=0;
+
+  function getEvX(e){ return e.touches?e.touches[0].clientX:e.clientX; }
+
+  function onStart(e){
+    if(track.classList.contains('success')) return;
+    dragging=true; startX=getEvX(e)-4;
+    track.style.transition='none';
+  }
+  function onMove(e){
+    if(!dragging) return;
+    e.preventDefault();
+    curX = Math.max(0, Math.min(getEvX(e)-startX, maxX()));
+    track.style.left = (4+curX)+'px';
+    // Arrow fades to checkmark
+    const pct = curX/maxX();
+    document.getElementById('geo-swipe-arrow').textContent = pct>0.7?'✓':'→';
+    track.style.background = `hsl(${Math.round(0+pct*135)},70%,${pct>0.7?38:35}%)`;
+  }
+  function onEnd(){
+    if(!dragging) return;
+    dragging=false;
+    track.style.transition='left .2s, background .2s';
+    if(curX >= maxX()*0.8){
+      track.style.left=maxX()+4+'px';
+      track.classList.add('success');
+      document.getElementById('geo-swipe-arrow').textContent='✓';
+      track.style.background='#16a34a';
+      setTimeout(()=>onSuccess(), 300);
+    } else {
+      track.style.left='4px';
+      document.getElementById('geo-swipe-arrow').textContent='→';
+      track.style.background='#C0392B';
+      curX=0;
+    }
+  }
+
+  // Remove old listeners (avoid duplicates)
+  track.replaceWith(track.cloneNode(true));
+  const newTrack = document.getElementById('geo-swipe-track');
+  newTrack.addEventListener('mousedown', onStart);
+  newTrack.addEventListener('touchstart', onStart, {passive:false});
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('touchmove', onMove, {passive:false});
+  document.addEventListener('mouseup', onEnd);
+  document.addEventListener('touchend', onEnd);
+}
+
+// ──────────────────────────────────────────────────────────────
+// ALERTE PÉRIMÈTRE DÉPASSÉ
+// ──────────────────────────────────────────────────────────────
+let _blockedVisible = false;
+function showBlockedAlert(dist, rayon){
+  if(_blockedVisible) return;
+  _blockedVisible = true;
+  const el = document.getElementById('geo-blocked-alert');
+  document.getElementById('gbc-dist').textContent = dist+' m';
+  // Barre: pleine quand très loin, vide quand proche
+  const pct = Math.min(100, Math.round((dist/rayon)*50));
+  document.getElementById('gbc-bar').style.width = pct+'%';
+  el.classList.add('show');
+  // Auto-hide après 8s
+  clearTimeout(_blockedTimer);
+  _blockedTimer = setTimeout(()=>hideBlockedAlert(), 8000);
+}
+function hideBlockedAlert(){
+  _blockedVisible = false;
+  document.getElementById('geo-blocked-alert').classList.remove('show');
+  clearTimeout(_blockedTimer);
+}
+
 function doPoint(ag,method,typeOvr,lat,lng){
   const type=typeOvr||'Entree';
   let pts=ld('pointages',[]);
@@ -985,8 +1261,15 @@ function onQR(text){
         const agLng=parseFloat(ag.lng)||parseFloat(parts[4]);
         const agRayon=parseInt(ag.rayon||ag.radius||parts[5]||300);
         const dist=Math.sqrt(Math.pow((lat-agLat)*111000,2)+Math.pow((lng-agLng)*111000*Math.cos(agLat*Math.PI/180),2));
-        const inZone = dist<=agRayon*2; // double tolerance for mobile GPS accuracy
-        if(!inZone){ showToast('⚠️ Position eloignee de '+Math.round(dist)+'m - pointage enregistre quand meme'); }
+        const inZone = dist<=agRayon*1.8; // 1.8× tolerance GPS mobile
+        if(!inZone){
+          // BLOQUER — afficher alerte périmetre
+          const agName = ag.name||ag.nom||ag.id;
+          showBlockedAlert(Math.round(dist), agRayon);
+          showToast('🚫 Hors périmètre ('+Math.round(dist)+'m) - rapprochez-vous de '+agName);
+          startScan(); // relancer le scan
+          return;
+        }
         doPoint(ag,'QR',nextType,lat,lng);
       },()=>{
         // GPS unavailable: still allow QR pointage with agency coords
@@ -1657,6 +1940,8 @@ function initApp(){
   renderConvs();
   // Démarrer listener messages admin → employé (après login, ME est défini)
   startInboxListener();
+  // Démarrer surveillance périmètre GPS
+  setTimeout(()=>{ try{ startGeoWatch(); }catch(e){} }, 1500);
 }
 
 function startInboxListener(){
