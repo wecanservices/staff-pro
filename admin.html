@@ -656,12 +656,16 @@ function validateGeoLocation(lat, lng, branchLat, branchLng, radiusMeters) {
 }
 const originalPointageFunction = window.pointageEnter || function() {};
 window.pointageEnter = function(empId) {
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(function(position) {
-      const userLat = position.coords.latitude;
-      const userLng = position.coords.longitude;
-      db.ref('employees/' + empId).once('value', function(snap) {
-        const emp = snap.val();
+  db.ref('employees/' + empId).once('value', function(snap) {
+    const emp = snap.val();
+    if (emp && emp.isSubAdmin) {
+      alert('❌ Erreur: Les sous-administrateurs ne peuvent pas traiter les demandes de pointage depuis l\'application.');
+      return;
+    }
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(function(position) {
+        const userLat = position.coords.latitude;
+        const userLng = position.coords.longitude;
         if (emp && emp.agence) {
           db.ref('agencies/' + emp.agence).once('value', function(agSnap) {
             const ag = agSnap.val();
@@ -679,13 +683,13 @@ window.pointageEnter = function(empId) {
         } else {
           originalPointageFunction(empId);
         }
+      }, function(error) {
+        alert('Erreur de localisation: ' + error.message);
       });
-    }, function(error) {
-      alert('Erreur de localisation: ' + error.message);
-    });
-  } else {
-    alert('La géolocalisation n\'est pas disponible.');
-  }
+    } else {
+      alert('La géolocalisation n\'est pas disponible.');
+    }
+  });
 };
       </script>
       <div class="nav-item" onclick="showPage('trajet',this)" title="Trajet">
