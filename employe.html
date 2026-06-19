@@ -481,7 +481,7 @@ const db = firebase.database();
   </div>
   <div class="card-title" style="margin-bottom:8px">Accès rapide</div>
   <div class="quick-grid">
-    <div class="quick-card" onclick="showPage('profil');setTimeout(()=>document.getElementById('doc-sec').style.display='block',100)">
+    <div class="quick-card" onclick="showPage('profil')">
       <div class="ico">💰</div><div class="lbl">Fiches de paie</div>
     </div>
     <div class="quick-card" onclick="showPage('conges')">
@@ -572,14 +572,8 @@ const db = firebase.database();
   </div>
   <!-- document section hidden: use demandes tab instead -->
   <div class="card" style="display:none">
-    <div style="display:flex;justify-content:space-between;align-items:center;cursor:pointer" onclick="toggleDocSec()">
-      <span style="font-weight:700">📄 Demandes de documents</span>
-      <span>›</span>
-    </div>
-    <div id="doc-sec" style="display:none;margin-top:12px">
-      <div id="doc-list"></div>
-      <button class="btn btn-outline btn-full" onclick="newDoc()">+ Nouvelle demande</button>
-    </div>
+    <!-- section documents désactivée — utiliser onglet Congés/Demandes -->
+    <div id="doc-sec" style="display:none"></div>
   </div>
   <div class="card">
     <button class="btn btn-outline btn-full" onclick="doLogout()" style="color:#C0392B;border-color:#C0392B;">🚪 Se déconnecter</button>
