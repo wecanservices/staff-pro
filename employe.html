@@ -1025,6 +1025,12 @@ function startGeoWatch(){
 
     // ── Passage DEHORS → DEDANS : alerte Entrée ──
     if(inside && _geoWasInside===false && !_geoAlertOpen){
+      if(window._activeSortieId && !window._activeSortieMission){
+        const now = new Date();
+        const timeStr = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+        recordRetour(window._activeSortieId, timeStr);
+        showToast('Retour en zone enregistre');
+      }
       const todayPts = ld('pointages',[]).filter(p=>p.empId===ME.id&&p.date===tday());
       const hasEntree = todayPts.some(p=>p.type==='Entree');
       if(!hasEntree){
@@ -1107,15 +1113,16 @@ function showGeoAlert(type, choices, lat, lng, ag){
       document.getElementById('geo-swipe-wrap').style.display='none';
       document.getElementById('geo-dismiss').style.display='none';
       const exitChoices = [
-        {label:'🏠  Fin de journée — Sortie', color:'#C0392B', bg:'#FDEDEC', type:'Sortie'},
-        {label:'🛒  Je vais acheter', color:'#854F0B', bg:'#FAEEDA', type:'Debut pause'},
-        {label:'☕  Pause déjeuner / café', color:'#92400E', bg:'#FEF9C3', type:'Debut pause'},
-        {label:'🏥  Sortie médicale', color:'#0369a1', bg:'#e0f2fe', type:'Debut pause'},
-        {label:'🚗  Déplacement terrain', color:'#6b21a8', bg:'#f3e8ff', type:'Debut pause'},
-        {label:'❌  Annuler', color:'#64748b', bg:'#f1f5f9', type:'cancel'},
+        {label:'🚀 Mission',           motif:'Mission',                   color:'#7c3aed', bg:'#ede9fe', mission:true},
+        {label:'📦 Livraison',         motif:'Livraison',                 color:'#0369a1', bg:'#e0f2fe', mission:false},
+        {label:'🛒 Achat personnel',   motif:'Achat personnel',           color:'#854F0B', bg:'#FAEEDA', mission:false},
+        {label:'🏢 Achat entreprise',  motif:'Achat pour l entreprise',   color:'#065f46', bg:'#d1fae5', mission:false},
+        {label:'☕ Pause',             motif:'Pause',                     color:'#92400E', bg:'#FEF9C3', mission:false},
+        {label:'🚻 Toilettes',         motif:'Toilettes',                 color:'#374151', bg:'#f3f4f6', mission:false},
+        {label:'🏥 Sante medecin',    motif:'Sante voir medecin',        color:'#1d4ed8', bg:'#dbeafe', mission:false},
       ];
       choicesEl.innerHTML = exitChoices.map(ch=>
-        `<button class="geo-choice-btn" style="background:${ch.bg};color:${ch.color};" onclick="onGeoChoice('${ch.type}','${ch.label}')">${ch.label}</button>`
+        `<button class="geo-choice-btn" style="background:${ch.bg};color:${ch.color};" onclick="onGeoExitChoice('${ch.motif}',${ch.mission})">${ch.label}</button>`
       ).join('');
       choicesEl.classList.add('show');
     };
@@ -1145,6 +1152,97 @@ function onGeoChoice(type, label){
     doPoint(ag,'GPS',type,parseFloat(ag.lat||0),parseFloat(ag.lng||0));
   },{timeout:5000,enableHighAccuracy:true});
   closeGeoAlert();
+}
+
+
+function onGeoExitChoice(motif, isMission){
+  if(!ME) return;
+  const now = new Date();
+  const timeStr = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+  const dateStr = tday();
+  const sortieId = 'sortie_'+ME.id+'_'+Date.now();
+  const sortieData = {
+    id: sortieId,
+    empId: ME.id,
+    empName: ME.prenom+' '+ME.nom,
+    agenceId: ME.agenceId,
+    motif: motif,
+    dateStr: dateStr,
+    heureDepart: timeStr,
+    heureRetour: null,
+    isMission: isMission,
+    missionPositions: [],
+    timestamp: Date.now()
+  };
+  let sorties = JSON.parse(localStorage.getItem('wecan_sorties')||'[]');
+  sorties.push(sortieData);
+  localStorage.setItem('wecan_sorties', JSON.stringify(sorties));
+  try{ db.ref('wecan/sorties/'+sortieId).set(sortieData); }catch(e){}
+  window._activeSortieId = sortieId;
+  window._activeSortieMission = isMission;
+  if(isMission){
+    startMissionTracking(sortieId);
+    showToast('Mission demarree - suivi GPS actif');
+  } else {
+    showToast('Sortie enregistree : '+motif);
+  }
+  closeGeoAlert();
+}
+
+let _missionWatchId = null;
+
+function startMissionTracking(sortieId){
+  if(!navigator.geolocation) return;
+  stopMissionTracking();
+  showMissionBadge(true);
+  _missionWatchId = navigator.geolocation.watchPosition(function(pos){
+    const lat = pos.coords.latitude;
+    const lng = pos.coords.longitude;
+    const now = new Date();
+    const timeStr = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+    const position = {lat:lat, lng:lng, time: timeStr, ts: Date.now()};
+    try{ db.ref('wecan/sorties/'+sortieId+'/missionPositions').push(position); }catch(e){}
+    const ag = getMyAgency();
+    if(ag){
+      const dist = geoDist(lat, lng, parseFloat(ag.lat||0), parseFloat(ag.lng||0));
+      const rayon = parseInt(ag.rayon||ag.radius||300);
+      if(dist <= rayon * 1.1){
+        stopMissionTracking();
+        recordRetour(sortieId, timeStr);
+        showToast('Mission terminee - retour en zone');
+      }
+    }
+  }, function(err){ console.warn('Mission GPS error', err); },
+  { enableHighAccuracy:true, maximumAge:10000, timeout:20000 });
+}
+
+function stopMissionTracking(){
+  if(_missionWatchId !== null){
+    navigator.geolocation.clearWatch(_missionWatchId);
+    _missionWatchId = null;
+    showMissionBadge(false);
+  }
+}
+
+function recordRetour(sortieId, timeStr){
+  try{ db.ref('wecan/sorties/'+sortieId+'/heureRetour').set(timeStr); }catch(e){}
+  let sorties = JSON.parse(localStorage.getItem('wecan_sorties')||'[]');
+  const idx = sorties.findIndex(function(s){ return s.id===sortieId; });
+  if(idx>-1){ sorties[idx].heureRetour = timeStr; localStorage.setItem('wecan_sorties', JSON.stringify(sorties)); }
+  window._activeSortieId = null;
+  window._activeSortieMission = false;
+}
+
+function showMissionBadge(show){
+  let badge = document.getElementById('mission-badge');
+  if(!badge){
+    badge = document.createElement('div');
+    badge.id = 'mission-badge';
+    badge.style.cssText = 'position:fixed;top:60px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;padding:8px 18px;border-radius:20px;font-size:13px;font-weight:700;z-index:7000;display:none;box-shadow:0 2px 12px rgba(124,58,237,0.4);';
+    badge.innerHTML = '🚀 Mission en cours - GPS actif';
+    document.body.appendChild(badge);
+  }
+  badge.style.display = show ? 'block' : 'none';
 }
 
 function closeGeoAlert(){
