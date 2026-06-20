@@ -99,7 +99,7 @@ body.dark input,body.dark select,body.dark textarea{background:#334155;color:#e2
 .scan-box{width:180px;height:180px;border:3px solid var(--red);border-radius:16px;box-shadow:0 0 0 9999px rgba(0,0,0,.5)}
 
 /* SUMMARY CARDS */
-.sum-row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px}
+.sum-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:14px}
 .sum-box{background:#fff;border-radius:12px;padding:10px;text-align:center;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .sum-box .sv{font-size:18px;font-weight:700;color:var(--red)}
 .sum-box .sl{font-size:10px;color:var(--gray);margin-top:2px}
@@ -300,6 +300,8 @@ body.dark input,body.dark select,body.dark textarea{background:#334155;color:#e2
 .login-field input:focus{border-color:#C0392B}
 .login-btn{width:100%;padding:14px;background:linear-gradient(135deg,#8B1A1A,#C0392B);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:4px}
 .login-error{color:#C0392B;font-size:12px;text-align:center;margin-top:10px;min-height:18px}
+.login-spinner{display:none;margin:14px auto 0;width:30px;height:30px;border:3px solid rgba(192,57,43,.2);border-top-color:#C0392B;border-radius:50%;animation:spin-login .7s linear infinite;}
+@keyframes spin-login{to{transform:rotate(360deg);}}
 
 /* ══ WECHECKIN — MODERN EMPLOYEE THEME ══ */
 :root {
@@ -447,6 +449,7 @@ const db = firebase.database();
       <input type="password" id="login-password" placeholder="••••••" autocomplete="current-password">
     </div>
     <button class="login-btn" onclick="doLogin()">Se connecter</button>
+    <div class="login-spinner" id="login-spinner"></div>
     <div class="login-error" id="login-error"></div>
   </div>
 </div>
@@ -459,7 +462,6 @@ const db = firebase.database();
     <h1 style="font-weight:800;letter-spacing:-0.5px;">WeCheckin</h1>
   </div>
   <div class="topbar-right">
-    <button id="refresh-btn" class="avatar-sm" onclick="refreshEmployeesAndAgencies()" style="background:rgba(255,255,255,0.3);cursor:pointer;font-size:16px;border:none;padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;" title="Actualiser employés et agences">🔄</button>
     <div id="top-av" class="avatar-sm" onclick="showPage('profil')">KB</div>
   </div>
 </div>
@@ -476,6 +478,7 @@ const db = firebase.database();
     <div class="subadmin-perm-grid" id="subadmin-perm-grid"></div>
   </div>
   <div class="sec-title">Bonjour, <span id="home-name">Karim</span> 👋</div>
+  <div id="geo-status-bar" style="display:none;padding:8px 12px;border-radius:10px;font-size:12px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px;"></div>
   <div class="card" id="home-pt-card">
     <div class="card-title">Pointage aujourd\u2019hui</div>
     <div id="home-pt-content" style="text-align:center;color:var(--gray);font-size:13px">Pas encore de pointage</div>
@@ -548,7 +551,10 @@ const db = firebase.database();
 
 <!-- ===== PAGE CHAT ===== -->
 <div class="page" id="page-chat">
-  <div class="sec-title">Messages</div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+    <div class="sec-title" style="margin-bottom:0">Messages</div>
+    <button onclick="openNewConvModal()" style="background:#C0392B;color:#fff;border:none;border-radius:10px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;">✏️ Nouveau</button>
+  </div>
   <div id="conv-list"></div>
 </div>
 
@@ -569,6 +575,14 @@ const db = firebase.database();
       <button class="theme-btn on" onclick="setTh(this,'light')">☀️ Clair</button>
       <button class="theme-btn" onclick="setTh(this,'dark')">🌙 Sombre</button>
       <button class="theme-btn" onclick="setTh(this,'auto')">⚙️ Auto</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">🌐 Langue / Language / اللغة</div>
+    <div class="theme-row">
+      <button class="theme-btn" id="lang-btn-fr" onclick="setAppLang('fr',this)">🇫🇷 Français</button>
+      <button class="theme-btn" id="lang-btn-ar" onclick="setAppLang('ar',this)">🇩🇿 عربي</button>
+      <button class="theme-btn" id="lang-btn-en" onclick="setAppLang('en',this)">🇬🇧 English</button>
     </div>
   </div>
   <!-- document section hidden: use demandes tab instead -->
@@ -609,10 +623,6 @@ const db = firebase.database();
           <div class="chip on" id="chip-a" onclick="selH('annuel')">Annuel</div>
           <div class="chip" id="chip-m" onclick="selH('maladie')">Maladie</div>
         </div>
-      </div>
-      <div class="field-group" style="display:flex;align-items:center;gap:10px;">
-        <input type="checkbox" id="ext-checkbox" style="width:18px;height:18px;cursor:pointer;">
-        <label for="ext-checkbox" style="margin:0;cursor:pointer;font-size:14px;font-weight:500;">Employé externe (travaille en dehors de l'agence)</label>
       </div>
       <div class="field-group"><label>Date début</label><input type="date" id="ld"></div>
       <div class="field-group"><label>Date fin</label><input type="date" id="lf"></div>
@@ -682,7 +692,21 @@ const db = firebase.database();
   <div class="cw-header">
     <button class="cw-back" onclick="closeWin()">‹</button>
     <div class="cw-av" id="cw-av">🤖</div>
-    <div><div class="cw-name" id="cw-name">Agent RH IA</div><div class="cw-sub" id="cw-sub">En ligne</div></div>
+    <div style="flex:1"><div class="cw-name" id="cw-name">Agent RH IA</div><div class="cw-sub" id="cw-sub">En ligne</div></div>
+    <button id="rdv-btn" onclick="openRdvModal()" style="display:none;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:10px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;">📅 RDV</button>
+  </div>
+  <!-- RDV Modal -->
+  <div id="rdv-modal" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;">
+    <div style="background:#fff;border-radius:16px;width:88%;max-width:340px;padding:20px;">
+      <div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:14px;">📅 Planifier un rendez-vous</div>
+      <div style="margin-bottom:10px;"><label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:4px;">Date</label><input type="date" id="rdv-date" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;"></div>
+      <div style="margin-bottom:10px;"><label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:4px;">Heure</label><input type="time" id="rdv-time" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;"></div>
+      <div style="margin-bottom:16px;"><label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:4px;">Objet</label><input type="text" id="rdv-objet" placeholder="Sujet du rendez-vous..." style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;"></div>
+      <div style="display:flex;gap:8px;">
+        <button onclick="closeRdvModal()" style="flex:1;padding:9px;background:#f1f5f9;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Annuler</button>
+        <button onclick="sendRdv()" style="flex:1;padding:9px;background:#C0392B;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">📅 Envoyer</button>
+      </div>
+    </div>
   </div>
   <div class="msgs-area" id="msgs-area">
     <div class="typing" id="typing-indicator"><span></span><span></span><span></span></div>
@@ -776,6 +800,32 @@ function fbEmpSync(){
     const val = snap.val();
     if(!val) return;
     localStorage.setItem('wecan_approbations', JSON.stringify(val));
+    // Also sync to 'approbations' key so admin.html (same device) sees it
+    const arr = Array.isArray(val) ? val : Object.values(val);
+    const existing = JSON.parse(localStorage.getItem('approbations')||'[]');
+    let changed = false;
+    arr.filter(a=>a&&a.id).forEach(a=>{
+      const idx=existing.findIndex(x=>x.id===a.id);
+      if(idx===-1){existing.push(a);changed=true;}
+      else if(existing[idx].status!==a.status){existing[idx]=a;changed=true;}
+    });
+    if(changed) localStorage.setItem('approbations',JSON.stringify(existing));
+  });
+  // Sync tous les pointages depuis Firebase → localStorage (pour sous-admin et rapports cross-device)
+  db.ref('wecan/pointages').on('value', snap=>{
+    const val = snap.val();
+    if(!val) return;
+    const arr = Array.isArray(val) ? val : Object.values(val);
+    const incoming = arr.filter(p=>p&&p.id&&p.empId);
+    if(!incoming.length) return;
+    // Merge avec les pointages existants
+    const existing = JSON.parse(localStorage.getItem('wecan_all_pointages')||'[]');
+    let changed = false;
+    incoming.forEach(p=>{
+      const idx = existing.findIndex(x=>String(x.id)===String(p.id));
+      if(idx===-1){existing.push(p);changed=true;}
+    });
+    if(changed) localStorage.setItem('wecan_all_pointages', JSON.stringify(existing));
   });
 }
 function now(){const n=new Date();return String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');}
@@ -817,7 +867,8 @@ if(!employees.length){
   if(changed)sv('employees',employees);
 }
 
-// Démarrer sync Firebase cross-device
+// Démarrer sync Firebase cross-device (immédiat + 500ms de sécurité)
+fbEmpSync();
 setTimeout(fbEmpSync, 500);
 
 if(!agencies.length){
@@ -838,7 +889,9 @@ function doLogin(){
   errEl.textContent='';
   if(!email||!pwd){errEl.textContent='Veuillez remplir email et mot de passe.';return;}
 
+  const spinner=document.getElementById('login-spinner');
   function _tryLogin(emps){
+    if(spinner)spinner.style.display='none';
     const emp=emps.find(e=>e.email&&e.email.toLowerCase()===email&&e.password===pwd);
     if(!emp){
       errEl.textContent='Email ou mot de passe incorrect. ('+emps.length+' comptes trouvés)';
@@ -855,20 +908,30 @@ function doLogin(){
 
   // Toujours vérifier Firebase en premier pour avoir les comptes à jour
   if(btn){btn.disabled=true;btn.textContent='Connexion...';}
+  if(spinner)spinner.style.display='block';
   try{
     db.ref('wecan/employees').once('value').then(snap=>{
-      const fbEmps=snap.val();
-      if(fbEmps&&fbEmps.length){
-        // Mettre à jour localStorage avec les données Firebase
+      const fbRaw=snap.val();
+      // Normaliser : Firebase peut retourner un objet {0:{...},1:{...}} ou un array
+      const fbEmps = fbRaw
+        ? (Array.isArray(fbRaw) ? fbRaw : Object.values(fbRaw)).filter(e=>e&&e.id)
+        : [];
+      if(fbEmps.length){
+        // Mettre à jour localStorage ET la variable globale employees avec les données Firebase
         localStorage.setItem('wecan_employees',JSON.stringify(fbEmps));
+        employees = fbEmps;
         _tryLogin(fbEmps);
       } else {
-        // Firebase vide → utiliser localStorage
-        _tryLogin(ld('employees',[]));
+        // Firebase vide → utiliser localStorage (fallback)
+        const localEmps = ld('employees',[]);
+        employees = localEmps;
+        _tryLogin(localEmps);
       }
     }).catch(()=>{
       // Pas de réseau → utiliser localStorage
-      _tryLogin(ld('employees',[]));
+      const localEmps = ld('employees',[]);
+      employees = localEmps;
+      _tryLogin(localEmps);
     });
   }catch(e){
     _tryLogin(ld('employees',[]));
@@ -942,7 +1005,8 @@ function geoDist(lat,lng,agLat,agLng){
 }
 
 function getMyAgency(){
-  return agencies.find(a=>String(a.id)===String(ME?.agenceId)) || agencies[0];
+  const agId = String(ME?.agenceId||ME?.agenceIds?.[0]||'');
+  return agencies.find(a=>String(a.id)===agId) || agencies[0];
 }
 
 function startGeoWatch(){
@@ -957,7 +1021,7 @@ function startGeoWatch(){
     if(!agLat||!agLng) return;
 
     const dist = geoDist(lat,lng,agLat,agLng);
-    const inside = dist <= rayon * 1.5; // 1.5× tolérance GPS mobile
+    const inside = dist <= rayon * 1.1; // 1.1× tolérance GPS mobile stricte
 
     // ── Passage DEHORS → DEDANS : alerte Entrée ──
     if(inside && _geoWasInside===false && !_geoAlertOpen){
@@ -1171,7 +1235,8 @@ function doPoint(ag,method,typeOvr,lat,lng){
   const type=typeOvr||'Entree';
   let pts=ld('pointages',[]);
   // Always use employee's assigned agency for name/id
-  const assignedAg = agencies.find(a=>String(a.id)===String(ME.agenceId)) || ag;
+  const agId = String(ME.agenceId||ME.agenceIds?.[0]||'');
+  const assignedAg = agencies.find(a=>String(a.id)===agId) || ag;
   const agenceId   = assignedAg ? assignedAg.id : (ag?ag.id:'');
   const agenceName = assignedAg ? (assignedAg.name||assignedAg.nom||assignedAg.id) : (ag?ag.name||ag.nom:'');
   const p={id:Date.now(),empId:ME.id,empName:ME.prenom+' '+ME.nom,agenceId,agenceName,type,method,time:now(),date:tday(),ok:true,lat,lng};
@@ -1184,18 +1249,31 @@ function doPoint(ag,method,typeOvr,lat,lng){
 }
 
 function gps(typeOverride){
-  // GPS pointage - for field workers (livreurs) only
+  // GPS pointage
   if(!navigator.geolocation){showToast('GPS non disponible');return;}
   showToast('📍 Localisation GPS...');
   navigator.geolocation.getCurrentPosition(pos=>{
     const lat=pos.coords.latitude,lng=pos.coords.longitude;
     // Use employee's assigned agency
-    const assignedAg = agencies.find(a=>a.id===ME.agenceId);
+    const assignedAg = agencies.find(a=>String(a.id)===String(ME.agenceId));
     const nearestAg = agencies.find(a=>{
       const d=Math.sqrt(Math.pow((lat-a.lat)*111000,2)+Math.pow((lng-a.lng)*111000*Math.cos(a.lat*Math.PI/180),2));
       return d<=(a.rayon||300)*3;
     });
     const ag = assignedAg || nearestAg || agencies[0];
+    // Contrôle géographique : bloquer si hors périmètre (sauf employé externe)
+    if(!ME.externe){
+      const agLat=parseFloat(ag.lat||0), agLng=parseFloat(ag.lng||0);
+      const agRayon=parseInt(ag.rayon||ag.radius||300);
+      if(agLat&&agLng){
+        const dist=Math.sqrt(Math.pow((lat-agLat)*111000,2)+Math.pow((lng-agLng)*111000*Math.cos(agLat*Math.PI/180),2));
+        if(dist>agRayon){
+          showBlockedAlert(Math.round(dist),agRayon);
+          showToast('🚫 Hors périmètre ('+Math.round(dist)+'m) — rapprochez-vous de '+(ag.name||ag.nom||ag.id));
+          return;
+        }
+      }
+    }
     // Auto-detect next type
     const todayPts = ld('pointages',[]).filter(p=>p.empId===ME.id&&p.date===tday());
     const hasEntree=todayPts.some(p=>p.type==='Entree');
@@ -1209,12 +1287,11 @@ function gps(typeOverride){
     else if(!hasSortie){auto='Sortie';}
     else{showToast('Deja pointe complet');return;}
     doPoint(ag,'GPS',auto,lat,lng);
-  },()=>{
-    showToast('Erreur GPS');
-    const ag=agencies.find(a=>a.id===ME.agenceId)||agencies[0];
-    const todayPts=ld('pointages',[]).filter(p=>p.empId===ME.id&&p.date===tday());
-    const auto=typeOverride||(todayPts.some(p=>p.type==='Entree')?'Sortie':'Entree');
-    doPoint(ag,'GPS',auto,ag.lat,ag.lng);
+  },err=>{
+    // Bloquer le pointage si GPS indisponible (sécurité géographique obligatoire)
+    const codes={1:'Permission refusée — activez la localisation',2:'Signal GPS faible — déplacez-vous vers une zone ouverte',3:'GPS trop lent — réessayez'};
+    showToast('🚫 GPS requis: '+(codes[err.code]||'Erreur GPS'));
+    showBlockedAlert(0,0);
   },{timeout:8000,enableHighAccuracy:true});
 }
 
@@ -1236,9 +1313,14 @@ function onQR(text){
   const parts=text.split('|');
   if(parts[0]==='WECAN'&&parts.length>=6){
     const code=parts[1];
-    // Use employee's ASSIGNED agency, not the scanned QR agency
-    const assignedAgId = ME.agenceId || code;
-    const ag = agencies.find(a=>a.id===assignedAgId) || agencies.find(a=>a.id===code) || {id:code,nom:parts[2],lat:parseFloat(parts[3]),lng:parseFloat(parts[4]),rayon:parseInt(parts[5])};
+    // Validate that scanned QR belongs to employee's ASSIGNED agency
+    const assignedAgId = String(ME.agenceId||ME.agenceIds?.[0]||'');
+    if(assignedAgId && code !== assignedAgId){
+      showToast('🚫 Ce QR appartient à une autre agence ('+parts[2]+') — vous êtes assigné à '+assignedAgId);
+      startScan();
+      return;
+    }
+    const ag = agencies.find(a=>a.id===assignedAgId||a.id===code) || {id:code,nom:parts[2],lat:parseFloat(parts[3]),lng:parseFloat(parts[4]),rayon:parseInt(parts[5])};
     // Auto-detect next pointage type
     const todayPts = ld('pointages',[]).filter(p=>p.empId===ME.id&&p.date===tday());
     const hasEntree  = todayPts.some(p=>p.type==='Entree');
@@ -1250,32 +1332,29 @@ function onQR(text){
     else if(hasDebPause>hasFinPause){ nextType='Fin pause'; }
     else if(!hasSortie){ nextType='Sortie'; }
     else { showToast('Deja pointe complet - journee terminee'); return; }
-    // Get GPS position for the record
+    // OBLIGATOIRE : vérifier GPS + périmètre avant d'accepter le pointage
     if(navigator.geolocation){
-      showToast('📍 Verification position...');
+      showToast('📍 Vérification position GPS...');
       navigator.geolocation.getCurrentPosition(pos=>{
         const lat=pos.coords.latitude,lng=pos.coords.longitude;
-        // Check if within agency radius (warn if outside but still allow QR)
         const agLat=parseFloat(ag.lat)||parseFloat(parts[3]);
         const agLng=parseFloat(ag.lng)||parseFloat(parts[4]);
         const agRayon=parseInt(ag.rayon||ag.radius||parts[5]||300);
         const dist=Math.sqrt(Math.pow((lat-agLat)*111000,2)+Math.pow((lng-agLng)*111000*Math.cos(agLat*Math.PI/180),2));
-        const inZone = dist<=agRayon*1.8; // 1.8× tolerance GPS mobile
-        if(!inZone){
-          // BLOQUER — afficher alerte périmetre
-          const agName = ag.name||ag.nom||ag.id;
-          showBlockedAlert(Math.round(dist), agRayon);
-          showToast('🚫 Hors périmètre ('+Math.round(dist)+'m) - rapprochez-vous de '+agName);
-          startScan(); // relancer le scan
+        // Bloquer strictement si hors périmètre (sauf employé externe)
+        if(!ME.externe && dist>agRayon){
+          const agName=ag.name||ag.nom||ag.id;
+          showBlockedAlert(Math.round(dist),agRayon);
+          showToast('🚫 Hors périmètre ('+Math.round(dist)+'m) — QR refusé. Rapprochez-vous de '+agName);
+          startScan();
           return;
         }
         doPoint(ag,'QR',nextType,lat,lng);
-      },()=>{
-        // GPS unavailable: still allow QR pointage with agency coords
-        doPoint(ag,'QR',nextType,parseFloat(parts[3]),parseFloat(parts[4]));
-      },{timeout:5000,enableHighAccuracy:true});
+      },err=>{
+        showToast('⚠️ GPS requis pour le pointage QR — activez la localisation');
+      },{timeout:8000,enableHighAccuracy:true});
     } else {
-      doPoint(ag,'QR',nextType,parseFloat(parts[3]),parseFloat(parts[4]));
+      showToast('⚠️ GPS non disponible — pointage QR impossible sans localisation');
     }
   }else{showToast('QR invalide - format attendu: WECAN|code|nom|lat|lng|rayon');}
 }
@@ -1296,10 +1375,13 @@ function renderPtSummary(){
   });
   if(entree&&sortie){const brut=toMins2(sortie.time)-toMins2(entree.time);net=Math.max(0,brut-totalPause);net=Math.floor(net/60)+'h'+(net%60?net%60+'m':'');}
   pause=totalPause?Math.floor(totalPause/60)+'h'+(totalPause%60?totalPause%60+'m':''):'-';
+  const agName = (entree&&entree.agenceName)||'Agence';
   row.innerHTML=`
     <div class="sum-box"><div class="sv">${entree?entree.time:'--'}</div><div class="sl">Entree</div></div>
     <div class="sum-box"><div class="sv">${sortie?sortie.time:'--'}</div><div class="sl">Sortie</div></div>
+    <div class="sum-box"><div class="sv">${pause}</div><div class="sl">Pause</div></div>
     <div class="sum-box"><div class="sv">${net}</div><div class="sl">Travail net</div></div>
+    <div class="sum-box" style="grid-column:1/-1;"><div class="sv" style="font-size:13px;">${agName}</div><div class="sl">Agence</div></div>
   `;
   const stat=document.getElementById('pt-status-txt');
   if(sortie) stat.textContent='Sortie a '+sortie.time;
@@ -1358,7 +1440,7 @@ function renderHome(){
   const initials=ME.prenom.charAt(0)+ME.nom.charAt(0);
   document.getElementById('home-name').textContent=ME.prenom;
   document.getElementById('top-av').textContent=initials;
-  if(ME.role==='admin'){
+  if(ME.role==='admin'||(ME.permissions&&ME.permissions.includes('approbations'))){
     const banner=document.getElementById('mgr-banner');
     banner.style.display='block';
     const pending=getMgrRequests().filter(r=>r.status==='pending');
@@ -1368,7 +1450,7 @@ function renderHome(){
   const PERM_MAP={dashboard:['📊','Tableau de bord','#1d4ed8'],employees:['👥','Employés','#C0392B'],agencies:['🏢','Agences','#047857'],stats:['📈','Statistiques','#7c3aed'],approbations:['✅','Approbations','#b45309'],pointage:['🕐','Pointage','#0369a1'],paie:['💰','Paie','#065f46'],reports:['📋','Rapports','#6b21a8']};
   const subCard=document.getElementById('subadmin-card');
   const empPerms = ME.permissions||[];
-  if(subCard && empPerms.length>0 && ME.role!=='admin'){
+  if(subCard && empPerms.length>0 && ME.role!=='admin' && ME.role!=='superadmin'){
     subCard.style.display='block';
     document.getElementById('subadmin-title-lbl').textContent="Accès accordés par l'administrateur · "+empPerms.length+' section'+(empPerms.length>1?'s':'');
     document.getElementById('subadmin-perm-grid').innerHTML=empPerms.map(pk=>{
@@ -1378,6 +1460,26 @@ function renderHome(){
   } else if(subCard){ subCard.style.display='none'; }
   renderActivity();
   renderPostesDash();
+  // Show geolocation status
+  updateGeoStatusBar();
+}
+
+function updateGeoStatusBar(){
+  const bar = document.getElementById('geo-status-bar');
+  if(!bar) return;
+  if(!navigator.geolocation){ bar.style.cssText='display:flex;padding:8px 12px;border-radius:10px;font-size:12px;font-weight:600;margin-bottom:10px;align-items:center;gap:8px;background:#FEF9C3;color:#92400E;'; bar.innerHTML='⚠️ GPS non disponible sur cet appareil'; return; }
+  const ag = getMyAgency();
+  if(!ag){ bar.style.display='none'; return; }
+  navigator.geolocation.getCurrentPosition(pos=>{
+    const dist = Math.round(geoDist(pos.coords.latitude,pos.coords.longitude,parseFloat(ag.lat||0),parseFloat(ag.lng||0)));
+    const rayon = parseInt(ag.rayon||ag.radius||300);
+    const inside = dist <= rayon;
+    bar.style.cssText='display:flex;padding:8px 12px;border-radius:10px;font-size:12px;font-weight:600;margin-bottom:10px;align-items:center;gap:8px;background:'+(inside?'#EAF3DE':'#FCEBEB')+';color:'+(inside?'#3B6D11':'#A32D2D')+';';
+    bar.innerHTML=(inside?'📍 Dans le périmètre':'🚫 Hors périmètre')+' — '+(ag.name||ag.nom||ag.id)+' ('+dist+'m)';
+  },()=>{
+    bar.style.cssText='display:flex;padding:8px 12px;border-radius:10px;font-size:12px;font-weight:600;margin-bottom:10px;align-items:center;gap:8px;background:#F1F5F9;color:#64748b;';
+    bar.innerHTML='📡 Localisation en cours...';
+  },{timeout:5000,enableHighAccuracy:true});
 }
 
 const POSTE_CATS=[
@@ -1511,9 +1613,12 @@ function subRequest(){
   const req={id,type,empId:ME.id,empName:ME.prenom+' '+ME.nom,poste:ME.poste,status:'pending',date:tday(),detail};
   let reqs=getMgrRequests();reqs.push(req);sv('mgr_requests',reqs);
   leaves=ld('emp_leaves',[]);leaves.push(req);sv('emp_leaves',leaves);
+  // Sync approbations: save to 'approbations' key (read by admin.html) AND Firebase
+  const localAppros=ld('approbations',[]);
+  if(!localAppros.find(a=>a.id===req.id)){localAppros.push(req);sv('approbations',localAppros);}
   try{
     const allAppros=JSON.parse(localStorage.getItem('wecan_approbations')||'[]');
-    if(!Array.isArray(allAppros)) { const arr=Object.values(allAppros); arr.push(req); db.ref('wecan/approbations').set(arr); } else { allAppros.push(req); db.ref('wecan/approbations').set(allAppros); }
+    if(!Array.isArray(allAppros)) { const arr=Object.values(allAppros); arr.push(req); localStorage.setItem('wecan_approbations',JSON.stringify(arr)); db.ref('wecan/approbations').set(arr); } else { allAppros.push(req); localStorage.setItem('wecan_approbations',JSON.stringify(allAppros)); db.ref('wecan/approbations').set(allAppros); }
   }catch(fbErr){}
   closeLF();showToast('✅ Demande envoyee');
   renderLeaves();renderHome();
@@ -1594,15 +1699,72 @@ function openConv(id){
   if(!c)return;
   c.unread=0;sv('emp_convs',convs);
   const isAI=c.type==='agent';
+  const isAdmin=id==='admin_direct';
   document.getElementById('cw-av').textContent=c.avatar||'🤖';
-  document.getElementById('cw-av').style.background=isAI?'rgba(255,255,255,.25)':'rgba(255,255,255,.25)';
+  document.getElementById('cw-av').style.background='rgba(255,255,255,.25)';
   document.getElementById('cw-name').textContent=c.name;
   document.getElementById('cw-sub').textContent=isAI?'Agent IA · Toujours disponible':'En ligne';
+  // Afficher bouton RDV uniquement pour conversations humaines (pas AI)
+  const rdvBtn=document.getElementById('rdv-btn');
+  if(rdvBtn) rdvBtn.style.display=isAI?'none':'block';
   document.getElementById('chat-win').classList.add('open');
   renderMsgs(id);
   updBadge();
+  // Pour conversations directes (non-AI), écouter les réponses Firebase
+  if(!isAI && id){
+    _listenDirectConv(id);
+  }
 }
 function closeWin(){document.getElementById('chat-win').classList.remove('open');renderConvs();}
+
+// ===== RDV =====
+function openRdvModal(){
+  const m=document.getElementById('rdv-modal');
+  if(!m)return;
+  const today=new Date();
+  document.getElementById('rdv-date').value=today.toISOString().slice(0,10);
+  document.getElementById('rdv-time').value='';
+  document.getElementById('rdv-objet').value='';
+  m.style.display='flex';
+}
+function closeRdvModal(){ const m=document.getElementById('rdv-modal'); if(m) m.style.display='none'; }
+function sendRdv(){
+  const date=document.getElementById('rdv-date').value;
+  const time=document.getElementById('rdv-time').value;
+  const objet=document.getElementById('rdv-objet').value.trim();
+  if(!date||!time||!objet){showToast('Remplissez tous les champs RDV');return;}
+  const rdvText=`📅 *Rendez-vous planifié*\nDate: ${date}\nHeure: ${time}\nObjet: ${objet}`;
+  closeRdvModal();
+  // Injecter dans le champ message et envoyer
+  const inp=document.getElementById('msg-inp');
+  if(inp){inp.value=rdvText;sMsg();}
+}
+
+// ===== FIREBASE DIRECT CONV LISTENER =====
+const _convListeners={};
+function _listenDirectConv(convId){
+  if(_convListeners[convId]) return; // Already listening
+  try{
+    const otherEmpIds=(convs.find(c=>c.id===convId)||{}).participants||[];
+    const myId=ME.id;
+    // Listen to our inbox for messages sent by others to this conversation
+    db.ref('wecan/per_emp/'+myId+'/direct/'+convId).on('child_added',snap=>{
+      const m=snap.val(); if(!m) return;
+      msgs=ld('emp_msgs',{});
+      if(!msgs[convId]) msgs[convId]=[];
+      if(!msgs[convId].find(x=>x.ts&&x.ts===m.ts)){
+        msgs[convId].push(m);
+        sv('emp_msgs',msgs);
+        const c=convs.find(x=>x.id===convId);
+        if(c){c.lastMsg=m.text;c.lastTime=m.time;if(aCid!==convId)c.unread=(c.unread||0)+1;sv('emp_convs',convs);}
+        if(aCid===convId) renderMsgs(convId);
+        updBadge();
+        showToast('💬 '+m.name+': '+m.text.slice(0,40));
+      }
+    });
+    _convListeners[convId]=true;
+  }catch(e){}
+}
 
 function renderMsgs(cid){
   msgs=ld('emp_msgs',{});
@@ -1630,15 +1792,33 @@ function sMsg(){
   inp.value='';
   msgs=ld('emp_msgs',{});
   if(!msgs[aCid])msgs[aCid]=[];
-  const m={from:ME.id,name:ME.prenom,text:txt,time:now(),date:tday()};
+  const m={from:ME.id,name:ME.prenom+' '+ME.nom,text:txt,time:now(),date:tday()};
   const ts = Date.now();
-  msgs[aCid].push({...m, ts});
-  if(aCid!=='agent') window._lastOutboxMsg={...m,ts,empName:ME.prenom+' '+ME.nom,empId:ME.id,convId:aCid};
+  const fullMsg={...m,ts};
+  msgs[aCid].push(fullMsg);
   sv('emp_msgs',msgs);
   const c=convs.find(x=>x.id===aCid);
   if(c){c.lastMsg=txt;c.lastTime=now();sv('emp_convs',convs);}
   renderMsgs(aCid);
-  if(aCid==='agent') aiR(txt,aCid);
+  // Envoyer via Firebase selon le type de conversation
+  if(aCid==='agent'){
+    aiR(txt,aCid);
+  } else if(aCid==='admin_direct'||aCid.startsWith('direct_admin')){
+    // Message vers admin via outbox
+    window._lastOutboxMsg={...m,ts,empName:ME.prenom+' '+ME.nom,empId:ME.id,convId:aCid};
+    try{ db.ref('wecan/emp_outbox/'+ME.id+'/msgs').push(window._lastOutboxMsg); }catch(e){}
+  } else {
+    // Message employé → employé : pousser dans Firebase inbox du destinataire
+    const conv=convs.find(x=>x.id===aCid);
+    if(conv&&conv.participants){
+      conv.participants.filter(pid=>pid!==ME.id).forEach(pid=>{
+        try{ db.ref('wecan/per_emp/'+pid+'/direct/'+aCid).push(fullMsg); }catch(e){}
+      });
+    }
+    // Notifier admin aussi via outbox
+    window._lastOutboxMsg={...m,ts,empName:ME.prenom+' '+ME.nom,empId:ME.id,convId:aCid};
+    try{ db.ref('wecan/emp_outbox/'+ME.id+'/msgs').push(window._lastOutboxMsg); }catch(e){}
+  }
 }
 
 async function aiR(text,cid){
@@ -1688,6 +1868,31 @@ function updBadge(){
   if(total>0){badge.style.display='inline-block';badge.textContent=total;}else{badge.style.display='none';}
 }
 
+function openNewConvModal(){
+  const employees=ld('employees',[]).filter(e=>String(e.id)!==String(ME.id));
+  if(!employees.length){showToast('Aucun collègue disponible');return;}
+  const sheet=document.createElement('div');
+  sheet.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;flex-direction:column;justify-content:flex-end;';
+  const list=employees.map(e=>`<div onclick="startNewConv(${e.id},'${e.prenom} ${e.nom}');this.closest('[style]').remove()" style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #f1f5f9;cursor:pointer;">
+    <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#8B1A1A,#C0392B);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0;">${(e.prenom||'?')[0]}${(e.nom||'?')[0]}</div>
+    <div><div style="font-size:13px;font-weight:600;color:#1e293b;">${e.prenom} ${e.nom}</div><div style="font-size:11px;color:#64748b;">${e.poste||'Employé'}</div></div>
+  </div>`).join('');
+  sheet.innerHTML=`<div style="background:#fff;border-radius:20px 20px 0 0;max-height:70vh;display:flex;flex-direction:column;"><div style="padding:16px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;"><div style="font-size:15px;font-weight:700;color:#1e293b;">💬 Nouvelle conversation</div><button onclick="this.closest('[style]').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#64748b;">✕</button></div><div style="overflow-y:auto;padding:0 16px 24px;">${list}</div></div>`;
+  sheet.addEventListener('click',e=>{if(e.target===sheet)sheet.remove();});
+  document.body.appendChild(sheet);
+}
+
+function startNewConv(empId,empName){
+  convs=ld('emp_convs',[]);
+  let conv=convs.find(c=>c.type==='direct'&&c.participants&&c.participants.includes(empId));
+  if(!conv){
+    const av=empName.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+    conv={id:'emp_'+empId+'_'+Date.now(),type:'direct',name:empName,participants:[ME.id,empId],unread:0,lastMsg:'',lastTime:'',avatar:av,color:'#FDEDEC'};
+    convs.push(conv);sv('emp_convs',convs);
+  }
+  openConv(conv.id);
+}
+
 // ===== PROFIL =====
 function renderProfil(){
   const _fe=ld('employees',[]);const _fm=_fe.find(e=>String(e.id)===String(ME.id));if(_fm)ME=_fm;
@@ -1715,6 +1920,81 @@ function setTh(btn,mode){
   else{document.body.classList.toggle('dark',window.matchMedia('(prefers-color-scheme: dark)').matches);}
 }
 
+// ===== LANGUE / LANGUAGE =====
+const LANG_STRINGS = {
+  fr: {
+    tab_home:'Accueil', tab_pointage:'Pointage', tab_conge:'Congés', tab_chat:'Chat', tab_profil:'Profil',
+    pt_entree:'Entrée', pt_sortie:'Sortie', pt_pause:'Pause', pt_net:'Travail net', pt_agence:'Agence',
+    btn_pointer:'📍 Pointer GPS', btn_scan:'📷 Scanner QR',
+    pt_aucun:'Aucun pointage', pt_hist:'Historique',
+    home_bonjour:'Bonjour', home_statut:'Statut', home_auj:'Aujourd\'hui',
+    profil_theme:'Thème', profil_langue:'Langue', profil_deconnect:'Se déconnecter',
+    statut_entree:'Pointé à', statut_sortie:'Sorti à', statut_pause:'En pause', statut_travail:'En cours de travail', statut_aucun:'Non pointé',
+  },
+  ar: {
+    tab_home:'الرئيسية', tab_pointage:'الحضور', tab_conge:'الإجازات', tab_chat:'المحادثة', tab_profil:'الملف',
+    pt_entree:'دخول', pt_sortie:'خروج', pt_pause:'استراحة', pt_net:'وقت العمل', pt_agence:'الوكالة',
+    btn_pointer:'📍 تسجيل GPS', btn_scan:'📷 مسح QR',
+    pt_aucun:'لا يوجد حضور', pt_hist:'السجل',
+    home_bonjour:'مرحبا', home_statut:'الحالة', home_auj:'اليوم',
+    profil_theme:'المظهر', profil_langue:'اللغة', profil_deconnect:'تسجيل الخروج',
+    statut_entree:'حضر في', statut_sortie:'غادر في', statut_pause:'في الاستراحة', statut_travail:'في العمل', statut_aucun:'لم يسجل',
+  },
+  en: {
+    tab_home:'Home', tab_pointage:'Attendance', tab_conge:'Leaves', tab_chat:'Chat', tab_profil:'Profile',
+    pt_entree:'Entry', pt_sortie:'Exit', pt_pause:'Break', pt_net:'Net work', pt_agence:'Agency',
+    btn_pointer:'📍 GPS Check-in', btn_scan:'📷 Scan QR',
+    pt_aucun:'No attendance', pt_hist:'History',
+    home_bonjour:'Hello', home_statut:'Status', home_auj:'Today',
+    profil_theme:'Theme', profil_langue:'Language', profil_deconnect:'Log out',
+    statut_entree:'Checked in at', statut_sortie:'Left at', statut_pause:'On break', statut_travail:'Working', statut_aucun:'Not checked in',
+  }
+};
+let _appLang = localStorage.getItem('wecan_app_lang') || 'fr';
+
+function tApp(key){ return (LANG_STRINGS[_appLang]||LANG_STRINGS.fr)[key] || key; }
+
+function setAppLang(lang, btn){
+  _appLang = lang;
+  localStorage.setItem('wecan_app_lang', lang);
+  document.querySelectorAll('#lang-btn-fr,#lang-btn-ar,#lang-btn-en').forEach(b=>b.classList.remove('on'));
+  if(btn) btn.classList.add('on');
+  // RTL for Arabic
+  document.body.dir = lang==='ar' ? 'rtl' : 'ltr';
+  // Update tab labels
+  const tabMap = [
+    ['tab-home','tab_home'], ['tab-pointage','tab_pointage'], ['tab-conge','tab_conge'],
+    ['tab-chat','tab_chat'], ['tab-profil','tab_profil']
+  ];
+  tabMap.forEach(([id,key])=>{
+    const el=document.getElementById(id);
+    if(el){ const span=el.querySelector('span:last-child'); if(span) span.textContent=tApp(key); }
+  });
+  // Update pointage summary labels
+  document.querySelectorAll('.sl').forEach(el=>{
+    if(el.textContent==='Entree'||el.textContent==='Entry'||el.textContent==='دخول') el.textContent=tApp('pt_entree');
+    else if(el.textContent==='Sortie'||el.textContent==='Exit'||el.textContent==='خروج') el.textContent=tApp('pt_sortie');
+    else if(el.textContent==='Pause'||el.textContent==='Break'||el.textContent==='استراحة') el.textContent=tApp('pt_pause');
+    else if(el.textContent==='Travail net'||el.textContent==='Net work'||el.textContent==='وقت العمل') el.textContent=tApp('pt_net');
+    else if(el.textContent==='Agence'||el.textContent==='Agency'||el.textContent==='الوكالة') el.textContent=tApp('pt_agence');
+  });
+  // Update GPS and QR buttons
+  const gpsBtn=document.getElementById('gps-btn');
+  const scanBtn=document.getElementById('scan-btn');
+  if(gpsBtn) gpsBtn.textContent=tApp('btn_pointer');
+  if(scanBtn) scanBtn.textContent=tApp('btn_scan');
+  showToast(lang==='ar'?'تم تغيير اللغة ✓':lang==='en'?'Language changed ✓':'Langue changée ✓');
+}
+
+function initLangBtn(){
+  const btn=document.getElementById('lang-btn-'+_appLang);
+  if(btn){
+    document.querySelectorAll('#lang-btn-fr,#lang-btn-ar,#lang-btn-en').forEach(b=>b.classList.remove('on'));
+    btn.classList.add('on');
+  }
+  if(_appLang==='ar') document.body.dir='rtl';
+}
+
 function toggleDocSec(){
   const sec=document.getElementById('doc-sec');
   sec.style.display=sec.style.display==='none'?'block':'none';
@@ -1739,21 +2019,44 @@ function openSubAdminSection(section){
   const LABELS={dashboard:'Tableau de bord',employees:'Employés',agencies:'Agences',stats:'Statistiques',approbations:'Approbations',pointage:'Pointage',paie:'Paie',reports:'Rapports'};
   const empsFresh=ld('employees',[]);
   const agsFresh=ld('agencies',[]);
-  const ptsFresh=ld('pointages',[]);
+  // Merge pointages personnels + tous les pointages Firebase (cross-device)
+  const _myPts=ld('pointages',[]);
+  const _allPts=JSON.parse(localStorage.getItem('wecan_all_pointages')||'[]');
+  const _ptMerged=[..._allPts];
+  _myPts.forEach(p=>{if(!_ptMerged.find(x=>String(x.id)===String(p.id)))_ptMerged.push(p);});
+  const ptsFresh=_ptMerged;
   let content='';
   if(section==='employees'){
     content=empsFresh.map(e=>`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f1f5f9;"><div style="width:36px;height:36px;border-radius:50%;background:#C0392B;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;">${(e.prenom||'?')[0]}${(e.nom||'?')[0]}</div><div><div style="font-size:13px;font-weight:600;color:#1e293b;">${e.prenom} ${e.nom}</div><div style="font-size:11px;color:#64748b;">${e.poste||''} · ${e.status||''}</div></div></div>`).join('')||'<p style="color:#94a3b8;text-align:center;padding:20px;">Aucun employé</p>';
   } else if(section==='agencies'){
     content=agsFresh.map(ag=>`<div style="padding:10px 0;border-bottom:1px solid #f1f5f9;"><div style="font-size:13px;font-weight:600;color:#1e293b;">🏢 ${ag.name||ag.nom||ag.id}</div><div style="font-size:11px;color:#64748b;margin-top:2px;">Code: ${ag.code||ag.id} · ${ag.addr||ag.wilaya||'Algérie'}</div></div>`).join('')||'<p style="color:#94a3b8;text-align:center;padding:20px;">Aucune agence</p>';
   } else if(section==='pointage'){
-    const today=ptsFresh.filter(p=>p.date===new Date().toISOString().slice(0,10)).slice(-20);
-    content=today.length?today.reverse().map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f1f5f9;"><div><div style="font-size:12px;font-weight:600;color:#1e293b;">${p.empName||p.empId}</div><div style="font-size:10px;color:#64748b;">${p.agenceName||'—'}</div></div><div style="text-align:right;"><div style="font-size:11px;font-weight:700;color:${p.type==='Entree'?'#047857':'#C0392B'};">${p.type}</div><div style="font-size:10px;color:#94a3b8;">${p.time||''}</div></div></div>`).join(''):'<p style="color:#94a3b8;text-align:center;padding:20px;">Aucun pointage aujourd&#39;hui</p>';
+    // Fix: use tday() format (DD/MM/YYYY) to match stored pointage dates
+    const todayStr=tday();
+    const myAgId=ME.agenceId;
+    const isAdmin=ME.role==='admin';
+    const todayPts=ptsFresh.filter(p=>p.date===todayStr&&(isAdmin||!myAgId||String(p.agenceId)===String(myAgId)));
+    const sortedPts=todayPts.slice().sort((a,b)=>b.time.localeCompare(a.time)).slice(0,30);
+    const typeColors={'Entree':'#047857','Sortie':'#C0392B','Debut pause':'#92400E','Fin pause':'#1d4ed8'};
+    content=sortedPts.length?sortedPts.map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f1f5f9;"><div><div style="font-size:12px;font-weight:600;color:#1e293b;">${p.empName||p.empId}</div><div style="font-size:10px;color:#64748b;">${p.agenceName||'—'} · ${p.method||'GPS'}</div></div><div style="text-align:right;"><div style="font-size:11px;font-weight:700;color:${typeColors[p.type]||'#374151'};">${p.type}</div><div style="font-size:10px;color:#94a3b8;">${p.time||''}</div></div></div>`).join(''):'<p style="color:#94a3b8;text-align:center;padding:20px;">Aucun pointage aujourd&#39;hui</p>';
   } else if(section==='stats'){
-    const today=ptsFresh.filter(p=>p.date===new Date().toISOString().slice(0,10)).length;
-    content=`<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:10px 0;"><div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center;"><div style="font-size:22px;font-weight:800;color:#C0392B;">${empsFresh.length}</div><div style="font-size:11px;color:#64748b;">Employés</div></div><div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center;"><div style="font-size:22px;font-weight:800;color:#047857;">${agsFresh.length}</div><div style="font-size:11px;color:#64748b;">Agences</div></div><div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center;"><div style="font-size:22px;font-weight:800;color:#0369a1;">${today}</div><div style="font-size:11px;color:#64748b;">Pointages auj.</div></div><div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center;"><div style="font-size:22px;font-weight:800;color:#6b21a8;">${ptsFresh.length}</div><div style="font-size:11px;color:#64748b;">Total pointages</div></div></div>`;
+    const todayStr2=tday();
+    const today=ptsFresh.filter(p=>p.date===todayStr2).length;
+    const entrToday=ptsFresh.filter(p=>p.date===todayStr2&&p.type==='Entree').length;
+    content=`<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:10px 0;"><div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center;"><div style="font-size:22px;font-weight:800;color:#C0392B;">${empsFresh.length}</div><div style="font-size:11px;color:#64748b;">Employés</div></div><div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center;"><div style="font-size:22px;font-weight:800;color:#047857;">${entrToday}</div><div style="font-size:11px;color:#64748b;">Présents auj.</div></div><div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center;"><div style="font-size:22px;font-weight:800;color:#0369a1;">${today}</div><div style="font-size:11px;color:#64748b;">Pointages auj.</div></div><div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center;"><div style="font-size:22px;font-weight:800;color:#6b21a8;">${agsFresh.length}</div><div style="font-size:11px;color:#64748b;">Agences</div></div></div>`;
   } else if(section==='approbations'){
-    const reqs=ld('mgr_requests',[]).filter(r=>r.status==='pending');
-    content=reqs.length?reqs.map(r=>`<div style="padding:10px 0;border-bottom:1px solid #f1f5f9;"><div style="font-size:12px;font-weight:600;color:#1e293b;">${r.empName} — ${r.type}</div><div style="font-size:11px;color:#64748b;">${r.date||''}</div></div>`).join(''):'<p style="color:#94a3b8;text-align:center;padding:20px;">Aucune demande en attente</p>';
+    // Merge local requests + Firebase-synced approbations (wecan_approbations key)
+    const fbAppros=JSON.parse(localStorage.getItem('wecan_approbations')||'[]');
+    const allReqs=[...ld('mgr_requests',[]),...(Array.isArray(fbAppros)?fbAppros:Object.values(fbAppros||{}))].filter((r,i,a)=>r&&r.id&&a.findIndex(x=>x.id===r.id)===i);
+    const reqs=allReqs.filter(r=>r.status==='pending'&&r.empId!==ME.id);
+    content=reqs.length?reqs.map(r=>`<div style="padding:10px 0;border-bottom:1px solid #f1f5f9;" id="sa-req-${r.id}">
+      <div style="font-size:12px;font-weight:600;color:#1e293b;">${r.empName||'Employé'} — ${r.type}</div>
+      <div style="font-size:11px;color:#64748b;margin:2px 0;">${r.date||''}</div>
+      <div style="display:flex;gap:8px;margin-top:6px;">
+        <button onclick="saApprove('${r.id}')" style="flex:1;padding:6px;background:#EAF3DE;color:#3B6D11;border:1px solid #C0DD97;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;">✅ Approuver</button>
+        <button onclick="saReject('${r.id}')" style="flex:1;padding:6px;background:#FCEBEB;color:#A32D2D;border:1px solid #F7C1C1;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;">❌ Refuser</button>
+      </div>
+    </div>`).join(''):'<p style="color:#94a3b8;text-align:center;padding:20px;">Aucune demande en attente</p>';
   } else {
     content=`<p style="color:#64748b;text-align:center;padding:30px 20px;">Section <b>${LABELS[section]||section}</b><br>accessible via l'espace administrateur.</p>`;
   }
@@ -1764,10 +2067,40 @@ function openSubAdminSection(section){
   document.body.appendChild(sheet);
 }
 
+// ===== SOUS-ADMIN APPROVE / REJECT =====
+function saApprove(id){
+  _saUpdateRequest(id,'approved');
+  const el=document.getElementById('sa-req-'+id);
+  if(el){el.style.opacity='.4';el.innerHTML+='<div style="color:#3B6D11;font-size:11px;font-weight:600;margin-top:4px;">✅ Approuvée</div>';}
+  showToast('✅ Demande approuvée');
+}
+function saReject(id){
+  _saUpdateRequest(id,'rejected');
+  const el=document.getElementById('sa-req-'+id);
+  if(el){el.style.opacity='.4';el.innerHTML+='<div style="color:#A32D2D;font-size:11px;font-weight:600;margin-top:4px;">❌ Refusée</div>';}
+  showToast('Demande refusée');
+}
+function _saUpdateRequest(id,status){
+  // Update in mgr_requests
+  const reqs=ld('mgr_requests',[]);
+  const idx=reqs.findIndex(r=>r.id===id||r.id===Number(id));
+  if(idx!==-1){reqs[idx].status=status;sv('mgr_requests',reqs);}
+  // Update in approbations
+  const appros=ld('approbations',[]);
+  const aidx=appros.findIndex(r=>r.id===id||r.id===Number(id));
+  if(aidx!==-1){appros[aidx].status=status;sv('approbations',appros);}
+  // Sync to Firebase
+  try{
+    const allAppros=JSON.parse(localStorage.getItem('wecan_approbations')||'[]');
+    const fidx=allAppros.findIndex(r=>r.id===id||r.id===Number(id));
+    if(fidx!==-1){allAppros[fidx].status=status;localStorage.setItem('wecan_approbations',JSON.stringify(allAppros));db.ref('wecan/approbations').set(allAppros);}
+  }catch(e){}
+}
+
 // ===== ESPACE MANAGER =====
 function openManagerSpace(){
   const isAdmin = ME.role==='admin';
-  const isSubAdmin = ME.role==='subadmin' && ME.permissions && ME.permissions.length > 0;
+  const isSubAdmin = ME.permissions && ME.permissions.length > 0;
   if(!isAdmin && !isSubAdmin){showToast('Acces refuse - contacter votre responsable');return;}
   document.getElementById('mgr-space').classList.add('open');
   renderMgrList();
@@ -1787,12 +2120,12 @@ function getMgrRequests(){
   // Filter: only show employees from same agency (if sous-admin) or all (if admin)
   const myAgId = ME.agenceId;
   const emps = ld('employees',[]);
-  const sameAgEmpIds = emps.filter(e=>String(e.agenceId)===String(myAgId)).map(e=>e.id);
+  const sameAgEmpIds = emps.filter(e=>String(e.agenceId)===String(myAgId)).map(e=>String(e.id));
   // Admin sees all, sous-admin sees same agency, exclude own requests
   const filtered = merged.filter(r=>{
-    if(r.empId === ME.id) return false; // exclude own requests
+    if(String(r.empId) === String(ME.id)) return false; // exclude own requests
     if(ME.role==='admin') return true;
-    return sameAgEmpIds.includes(r.empId);
+    return sameAgEmpIds.includes(String(r.empId));
   });
   return filtered.length ? filtered : merged.filter(r=>r.empId!==ME.id);
 }
@@ -1937,6 +2270,8 @@ function mgrAction(status){
 function initApp(){
   rHome();
   renderConvs();
+  // Initialiser langue
+  try{ initLangBtn(); }catch(e){}
   // Démarrer listener messages admin → employé (après login, ME est défini)
   startInboxListener();
   // Démarrer surveillance périmètre GPS
