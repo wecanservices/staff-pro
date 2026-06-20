@@ -635,6 +635,10 @@ const db = firebase.database();
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
         <span data-t="nav_adjust">Adjust</span>
       </div>
+      <div class="nav-item" onclick="showPage('sorties',this)" title="Sorties territoire">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 8 16 12 12 16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>
+        <span>Sorties</span>
+      </div>
       <div class="nav-divider"></div>
       <div class="nav-item" onclick="showPage('help',this)" title="Help">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -1444,6 +1448,55 @@ const db = firebase.database();
       </div>
     </div>
 
+
+    <div class="page" id="page-sorties">
+      <div class="page-scroll">
+        <div class="page-header">
+          <div>
+            <div class="page-title">Sorties de territoire</div>
+            <div class="page-sub"><span class="live-dot"></span> Suivi des deplacements et missions</div>
+          </div>
+        </div>
+
+        <!-- Aujourd'hui -->
+        <div class="card" style="margin-bottom:16px;">
+          <div class="card-body" style="padding:14px 16px;">
+            <div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:12px;">📅 Aujourd'hui</div>
+            <div id="sorties-today" style="display:flex;flex-direction:column;gap:8px;">
+              <p style="color:#94a3b8;font-size:13px;text-align:center;padding:20px;">Chargement...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filtres + Historique -->
+        <div class="card">
+          <div class="card-body" style="padding:14px 16px;">
+            <div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:12px;">🗓 Historique</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+              <input type="date" id="sf-date" style="border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:12px;" onchange="renderSortiesHistory()">
+              <select id="sf-emp" style="border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:12px;min-width:140px;" onchange="renderSortiesHistory()">
+                <option value="">Tous les agents</option>
+              </select>
+              <select id="sf-motif" style="border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:12px;" onchange="renderSortiesHistory()">
+                <option value="">Tous les motifs</option>
+                <option>Mission</option>
+                <option>Livraison</option>
+                <option>Achat personnel</option>
+                <option>Achat pour l entreprise</option>
+                <option>Pause</option>
+                <option>Toilettes</option>
+                <option>Sante voir medecin</option>
+              </select>
+              <button onclick="document.getElementById('sf-date').value='';document.getElementById('sf-emp').value='';document.getElementById('sf-motif').value='';renderSortiesHistory();" style="border:1px solid #e2e8f0;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;background:#f8fafc;">Effacer</button>
+            </div>
+            <div id="sorties-history" style="display:flex;flex-direction:column;gap:8px;">
+              <p style="color:#94a3b8;font-size:13px;text-align:center;padding:20px;">Chargement...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /main -->
 </div><!-- /app-body -->
 
@@ -2055,9 +2108,20 @@ function fbInitSync(){
   db.ref('wecan/employees').on('value', snap=>{
     const val = snap.val();
     if(val !== null && val !== undefined){
-      _applyFbData('employees', val);
+      const fbArr = Array.isArray(val) ? val : Object.values(val);
+      try{
+        const localRaw = localStorage.getItem('wecan_employees');
+        const localArr = localRaw ? JSON.parse(localRaw) : [];
+        const isDefault = localArr.length <= 5 && localArr[0] && localArr[0].prenom==='Karim' && localArr[0].nom==='Bensalem';
+        if(!isDefault && Array.isArray(localArr) && localArr.length > fbArr.length){
+          // Local a plus d employes : Firebase est en retard, on pousse le local
+          db.ref('wecan/employees').set(localArr);
+        } else {
+          _applyFbData('employees', val);
+        }
+      }catch(e){ _applyFbData('employees', val); }
     } else {
-      // Firebase vide : pousser uniquement si des vrais employés existent en local
+      // Firebase vide : pousser uniquement si des vrais employes existent en local
       try{
         const local = JSON.parse(localStorage.getItem('wecan_employees')||'null');
         if(local && Array.isArray(local) && local.length > 0){
@@ -2070,7 +2134,17 @@ function fbInitSync(){
   db.ref('wecan/agencies').on('value', snap=>{
     const val = snap.val();
     if(val !== null && val !== undefined){
-      _applyFbData('agencies', val);
+      const fbArr = Array.isArray(val) ? val : Object.values(val);
+      try{
+        const localRaw = localStorage.getItem('wecan_agencies');
+        const localArr = localRaw ? JSON.parse(localRaw) : [];
+        if(Array.isArray(localArr) && localArr.length > fbArr.length){
+          // Local a plus d agences : Firebase est en retard, on pousse le local vers Firebase
+          db.ref('wecan/agencies').set(localArr);
+        } else {
+          _applyFbData('agencies', val);
+        }
+      }catch(e){ _applyFbData('agencies', val); }
     } else {
       try{
         const local = JSON.parse(localStorage.getItem('wecan_agencies')||'null');
@@ -2357,6 +2431,7 @@ function showPage(name,el){
   if(name==='chat'){initChat();}
   if(name==='paie'){renderPaie();}
   if(name==='profile'){renderProfilePage();}
+  if(name==='sorties'){ initSortiesPage(); }
 
   // Keep language after page switch
   setTimeout(()=>{ applyTranslations(); }, 50);
@@ -6947,6 +7022,7 @@ setInterval(()=>{
   if(document.getElementById('page-adjust').classList.contains('active')) updateRamadanStatus();
   if(document.getElementById('page-trajet').classList.contains('active'))renderTrajet();
   if(document.getElementById('page-dashboard').classList.contains('active')){renderPanelStats();renderPanelEmpList();renderMapLayers();if(dashView==='stats')renderDashStats();}
+  if(document.getElementById('page-sorties') && document.getElementById('page-sorties').classList.contains('active')){ renderSortiesToday(); renderSortiesHistory(); }
 },5000);
 
 // ── INIT ──
@@ -6960,6 +7036,93 @@ setInterval(()=>{
 })();
 setTimeout(()=>{initMap();updateApproBadge(); updateChatBadge();
   if(document.getElementById('page-adjust').classList.contains('active')) updateRamadanStatus();},150);
+// ── SORTIES TERRITOIRE ──
+var sorties_data = [];
+
+function initSortiesPage(){
+  sorties_data = JSON.parse(localStorage.getItem('wecan_sorties')||'[]');
+  db.ref('wecan/sorties').on('value', function(snap){
+    var val = snap.val();
+    if(!val) return;
+    var arr = Array.isArray(val) ? val : Object.values(val);
+    sorties_data = arr.filter(function(s){ return s&&s.id; });
+    localStorage.setItem('wecan_sorties', JSON.stringify(sorties_data));
+    renderSortiesToday();
+    renderSortiesHistory();
+    var empSel = document.getElementById('sf-emp');
+    if(empSel){
+      var uniqueEmps = sorties_data.map(function(s){ return s.empName; }).filter(Boolean).filter(function(v,i,a){ return a.indexOf(v)===i; });
+      empSel.innerHTML = '<option value="">Tous les agents</option>' +
+        uniqueEmps.map(function(n){ return '<option>'+n+'</option>'; }).join('');
+    }
+  });
+  renderSortiesToday();
+  renderSortiesHistory();
+}
+
+function renderSortiesToday(){
+  var el = document.getElementById('sorties-today');
+  if(!el) return;
+  var d = new Date();
+  var todayStr = String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
+  var todayItems = sorties_data.filter(function(s){ return s.dateStr===todayStr; });
+  if(!todayItems.length){
+    el.innerHTML = '<p style="color:#94a3b8;font-size:13px;text-align:center;padding:20px;">Aucune sortie aujourd\'hui</p>';
+    return;
+  }
+  el.innerHTML = todayItems.map(function(s){ return sortieCard(s); }).join('');
+}
+
+function renderSortiesHistory(){
+  var el = document.getElementById('sorties-history');
+  if(!el) return;
+  var items = sorties_data.slice().sort(function(a,b){ return b.timestamp-a.timestamp; });
+  var dateEl = document.getElementById('sf-date');
+  var empEl = document.getElementById('sf-emp');
+  var motifEl = document.getElementById('sf-motif');
+  var dateVal  = dateEl ? dateEl.value : '';
+  var empVal   = empEl ? empEl.value : '';
+  var motifVal = motifEl ? motifEl.value : '';
+  if(dateVal){
+    var parts = dateVal.split('-');
+    var fmtDate = parts[2]+'/'+parts[1]+'/'+parts[0];
+    items = items.filter(function(s){ return s.dateStr===fmtDate; });
+  }
+  if(empVal) items = items.filter(function(s){ return s.empName===empVal; });
+  if(motifVal) items = items.filter(function(s){ return s.motif===motifVal; });
+  if(!items.length){
+    el.innerHTML = '<p style="color:#94a3b8;font-size:13px;text-align:center;padding:20px;">Aucun resultat</p>';
+    return;
+  }
+  el.innerHTML = items.map(function(s){ return sortieCard(s); }).join('');
+}
+
+function sortieCard(s){
+  var MOTIF_COLORS = {
+    'Mission':'#7c3aed','Livraison':'#0369a1','Achat personnel':'#854F0B',
+    'Achat pour l entreprise':'#065f46','Pause':'#92400E','Toilettes':'#374151','Sante voir medecin':'#1d4ed8'
+  };
+  var MOTIF_BG = {
+    'Mission':'#ede9fe','Livraison':'#e0f2fe','Achat personnel':'#FAEEDA',
+    'Achat pour l entreprise':'#d1fae5','Pause':'#FEF9C3','Toilettes':'#f3f4f6','Sante voir medecin':'#dbeafe'
+  };
+  var color = MOTIF_COLORS[s.motif]||'#475569';
+  var bg = MOTIF_BG[s.motif]||'#f1f5f9';
+  var retour = s.heureRetour ? ('&rarr; '+s.heureRetour) : '<span style="color:#f59e0b">En cours</span>';
+  var missionBadge = s.isMission ? '<span style="background:#7c3aed;color:#fff;font-size:10px;padding:2px 6px;border-radius:8px;margin-left:6px;">GPS</span>' : '';
+  return '<div style="background:#fff;border-radius:12px;padding:12px 14px;box-shadow:0 1px 3px rgba(0,0,0,.07);border-left:3px solid '+color+';">' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">' +
+    '<span style="font-size:13px;font-weight:700;color:#1e293b;">'+(s.empName||'Agent')+missionBadge+'</span>' +
+    '<span style="font-size:11px;color:#94a3b8;">'+s.dateStr+'</span>' +
+    '</div>' +
+    '<div style="display:flex;align-items:center;gap:8px;">' +
+    '<span style="background:'+bg+';color:'+color+';font-size:12px;font-weight:600;padding:3px 10px;border-radius:8px;">'+s.motif+'</span>' +
+    '<span style="font-size:12px;color:#475569;">'+s.heureDepart+' '+retour+'</span>' +
+    '</div>' +
+    '</div>';
+}
+
+
 </script>
 
 <!-- EDIT APPROBATION MODAL -->
