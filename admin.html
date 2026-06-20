@@ -1458,41 +1458,53 @@ const db = firebase.database();
           </div>
         </div>
 
-        <!-- Aujourd'hui -->
-        <div class="card" style="margin-bottom:16px;">
-          <div class="card-body" style="padding:14px 16px;">
-            <div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:12px;">📅 Aujourd'hui</div>
-            <div id="sorties-today" style="display:flex;flex-direction:column;gap:8px;">
-              <p style="color:#94a3b8;font-size:13px;text-align:center;padding:20px;">Chargement...</p>
-            </div>
-          </div>
-        </div>
+        <!-- 2 colonnes : Activite du jour | Historique complet -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;">
 
-        <!-- Filtres + Historique -->
-        <div class="card">
-          <div class="card-body" style="padding:14px 16px;">
-            <div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:12px;">🗓 Historique</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
-              <input type="date" id="sf-date" style="border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:12px;" onchange="renderSortiesHistory()">
-              <select id="sf-emp" style="border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:12px;min-width:140px;" onchange="renderSortiesHistory()">
-                <option value="">Tous les agents</option>
-              </select>
-              <select id="sf-motif" style="border:1px solid #e2e8f0;border-radius:8px;padding:6px 10px;font-size:12px;" onchange="renderSortiesHistory()">
-                <option value="">Tous les motifs</option>
-                <option>Mission</option>
-                <option>Livraison</option>
-                <option>Achat personnel</option>
-                <option>Achat pour l entreprise</option>
-                <option>Pause</option>
-                <option>Toilettes</option>
-                <option>Sante voir medecin</option>
-              </select>
-              <button onclick="document.getElementById('sf-date').value='';document.getElementById('sf-emp').value='';document.getElementById('sf-motif').value='';renderSortiesHistory();" style="border:1px solid #e2e8f0;border-radius:8px;padding:6px 12px;font-size:12px;cursor:pointer;background:#f8fafc;">Effacer</button>
-            </div>
-            <div id="sorties-history" style="display:flex;flex-direction:column;gap:8px;">
-              <p style="color:#94a3b8;font-size:13px;text-align:center;padding:20px;">Chargement...</p>
+          <!-- Colonne gauche : Activite du jour -->
+          <div class="card">
+            <div class="card-body" style="padding:14px 16px;">
+              <div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:10px;">📅 Activite du jour</div>
+              <!-- Stats mini -->
+              <div id="sorties-today-stats" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px;"></div>
+              <!-- Liste -->
+              <div id="sorties-today" style="display:flex;flex-direction:column;gap:8px;max-height:520px;overflow-y:auto;">
+                <p style="color:#94a3b8;font-size:13px;text-align:center;padding:20px;">Chargement...</p>
+              </div>
             </div>
           </div>
+
+          <!-- Colonne droite : Historique complet avec filtres -->
+          <div class="card">
+            <div class="card-body" style="padding:14px 16px;">
+              <div style="font-size:13px;font-weight:700;color:#1e293b;margin-bottom:10px;">🗓 Historique complet</div>
+              <!-- Filtres -->
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;">
+                <input type="date" id="sf-date" style="border:1px solid #e2e8f0;border-radius:8px;padding:5px 8px;font-size:12px;flex:1;min-width:110px;" onchange="renderSortiesHistory()">
+                <select id="sf-emp" style="border:1px solid #e2e8f0;border-radius:8px;padding:5px 8px;font-size:12px;flex:1;min-width:120px;" onchange="renderSortiesHistory()">
+                  <option value="">Tous les agents</option>
+                </select>
+                <select id="sf-motif" style="border:1px solid #e2e8f0;border-radius:8px;padding:5px 8px;font-size:12px;flex:1;min-width:120px;" onchange="renderSortiesHistory()">
+                  <option value="">Tous les motifs</option>
+                  <option>Mission</option>
+                  <option>Livraison</option>
+                  <option>Achat personnel</option>
+                  <option>Achat pour l entreprise</option>
+                  <option>Pause</option>
+                  <option>Toilettes</option>
+                  <option>Sante voir medecin</option>
+                </select>
+                <button onclick="document.getElementById('sf-date').value='';document.getElementById('sf-emp').value='';document.getElementById('sf-motif').value='';renderSortiesHistory();" style="border:1px solid #e2e8f0;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer;background:#f8fafc;white-space:nowrap;">✕ Effacer</button>
+              </div>
+              <!-- Compteur resultats -->
+              <div id="sorties-history-count" style="font-size:11px;color:#94a3b8;margin-bottom:8px;"></div>
+              <!-- Liste -->
+              <div id="sorties-history" style="display:flex;flex-direction:column;gap:8px;max-height:520px;overflow-y:auto;">
+                <p style="color:#94a3b8;font-size:13px;text-align:center;padding:20px;">Chargement...</p>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -7062,10 +7074,29 @@ function initSortiesPage(){
 
 function renderSortiesToday(){
   var el = document.getElementById('sorties-today');
+  var statsEl = document.getElementById('sorties-today-stats');
   if(!el) return;
   var d = new Date();
   var todayStr = String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear();
   var todayItems = sorties_data.filter(function(s){ return s.dateStr===todayStr; });
+
+  // Stats mini
+  if(statsEl){
+    var total = todayItems.length;
+    var enCours = todayItems.filter(function(s){ return !s.heureRetour; }).length;
+    var missions = todayItems.filter(function(s){ return s.motif==='Mission'; }).length;
+    function statBox(label, val, bg, color){
+      return '<div style="background:'+bg+';border-radius:10px;padding:8px;text-align:center;">' +
+        '<div style="font-size:18px;font-weight:700;color:'+color+'">'+val+'</div>' +
+        '<div style="font-size:10px;color:'+color+';opacity:0.8;margin-top:2px;">'+label+'</div>' +
+        '</div>';
+    }
+    statsEl.innerHTML =
+      statBox('Sorties', total, '#f0f9ff', '#0369a1') +
+      statBox('En cours', enCours, '#fef9c3', '#92400e') +
+      statBox('Missions', missions, '#ede9fe', '#7c3aed');
+  }
+
   if(!todayItems.length){
     el.innerHTML = '<p style="color:#94a3b8;font-size:13px;text-align:center;padding:20px;">Aucune sortie aujourd\'hui</p>';
     return;
@@ -7075,6 +7106,7 @@ function renderSortiesToday(){
 
 function renderSortiesHistory(){
   var el = document.getElementById('sorties-history');
+  var countEl = document.getElementById('sorties-history-count');
   if(!el) return;
   var items = sorties_data.slice().sort(function(a,b){ return b.timestamp-a.timestamp; });
   var dateEl = document.getElementById('sf-date');
@@ -7090,6 +7122,10 @@ function renderSortiesHistory(){
   }
   if(empVal) items = items.filter(function(s){ return s.empName===empVal; });
   if(motifVal) items = items.filter(function(s){ return s.motif===motifVal; });
+  if(countEl){
+    var activeFilters = (dateVal?1:0)+(empVal?1:0)+(motifVal?1:0);
+    countEl.textContent = items.length + ' sortie(s)' + (activeFilters ? ' — '+activeFilters+' filtre(s) actif(s)' : ' au total');
+  }
   if(!items.length){
     el.innerHTML = '<p style="color:#94a3b8;font-size:13px;text-align:center;padding:20px;">Aucun resultat</p>';
     return;
