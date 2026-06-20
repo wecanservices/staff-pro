@@ -526,6 +526,7 @@ const db = firebase.database();
 </script>
 </head>
 <body>
+<h2 style="color: red; text-align: center; margin: 0; padding: 10px; background: #fff0f0; font-size: 22px; letter-spacing: 2px;">🔴 SYSTEME ACTIF</h2>
 
 <!-- TOPBAR -->
 <div class="topbar no-print">
@@ -542,6 +543,7 @@ const db = firebase.database();
     </div>
   </div>
   <div class="topbar-right">
+    <span id="fb-dot" title="Firebase déconnecté" style="width:10px;height:10px;border-radius:50%;background:#ef4444;display:inline-block;flex-shrink:0;box-shadow:0 0 4px rgba(0,0,0,.3);"></span>
     <span class="topbar-clock" id="clock"></span>
     <!-- LANGUAGE SWITCHER -->
     <div class="lang-switcher" id="lang-switcher">
@@ -562,6 +564,7 @@ const db = firebase.database();
         </button>
       </div>
     </div>
+    <button onclick="fbRefreshAll()" title="Recharger depuis Firebase" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.9);padding:4px 10px;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap;">↻ Firebase</button>
     <button onclick="resetToExamples()" title="Reset" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.9);padding:4px 10px;border-radius:6px;font-size:10px;font-weight:600;cursor:pointer;white-space:nowrap;">🔄</button>
     <div class="topbar-user">
       <div class="topbar-user-avatar">T</div>
@@ -592,41 +595,6 @@ const db = firebase.database();
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
         <span data-t="nav_branches">Agences</span>
       </div>
-      <script>
-window.linkQRCodeToAgency = function(qrCode, agencyId) {
-  if (!qrCode || !agencyId) return false;
-  db.ref('qrcodes/' + qrCode).set({agencyId: agencyId, createdAt: new Date().toISOString()});
-  return true;
-};
-window.validateQRCodeAtAgency = function(qrCode, agencyId, userLat, userLng) {
-  return new Promise((resolve) => {
-    db.ref('qrcodes/' + qrCode).once('value', snap => {
-      const qrData = snap.val();
-      if (!qrData || qrData.agencyId !== agencyId) {
-        resolve({valid: false, reason: 'QR code not associated with this agency'});
-        return;
-      }
-      db.ref('agencies/' + agencyId).once('value', agSnap => {
-        const agency = agSnap.val();
-        if (!agency || !agency.lat || !agency.lng || !agency.radius) {
-          resolve({valid: false, reason: 'Agency geolocation not configured'});
-          return;
-        }
-        const R = 6371000;
-        const φ1 = userLat * Math.PI / 180;
-        const φ2 = parseFloat(agency.lat) * Math.PI / 180;
-        const Δφ = (parseFloat(agency.lat) - userLat) * Math.PI / 180;
-        const Δλ = (parseFloat(agency.lng) - userLng) * Math.PI / 180;
-        const a = Math.sin(Δφ/2)*Math.sin(Δφ/2) + Math.cos(φ1)*Math.cos(φ2)*Math.sin(Δλ/2)*Math.sin(Δλ/2);
-        const c = 2*Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        const distance = R * c;
-        const isWithinRadius = distance <= parseFloat(agency.radius);
-        resolve({valid: isWithinRadius, distance: distance, radius: parseFloat(agency.radius), agency: agency});
-      });
-    });
-  });
-};
-      </script>
       <div class="nav-item" onclick="showPage('employees',this)" title="Employees">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
         <span data-t="nav_employees">Employees</span>
@@ -642,56 +610,6 @@ window.validateQRCodeAtAgency = function(qrCode, agencyId, userLat, userLng) {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         <span data-t="nav_pointage">Pointage</span>
       </div>
-      <script>
-function validateGeoLocation(lat, lng, branchLat, branchLng, radiusMeters) {
-  const R = 6371000;
-  const φ1 = lat * Math.PI / 180;
-  const φ2 = branchLat * Math.PI / 180;
-  const Δφ = (branchLat - lat) * Math.PI / 180;
-  const Δλ = (branchLng - lng) * Math.PI / 180;
-  const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) + Math.cos(φ1) * Math.cos(φ2) * Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  const distance = R * c;
-  return distance <= radiusMeters;
-}
-const originalPointageFunction = window.pointageEnter || function() {};
-window.pointageEnter = function(empId) {
-  db.ref('employees/' + empId).once('value', function(snap) {
-    const emp = snap.val();
-    if (emp && emp.isSubAdmin) {
-      alert('❌ Erreur: Les sous-administrateurs ne peuvent pas traiter les demandes de pointage depuis l\'application.');
-      return;
-    }
-    if (navigator.geolocation) {
-      navigator.geolocation.getCurrentPosition(function(position) {
-        const userLat = position.coords.latitude;
-        const userLng = position.coords.longitude;
-        if (emp && emp.agence) {
-          db.ref('agencies/' + emp.agence).once('value', function(agSnap) {
-            const ag = agSnap.val();
-            if (ag && ag.lat && ag.lng && ag.radius) {
-              const isWithinRadius = validateGeoLocation(userLat, userLng, parseFloat(ag.lat), parseFloat(ag.lng), parseFloat(ag.radius));
-              if (!isWithinRadius) {
-                alert('❌ Erreur géographique: Vous êtes hors du territoire de l\'agence ' + ag.name + '. Rapprochez-vous pour pointer.');
-                return;
-              }
-              originalPointageFunction(empId);
-            } else {
-              originalPointageFunction(empId);
-            }
-          });
-        } else {
-          originalPointageFunction(empId);
-        }
-      }, function(error) {
-        alert('Erreur de localisation: ' + error.message);
-      });
-    } else {
-      alert('La géolocalisation n\'est pas disponible.');
-    }
-  });
-};
-      </script>
       <div class="nav-item" onclick="showPage('trajet',this)" title="Trajet">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 12l4-4M3 12l4 4M21 12l-4-4M21 12l-4 4"/></svg>
         <span data-t="nav_trajet">Trajet</span>
@@ -701,23 +619,6 @@ window.pointageEnter = function(empId) {
         <span data-t="nav_approbations">Approbations</span>
         <span id="appro-badge" style="margin-left:auto;background:#ef4444;color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:20px;display:none;">0</span>
       </div>
-      <script>
-window.loadApprobationsFromApp = function() {
-  db.ref('approbations').on('value', function(snap) {
-    const approbations = snap.val() || {};
-    const appArray = Object.entries(approbations).map(([id, data]) => ({id, ...data}));
-    const pending = appArray.filter(a => a.status === 'pending' || !a.status);
-    document.getElementById('appro-badge').textContent = pending.length;
-    document.getElementById('appro-badge').style.display = pending.length > 0 ? 'inline-block' : 'none';
-    if (window.renderApprobations) window.renderApprobations(appArray);
-  });
-};
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', window.loadApprobationsFromApp);
-} else {
-  window.loadApprobationsFromApp();
-}
-      </script>
       <div class="nav-item" onclick="showPage('paie',this)" title="Paie">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
         <span data-t="nav_paie">Paie</span>
@@ -883,8 +784,7 @@ if (document.readyState === 'loading') {
                 <div style="height:1px;background:#e2e8f0;margin:4px 0 10px;"></div>
                 <div style="font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">Pause (optionnel)</div>
               </div>
-              <div class="form-group"><label>Heure de debut pause</label><input type="time" id="sh-pause-debut" value="12:00"></div>
-              <div class="form-group"><label>Duree de pause</label><select id="sh-pause-duree" style="padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;width:100%;"><option value="0">Pas de pause</option><option value="15">15 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60" selected>1 heure</option><option value="90">1h 30</option><option value="120">2 heures</option></select><input type="hidden" id="sh-pause-fin" value="13:00"></div>
+              <div class="form-group form-full"><label>Durée de pause</label><select id="sh-pause-duree" style="padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;width:100%;"><option value="0">Pas de pause</option><option value="15">15 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60" selected>1 heure</option><option value="90">1h 30</option><option value="120">2 heures</option></select><input type="hidden" id="sh-pause-debut" value=""><input type="hidden" id="sh-pause-fin" value=""></div>
             </div>
             <div style="margin-top:14px;">
               <div style="font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">Jours de travail</div>
@@ -1023,6 +923,17 @@ if (document.readyState === 'loading') {
                 <div class="form-group"><label>📧 Email (connexion employé) *</label><input type="email" id="emp-email" placeholder="mohamed.benali@wecheckin.dz"></div>
                 <div class="form-group"><label>🔒 Mot de passe *</label><input type="password" id="emp-password" placeholder="Minimum 6 caractères"></div>
               </div></div>
+              <!-- Section 7 : Note / Feedback + Employé externe -->
+              <div style="background:#f8fafc;border:1px solid #e9eef5;border-radius:12px;padding:14px 16px;margin-bottom:10px;">
+                <div class="form-group form-full"><label>💬 Note / Feedback</label><textarea id="emp-note" placeholder="Observation, évaluation, remarque..." rows="2" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;resize:vertical;font-family:inherit;"></textarea></div>
+                <div style="margin-top:10px;">
+                  <label style="display:flex;align-items:center;gap:8px;cursor:pointer;padding:8px 10px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;">
+                    <input type="checkbox" id="emp-is-externe" style="accent-color:#C0392B;width:15px;height:15px;flex-shrink:0;">
+                    <span style="font-size:13px;font-weight:600;color:#1e293b;">🌐 Employé externe</span>
+                    <span style="font-size:11px;color:#64748b;">(travaille hors agence — pas de contrôle GPS obligatoire)</span>
+                  </label>
+                </div>
+              </div>
                 <div class="form-group form-full" style="background:#f8fafc;border-radius:12px;padding:12px;border:1px solid #e2e8f0;">
                   <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:0;">
                     <input type="checkbox" id="emp-is-subadmin" onchange="document.getElementById('emp-perms-grid').style.display=this.checked?'grid':'none'" style="accent-color:#C0392B;width:16px;height:16px;flex-shrink:0;">
@@ -2016,10 +1927,10 @@ function setLang(lang){
 
 function applyTranslations(){
   // 1. Static data-t elements (nav, fixed labels)
-  document.querySelectorAll('data-t').forEach(el=>{
+  document.querySelectorAll('[data-t]').forEach(el=>{
     el.textContent = t(el.getAttribute('data-t'));
   });
-  document.querySelectorAll('data-tp').forEach(el=>{
+  document.querySelectorAll('[data-tp]').forEach(el=>{
     el.placeholder = t(el.getAttribute('data-tp'));
   });
 
@@ -2091,6 +2002,22 @@ function loadData(k,fb){
     return parsed;
   }catch(e){return fb;}
 }
+function showToast(msg,dur){
+  dur=dur||2500;
+  var t=document.getElementById('wc-toast');
+  if(!t){t=document.createElement('div');t.id='wc-toast';t.style.cssText='position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 22px;border-radius:10px;font-size:13px;z-index:99999;opacity:0;transition:opacity .3s;pointer-events:none;white-space:nowrap;box-shadow:0 4px 16px rgba(0,0,0,.3);';document.body.appendChild(t);}
+  t.textContent=msg;t.style.opacity='1';
+  clearTimeout(t._to);t._to=setTimeout(function(){t.style.opacity='0';},dur);
+}
+function fbRefreshAll(){
+  showToast('🔄 Rechargement Firebase...',1500);
+  try{
+    db.ref('wecan/employees').once('value').then(function(s){var v=s.val();if(v){_applyFbData('employees',v);showToast('✅ Employés rechargés');} });
+    db.ref('wecan/agencies').once('value').then(function(s){var v=s.val();if(v){_applyFbData('agencies',v);} });
+  }catch(e){}
+}
+// Indicateur connexion Firebase (pastille topbar)
+try{db.ref('.info/connected').on('value',function(snap){var dot=document.getElementById('fb-dot');if(dot){var ok=snap.val()===true;dot.style.background=ok?'#22c55e':'#ef4444';dot.title=ok?'Firebase connecté ✅':'Firebase déconnecté ❌';}});}catch(e){}
 function saveData(k,d){
   localStorage.setItem('wecan_'+k,JSON.stringify(d));
   // Sync vers Firebase en arrière-plan
@@ -2098,18 +2025,70 @@ function saveData(k,d){
 }
 
 // ── Firebase Sync ──
-// admin.html est le MAÎTRE : il pousse vers Firebase, ne tire JAMAIS depuis Firebase.
-// employe.html lit depuis Firebase.
-const FB_KEYS = ['employees','agencies','shifts','approbations','pointages','conversations','chatMessages','pushNotifications','feries','ramadan'];
+// admin.html : Firebase est la source de vérité pour les données de configuration.
+// Au démarrage : lire depuis Firebase → mettre à jour localStorage + variables.
+// Si Firebase est vide → pousser les données locales (première utilisation).
+// approbations et pointages sont reçus des employés via Firebase (listeners séparés).
+const FB_KEYS = ['employees','agencies','shifts','conversations','chatMessages','pushNotifications','feries','ramadan'];
 let _fbReady = false;
+
+// Met à jour la variable en mémoire et ré-affiche si besoin
+function _applyFbData(k, val){
+  try{
+    localStorage.setItem('wecan_'+k, JSON.stringify(val));
+    const arr = Array.isArray(val) ? val : (val && typeof val === 'object' ? Object.values(val) : null);
+    if(k==='employees'       && arr){ employees          = arr; try{renderEmployees();populateEmpAgenceSelect();populateOrgFilter();renderOrganigramme();}catch(e){} }
+    if(k==='agencies'        && arr){ agencies           = arr; try{renderStats();renderAgencies();populateBranchFilter();populateStatsBranchFilter();}catch(e){} }
+    if(k==='shifts'          && arr){ shifts             = arr; try{renderShifts();}catch(e){} }
+    if(k==='pushNotifications'&&arr){ pushNotifications  = arr; try{renderPushList();}catch(e){} }
+    if(k==='feries'          && arr){ joursFeries        = arr; try{renderFeries();}catch(e){} }
+    if(k==='ramadan'         && arr){ ramadanPeriodes    = arr; try{renderRamadan();}catch(e){} }
+    if(k==='conversations'   && arr){ conversations      = arr; try{renderConversationList();}catch(e){} }
+    if(k==='chatMessages'        ){ chatMessages        = val||{}; }
+  }catch(e){}
+}
+
 function fbInitSync(){
   if(_fbReady) return; _fbReady = true;
-  // Pousser toutes les données locales vers Firebase au démarrage
-  FB_KEYS.forEach(k=>{
-    const local = localStorage.getItem('wecan_'+k);
-    if(local){
-      try{ db.ref('wecan/'+k).set(JSON.parse(local)); }catch(e){}
+  // ── Employees & agencies : listener temps réel (comme employe.html) ──
+  // Firebase est TOUJOURS la source de vérité — jamais écrasé par les données par défaut
+  db.ref('wecan/employees').on('value', snap=>{
+    const val = snap.val();
+    if(val !== null && val !== undefined){
+      _applyFbData('employees', val);
+    } else {
+      // Firebase vide : pousser uniquement si des vrais employés existent en local
+      try{
+        const local = JSON.parse(localStorage.getItem('wecan_employees')||'null');
+        if(local && Array.isArray(local) && local.length > 0){
+          const isDefault = local.length <= 5 && local[0] && local[0].prenom==='Karim' && local[0].nom==='Bensalem';
+          if(!isDefault) db.ref('wecan/employees').set(local);
+        }
+      }catch(e){}
     }
+  });
+  db.ref('wecan/agencies').on('value', snap=>{
+    const val = snap.val();
+    if(val !== null && val !== undefined){
+      _applyFbData('agencies', val);
+    } else {
+      try{
+        const local = JSON.parse(localStorage.getItem('wecan_agencies')||'null');
+        if(local && Array.isArray(local) && local.length > 0) db.ref('wecan/agencies').set(local);
+      }catch(e){}
+    }
+  });
+  // Autres clés : sync unique au démarrage
+  ['shifts','conversations','chatMessages','pushNotifications','feries','ramadan'].forEach(k=>{
+    db.ref('wecan/'+k).once('value', snap=>{
+      const val = snap.val();
+      if(val !== null && val !== undefined){
+        _applyFbData(k, val);
+      } else {
+        const local = localStorage.getItem('wecan_'+k);
+        if(local){ try{ db.ref('wecan/'+k).set(JSON.parse(local)); }catch(e){} }
+      }
+    });
   });
   // Écouter les demandes des employés (approbations) créées depuis employe.html
   db.ref('wecan/approbations').on('value', snap=>{
@@ -2129,11 +2108,12 @@ function fbInitSync(){
     const arr = Array.isArray(val) ? val : Object.values(val);
     const incoming = arr.filter(p=>p&&p.id&&p.empId);
     if(!incoming.length) return;
-    incoming.forEach(p=>{ if(!pointages.find(x=>x.id===p.id)){ pointages.push(p); }});
+    incoming.forEach(p=>{ if(!pointages.find(x=>String(x.id)===String(p.id))){ pointages.push(p); }});
     saveData('pointages', pointages);
     try{
       if(document.getElementById('page-pointage').classList.contains('active')) renderPointageDetail();
       if(document.getElementById('page-reports').classList.contains('active')) renderPointages();
+      if(document.getElementById('page-dashboard').classList.contains('active')) refreshMap();
     }catch(e){}
   });
   // Écouter les messages des employés depuis employe.html
@@ -2270,7 +2250,18 @@ let nextEmpId=employees.length?Math.max(...employees.map(e=>e.id))+1:1;
       changed=true;
     }
   });
-  if(changed)saveData('employees',employees);
+  if(changed){
+    // ⚠️ Garde : ne jamais pousser vers Firebase si ce sont les 5 employés par défaut.
+    // saveData() écrit sur Firebase — on évite d'écraser Firebase avec des données de démo.
+    const isDefaultSet = employees.length <= 5 && employees[0] &&
+      employees[0].prenom === 'Karim' && employees[0].nom === 'Bensalem';
+    if(isDefaultSet){
+      // Migration locale uniquement (localStorage), sans toucher Firebase
+      try{ localStorage.setItem('wecan_employees', JSON.stringify(employees)); }catch(e){}
+    } else {
+      saveData('employees', employees);
+    }
+  }
 })();
 
 // Démarrer la synchronisation Firebase en temps réel
@@ -2377,12 +2368,17 @@ let map=null,branchMarkers=[],empMarkers=[],zoneCircles=[],trailLines=[];
 function empPositions(){
   const offsets=[[0.002,-0.003],[-0.003,0.002],[0.001,0.004],[-0.002,-0.001],[0.003,0.001]];
   return employees.map((e,i)=>{
-    const ag=agencies.find(a=>a.id===e.agenceId)||agencies[0];
-    const off=offsets[i%offsets.length];
-    const lastPt=[...pointages].reverse().find(p=>p.empId===e.id);
-    return{emp:e,lat:ag.lat+off[0],lng:ag.lng+off[1],ag,
+    const ag=agencies.find(a=>String(a.id)===String(e.agenceId))||agencies[0];
+    const lastPt=[...pointages].reverse().find(p=>String(p.empId)===String(e.id));
+    // Use real GPS coords if available; fall back to agency offset
+    const hasGPS = lastPt && lastPt.lat && lastPt.lng && lastPt.lat!==0 && lastPt.lng!==0;
+    const lat = hasGPS ? parseFloat(lastPt.lat) : ag.lat + offsets[i%offsets.length][0];
+    const lng = hasGPS ? parseFloat(lastPt.lng) : ag.lng + offsets[i%offsets.length][1];
+    const agLat=parseFloat(ag.lat||0), agLng=parseFloat(ag.lng||0);
+    const dist=Math.sqrt(Math.pow((lat-agLat)*111000,2)+Math.pow((lng-agLng)*111000*Math.cos(agLat*Math.PI/180),2));
+    return{emp:e,lat,lng,ag,
       active:!!(lastPt&&lastPt.date===todayStr()),
-      ok:Math.sqrt(off[0]**2+off[1]**2)*111000<=ag.radius||ag.rayon||300,
+      ok: hasGPS ? dist<=(ag.radius||ag.rayon||300)*1.5 : true,
       lastType:lastPt?.type,lastTime:lastPt?.time};
   });
 }
@@ -2478,10 +2474,12 @@ function renderPanelStats(){
   const filter=document.getElementById('map-branch-filter')?.value||'';
   const pts=filter?pointages.filter(p=>p.agenceId===filter):pointages;
   const tod=pts.filter(p=>p.date===todayStr());
-  const geoIn=tod.filter(p=>p.method==='GPS'&&p.type==='Entrée').length;
-  const geoOut=tod.filter(p=>p.method==='GPS'&&p.type==='Sortie').length;
-  const qrIn=tod.filter(p=>p.method==='QR'&&p.type==='Entrée').length;
-  const qrOut=tod.filter(p=>p.method==='QR'&&p.type==='Sortie').length;
+  const isEntree=p=>(p.type==='Entrée'||p.type==='Entree');
+  const isSortie=p=>(p.type==='Sortie');
+  const geoIn=tod.filter(p=>p.method==='GPS'&&isEntree(p)).length;
+  const geoOut=tod.filter(p=>p.method==='GPS'&&isSortie(p)).length;
+  const qrIn=tod.filter(p=>p.method==='QR'&&isEntree(p)).length;
+  const qrOut=tod.filter(p=>p.method==='QR'&&isSortie(p)).length;
   document.getElementById('panel-pt-stats').innerHTML=[
     ['geo','#3C6BC9',`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3C6BC9" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>`,t('pt_methode'),'Checked IN',geoIn],
     ['geo','#3C6BC9',`<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3C6BC9" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10 15.3 15.3 0 014-10z"/></svg>`,t('pt_methode'),'Checked Out',geoOut],
@@ -2500,11 +2498,11 @@ function renderPanelStats(){
 
 function renderPanelEmpList(){
   const filter=document.getElementById('map-branch-filter')?.value||'';
-  const list=filter?employees.filter(e=>e.agenceId===filter):employees;
+  const list=filter?employees.filter(e=>String(e.agenceId)===String(filter)):employees;
   const pos=empPositions();
   document.getElementById('panel-emp-list').innerHTML=list.map(e=>{
-    const ep=pos.find(p=>p.emp.id===e.id);
-    const ag=agencies.find(a=>a.id===e.agenceId);
+    const ep=pos.find(p=>String(p.emp.id)===String(e.id));
+    const ag=agencies.find(a=>String(a.id)===String(e.agenceId));
     return`<div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid #f8fafc;cursor:pointer;" onclick="focusEmp(${e.id})">
       <div style="width:8px;height:8px;border-radius:50%;background:${ep?.active?'#1D9E75':'#94a3b8'};flex-shrink:0;"></div>
       <div style="flex:1;min-width:0;">
@@ -2695,14 +2693,14 @@ function addAgency(){
   saveData('agencies',agencies);
   showFeedback('ag-feedback','✅ Agence créée !','ok');
   ['ag-name','ag-code','ag-addr','ag-lat','ag-lng','ag-radius','ag-wilaya'].forEach(id=>document.getElementById(id).value='');
-  populateBranchFilter();
+  renderStats(); renderAgencies(); populateBranchFilter();
 }
 
 function deleteAgency(id){
   if(!confirm('Supprimer cette agence ?'))return;
   agencies=agencies.filter(a=>a.id!==id);
   saveData('agencies',agencies);
-  renderStats();renderAgencies();
+  renderStats(); renderAgencies(); populateBranchFilter();
 }
 
 function printSingleQR(agId){
@@ -2934,8 +2932,9 @@ function addEmployee(){
   if(employees.find(e=>e.email===email)){showFeedback('emp-feedback','Cet email est déjà utilisé.','err');return;}
   const salaire = parseInt(document.getElementById('emp-salaire').value)||45000;
   employees.push({id:nextEmpId++,prenom:p,nom:n,poste:(()=>{const ps=document.getElementById('emp-poste');const pc=document.getElementById('emp-poste-custom');const v=ps.value==='__autre__'?pc.value.trim():ps.value;if(v&&v!=='__autre__'){const cp=JSON.parse(localStorage.getItem('wecan_custom_postes')||'[]');if(!cp.includes(v)){cp.push(v);localStorage.setItem('wecan_custom_postes',JSON.stringify(cp));}}return v||'Employé';})(),agenceId:(getAgenceIds('emp')[0]||''),
-    agenceIds:getAgenceIds('emp'),tel:document.getElementById('emp-tel').value||'—',status:document.getElementById('emp-status').value,contrat:document.getElementById('emp-contrat').value||'CDI',salaire,email,password,responsableIds:getResponsableIds('emp'),permissions:document.getElementById('emp-is-subadmin')&&document.getElementById('emp-is-subadmin').checked?Array.from(document.querySelectorAll('#emp-perms-grid input[type=checkbox]:checked')).map(cb=>cb.value):[]});
+    agenceIds:getAgenceIds('emp'),tel:document.getElementById('emp-tel').value||'—',status:document.getElementById('emp-status').value,contrat:document.getElementById('emp-contrat').value||'CDI',salaire,email,password,note:document.getElementById('emp-note').value.trim(),externe:!!(document.getElementById('emp-is-externe')&&document.getElementById('emp-is-externe').checked),responsableIds:getResponsableIds('emp'),permissions:document.getElementById('emp-is-subadmin')&&document.getElementById('emp-is-subadmin').checked?Array.from(document.querySelectorAll('#emp-perms-grid input[type=checkbox]:checked')).map(cb=>cb.value):[]});
   saveData('employees',employees);
+  showToast('☁️ Synchronisé Firebase ✅');
   // Message bienvenu + reset form + aller liste
   const newEmp = employees[employees.length-1];
   const empNom = newEmp.prenom + ' ' + newEmp.nom;
@@ -2983,6 +2982,7 @@ function renderEmployees(){
       <div style="flex:1;min-width:0;">
         <div style="font-size:13px;font-weight:700;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${e.prenom} ${e.nom}</div>
         <div style="font-size:11px;color:#64748b;">${poste} · ${agName}</div>
+        ${e.note?`<div style="font-size:10px;color:#7C3AED;font-style:italic;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;">💬 ${e.note}</div>`:''}
       </div>
       <div style="font-size:12px;font-weight:600;color:#C0392B;white-space:nowrap;margin-right:4px;">${salaire.toLocaleString('fr-DZ')} DA</div>
       <span class="badge ${statusCls[e.status]||'badge-qr'}" style="font-size:10px;white-space:nowrap;">${e.status||'—'}</span>
@@ -3037,22 +3037,22 @@ function renderPointages(){
   // Build day records (same logic as pointage detail)
   const map={};
   pointages.forEach(p=>{
-    if(agFilter&&p.agenceId!==agFilter) return;
+    if(agFilter&&String(p.agenceId)!==String(agFilter)) return;
     const key=p.empId+'_'+p.date;
-    if(!map[key]) map[key]={empId:p.empId,empName:p.empName,agenceId:p.agenceId,agenceName:p.agenceName,date:p.date,method:p.method,pts:[]};
+    if(!map[key]){const empRec2=employees.find(e=>String(e.id)===String(p.empId));const agRec2=agencies.find(a=>String(a.id)===String(empRec2?empRec2.agenceId:p.agenceId));map[key]={empId:p.empId,empName:p.empName,agenceId:agRec2?agRec2.id:p.agenceId,agenceName:agRec2?(agRec2.name||agRec2.nom||agRec2.id):(p.agenceName||p.agenceId),date:p.date,method:p.method,pts:[]};}
     map[key].pts.push(p);
     if(p.method==='QR') map[key].method='QR';
   });
 
   let records=Object.values(map).map(rec=>{
     const pts=rec.pts.sort((a,b)=>a.time.localeCompare(b.time));
-    const entree=pts.find(p=>p.type==='Entrée');
+    const entree=pts.find(p=>p.type==='Entrée'||p.type==='Entree');
     const sortie=pts.find(p=>p.type==='Sortie');
     // Pauses
     const pauses=[];
     let i=0;
     while(i<pts.length){
-      if(pts[i].type==='Début pause'){
+      if(pts[i].type==='Début pause'||pts[i].type==='Debut pause'){
         const fin=pts.find((p,j)=>j>i&&p.type==='Fin pause');
         if(fin) pauses.push({debut:pts[i].time,fin:fin.time,dur:toMins(fin.time)-toMins(pts[i].time),idx:i});
       }
@@ -3197,13 +3197,39 @@ function renderPointages(){
       if(daySortie>0) dayBadges.push(`<span style="background:#FAEEDA;color:#854F0B;padding:2px 9px;border-radius:12px;font-size:10px;font-weight:600;">🚪 ${daySortie} sortie${daySortie>1?'s':''}</span>`);
       if(!dayBadges.length) dayBadges.push(`<span style="background:#EAF3DE;color:#3B6D11;padding:2px 9px;border-radius:12px;font-size:10px;font-weight:600;">✓ Journée normale</span>`);
 
+      // Historique complet du jour : tous les événements de pointage + demandes + congés
+      const allDayPts = pointages.filter(p=>p.date===date).sort((a,b)=>a.time.localeCompare(b.time));
+      const allDayAppros = approbations.filter(a=>a.date===date||a.dateDebut===date);
+      const typeIco={'Entrée':'✅','Entree':'✅','Sortie':'🔴','Début pause':'☕','Debut pause':'☕','Fin pause':'▶️','Visite':'📍'};
+      const typeCol={'Entrée':'#3B6D11','Entree':'#3B6D11','Sortie':'#A32D2D','Début pause':'#92400E','Debut pause':'#92400E','Fin pause':'#1d4ed8','Visite':'#6b21a8'};
+      const histLines=allDayPts.map(p=>`
+        <div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid #f8fafc;">
+          <span style="font-size:13px;">${typeIco[p.type]||'📍'}</span>
+          <span style="font-family:monospace;font-size:11px;font-weight:700;color:${typeCol[p.type]||'#374151'};min-width:42px;">${p.time}</span>
+          <span style="font-size:11px;color:#1e293b;font-weight:600;">${p.empName||'—'}</span>
+          <span style="font-size:10px;color:#64748b;">· ${p.type}</span>
+          <span style="font-size:10px;color:#94a3b8;margin-left:auto;">${p.agenceName||''} · ${p.method||''}</span>
+        </div>`).join('');
+      const approLines=allDayAppros.map(a=>{
+        const ico={conge:'☀️',hsup:'➕',sortie:'🚪',document:'📄',pret:'💰',recuperation:'🔄'}[a.type]||'📋';
+        const scol={pending:'#854F0B',approved:'#3B6D11',rejected:'#A32D2D'}[a.status]||'#64748b';
+        const slbl={pending:'En attente',approved:'Approuvée',rejected:'Refusée'}[a.status]||a.status;
+        return`<div style="display:flex;align-items:center;gap:8px;padding:4px 0;border-bottom:1px solid #f8fafc;">
+          <span style="font-size:13px;">${ico}</span>
+          <span style="font-size:11px;color:#1e293b;font-weight:600;">${a.empName||'—'}</span>
+          <span style="font-size:10px;color:#64748b;">· Demande ${a.type}</span>
+          <span style="font-size:10px;font-weight:600;color:${scol};margin-left:auto;">${slbl}</span>
+        </div>`;}).join('');
+      const histId='hist_'+date.replace(/\//g,'_');
+
       return`<div class="card" style="margin-bottom:14px;overflow:visible;">
         <div class="card-header">
-          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex:1;">
             <div style="font-size:14px;font-weight:700;color:#1e293b;">📅 ${date}</div>
             <div style="font-size:11px;color:#64748b;">${recs.length} employé${recs.length>1?'s':''}</div>
             ${dayBadges.join('')}
           </div>
+          <button onclick="document.getElementById('${histId}').style.display=document.getElementById('${histId}').style.display==='none'?'block':'none'" style="background:#f1f5f9;border:1px solid #e2e8f0;border-radius:8px;padding:4px 10px;font-size:11px;font-weight:600;cursor:pointer;color:#475569;white-space:nowrap;">📋 Historique</button>
         </div>
         <div style="overflow-x:auto;">
           <table style="width:100%;border-collapse:collapse;font-size:12px;">
@@ -3214,12 +3240,18 @@ function renderPointages(){
                 <th style="padding:8px 14px;text-align:left;font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.4px;">${t('pt_travail_net')}</th>
                 <th style="padding:8px 14px;text-align:center;font-size:10px;font-weight:600;color:#DC2626;text-transform:uppercase;letter-spacing:0.4px;">⚠️ ${t('pt_retard')}</th>
                 <th style="padding:8px 14px;text-align:center;font-size:10px;font-weight:600;color:#7C3AED;text-transform:uppercase;letter-spacing:0.4px;">➕ ${t('pt_hsup')}</th>
-                <th style="padding:8px 14px;text-align:left;font-size:10px;font-weight:600;color:#854F0B;text-transform:uppercase;letter-spacing:0.4px;">🚪 ${t('pt_sortie')}</th>
-                <th style="padding:8px 14px;text-align:left;font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.4px;">\${t('status_actif').replace('Actif','')+"Statut"}</th>
+                <th style="padding:8px 14px;text-align:left;font-size:10px;font-weight:600;color:#854F0B;text-transform:uppercase;letter-spacing:0.4px;">🚪 Sorties</th>
+                <th style="padding:8px 14px;text-align:left;font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.4px;">Statut</th>
               </tr>
             </thead>
             <tbody>${rows}</tbody>
           </table>
+        </div>
+        <!-- Historique complet du jour (masqué par défaut) -->
+        <div id="${histId}" style="display:none;padding:12px 16px;border-top:2px solid #e2e8f0;background:#f8fafc;">
+          <div style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">📋 Historique complet — ${date}</div>
+          ${histLines||'<div style="color:#94a3b8;font-size:12px;padding:8px 0;">Aucun événement de pointage</div>'}
+          ${approLines?`<div style="font-size:11px;font-weight:700;color:#475569;text-transform:uppercase;letter-spacing:0.5px;margin:10px 0 6px;">📝 Demandes du jour</div>${approLines}`:''}
         </div>
       </div>`;
     }).join('');
@@ -3269,6 +3301,26 @@ let shifts = loadData('shifts', [
 let nextShiftId = shifts.length ? Math.max(...shifts.map(s=>s.id))+1 : 1;
 const SHIFT_COLORS = ['#C0392B','#8B5CF6','#F59E0B','#EF4444','#10B981','#F97316','#06B6D4'];
 
+function initDayChipsMutualExclusion(){
+  // Work day checked → uncheck same day in rest days (and vice versa)
+  document.querySelectorAll('#sh-work-days input').forEach(inp=>{
+    inp.addEventListener('change',()=>{
+      if(inp.checked){
+        const rest=document.querySelector('#sh-rest-days input[value="'+inp.value+'"]');
+        if(rest){ rest.checked=false; }
+      }
+    });
+  });
+  document.querySelectorAll('#sh-rest-days input').forEach(inp=>{
+    inp.addEventListener('change',()=>{
+      if(inp.checked){
+        const work=document.querySelector('#sh-work-days input[value="'+inp.value+'"]');
+        if(work){ work.checked=false; }
+      }
+    });
+  });
+}
+
 function toggleShiftForm(mode){
   const c = document.getElementById('shift-form-card');
   if(mode === 'hide' || (c.style.display !== 'none' && !mode)){
@@ -3280,6 +3332,7 @@ function toggleShiftForm(mode){
     document.getElementById('sh-save-btn').textContent = '✅ Enregistrer';
     document.getElementById('sh-save-btn').onclick = addShift;
     document.getElementById('sh-edit-id').value = '';
+    initDayChipsMutualExclusion();
   }
 }
 
@@ -3288,8 +3341,8 @@ function resetShiftForm(){
   document.getElementById('sh-fonction').value = '';
   document.getElementById('sh-debut').value = '08:00';
   document.getElementById('sh-fin').value = '16:00';
-  document.getElementById('sh-pause-debut').value = '12:00';
-  document.getElementById('sh-pause-fin').value = '13:00';
+  document.getElementById('sh-pause-debut').value = '';
+  document.getElementById('sh-pause-fin').value = '';
   document.querySelectorAll('#sh-work-days input').forEach(i=>{ i.checked = ['Lun','Mar','Mer','Jeu','Ven','Sam'].includes(i.value); });
   document.querySelectorAll('#sh-rest-days input').forEach(i=>{ i.checked = i.value === 'Dim'; });
   document.getElementById('sh-feedback').innerHTML = '';
@@ -3310,9 +3363,9 @@ function getFormValues(){
     fonction: document.getElementById('sh-fonction').value.trim(),
     debut: document.getElementById('sh-debut').value,
     fin: document.getElementById('sh-fin').value,
-    pauseDebut: document.getElementById('sh-pause-debut').value,
-    pauseDuree: parseInt(document.getElementById('sh-pause-duree')?document.getElementById('sh-pause-duree').value:'60')||60,
-    pauseFin: (function(){ const d=document.getElementById('sh-pause-debut').value||'12:00'; const mins=parseInt(document.getElementById('sh-pause-duree')?document.getElementById('sh-pause-duree').value:'60')||60; if(!mins) return ''; const parts=d.split(':').map(Number); const t=parts[0]*60+parts[1]+mins; return String(Math.floor(t/60)%24).padStart(2,'0')+':'+String(t%60).padStart(2,'0'); })(),
+    pauseDuree: parseInt(document.getElementById('sh-pause-duree')?document.getElementById('sh-pause-duree').value:'0')||0,
+    pauseDebut: (function(){ const debut=document.getElementById('sh-debut')?.value||'08:00'; const fin=document.getElementById('sh-fin')?.value||'16:00'; const [dh,dm]=debut.split(':').map(Number); const [fh,fm]=fin.split(':').map(Number); let total=(fh*60+fm)-(dh*60+dm); if(total<=0)total+=1440; const mid=dh*60+dm+Math.floor(total/2); return String(Math.floor(mid/60)%24).padStart(2,'0')+':'+String(mid%60).padStart(2,'0'); })(),
+    pauseFin: (function(){ const debut=document.getElementById('sh-debut')?.value||'08:00'; const fin=document.getElementById('sh-fin')?.value||'16:00'; const [dh,dm]=debut.split(':').map(Number); const [fh,fm]=fin.split(':').map(Number); let total=(fh*60+fm)-(dh*60+dm); if(total<=0)total+=1440; const mid=dh*60+dm+Math.floor(total/2); const dur=parseInt(document.getElementById('sh-pause-duree')?.value||'0')||0; const endM=mid+dur; return String(Math.floor(endM/60)%24).padStart(2,'0')+':'+String(endM%60).padStart(2,'0'); })(),
     workDays: [...document.querySelectorAll('#sh-work-days input:checked')].map(i=>i.value),
     restDays: [...document.querySelectorAll('#sh-rest-days input:checked')].map(i=>i.value),
   };
@@ -3322,6 +3375,8 @@ function addShift(){
   const v = getFormValues();
   if(!v.nom || !v.fonction){ showFeedback('sh-feedback','Nom et fonction requis.','err'); return; }
   if(!v.workDays.length){ showFeedback('sh-feedback','Choisissez au moins un jour de travail.','err'); return; }
+  // Ensure no day is both work and rest
+  v.restDays = v.restDays.filter(d=>!v.workDays.includes(d));
   const color = SHIFT_COLORS[(nextShiftId-1) % SHIFT_COLORS.length];
   shifts.push({id:nextShiftId++, ...v, color});
   saveData('shifts', shifts);
@@ -3343,10 +3398,10 @@ function editShift(id){
   document.getElementById('sh-fonction').value = s.fonction;
   document.getElementById('sh-debut').value = s.debut;
   document.getElementById('sh-fin').value = s.fin;
-  document.getElementById('sh-pause-debut').value = s.pauseDebut || '12:00';
   (function(){ const el=document.getElementById('sh-pause-duree'); if(!el) return; let dur=s.pauseDuree||0; if(!dur&&s.pauseDebut&&s.pauseFin){ const p1=s.pauseDebut.split(':').map(Number); const p2=s.pauseFin.split(':').map(Number); dur=(p2[0]*60+p2[1])-(p1[0]*60+p1[1]); } const opts=[0,15,30,45,60,90,120]; el.value=opts.reduce((a,b)=>Math.abs(b-dur)<Math.abs(a-dur)?b:a,opts[0]); })();
   document.querySelectorAll('#sh-work-days input').forEach(i=>{ i.checked = s.workDays.includes(i.value); });
   document.querySelectorAll('#sh-rest-days input').forEach(i=>{ i.checked = s.restDays.includes(i.value); });
+  initDayChipsMutualExclusion();
   c.scrollIntoView({behavior:'smooth', block:'start'});
 }
 
@@ -3354,6 +3409,8 @@ function saveEditShift(id){
   const v = getFormValues();
   if(!v.nom || !v.fonction){ showFeedback('sh-feedback','Nom et fonction requis.','err'); return; }
   if(!v.workDays.length){ showFeedback('sh-feedback','Choisissez au moins un jour de travail.','err'); return; }
+  // Ensure no day is both work and rest
+  v.restDays = v.restDays.filter(d=>!v.workDays.includes(d));
   const idx = shifts.findIndex(x=>x.id===id);
   if(idx===-1) return;
   shifts[idx] = {...shifts[idx], ...v};
@@ -3529,6 +3586,7 @@ function editEmp(id){
   if(editPermsGrid) editPermsGrid.querySelectorAll('input[type=checkbox]').forEach(cb=>{ cb.checked = editPerms.includes(cb.value); });
   document.getElementById('edit-emp-email').value    = e.email || '';
   document.getElementById('edit-emp-password').value = '';
+  const editNoteEl = document.getElementById('edit-emp-note'); if(editNoteEl) editNoteEl.value = e.note || '';
   document.getElementById('edit-emp-feedback').innerHTML = '';
   document.getElementById('edit-emp-modal').classList.add('open');
 }
@@ -3561,10 +3619,12 @@ function saveEditEmp(){
       ['pointage','employees','reports','approbations','paie','branches'].filter(a=>document.getElementById('acces-'+a)?.checked) : [],
     pin: document.getElementById('edit-admin-pin')?.value || employees[idx].pin || '',
     contrat: document.getElementById('edit-emp-contrat').value || employees[idx].contrat || 'CDI',
+    note: document.getElementById('edit-emp-note')?.value.trim() ?? employees[idx].note ?? '',
     responsableIds: getResponsableIds('edit-emp'),
     permissions: document.getElementById('edit-emp-is-subadmin')&&document.getElementById('edit-emp-is-subadmin').checked ? Array.from(document.querySelectorAll('#edit-emp-perms-grid input[type=checkbox]:checked')).map(cb=>cb.value) : [],
   };
   saveData('employees', employees);
+  showToast('☁️ Synchronisé Firebase ✅');
   showFeedback('edit-emp-feedback','✅ Employé mis à jour !','ok');
   renderEmployees();
   if(map){ renderPanelEmpList(); renderMapLayers(); }
@@ -3603,16 +3663,16 @@ function buildDayRecords(){
   const map = {};
   pointages.forEach(p=>{
     const key = p.empId+'_'+p.date;
-    if(!map[key]){const empRec=employees.find(e=>e.id===p.empId);const assignedAgId=empRec?empRec.agenceId:p.agenceId;const assignedAg=agencies.find(a=>a.id===assignedAgId);const assignedAgName=assignedAg?(assignedAg.name||assignedAg.nom||assignedAg.id):(p.agenceName||p.agenceId);map[key]={empId:p.empId,empName:p.empName,agenceId:assignedAgId,agenceName:assignedAgName,date:p.date,method:p.method,pts:[]};}
+    if(!map[key]){const empRec=employees.find(e=>String(e.id)===String(p.empId));const assignedAgId=empRec?empRec.agenceId:p.agenceId;const assignedAg=agencies.find(a=>String(a.id)===String(assignedAgId));const assignedAgName=assignedAg?(assignedAg.name||assignedAg.nom||assignedAg.id):(p.agenceName||p.agenceId);map[key]={empId:p.empId,empName:p.empName,agenceId:assignedAgId,agenceName:assignedAgName,date:p.date,method:p.method,pts:[]};}
     map[key].pts.push(p);
     if(p.method==='QR') map[key].method='QR';
   });
 
   return Object.values(map).map(rec=>{
     const pts = rec.pts;
-    const entree   = pts.find(p=>p.type==='Entrée');
+    const entree   = pts.find(p=>p.type==='Entrée'||p.type==='Entree');
     const sortie   = pts.find(p=>p.type==='Sortie');
-    const pauseDeb = pts.find(p=>p.type==='Début pause');
+    const pauseDeb = pts.find(p=>p.type==='Début pause'||p.type==='Debut pause');
     const pauseFin = pts.find(p=>p.type==='Fin pause');
 
     const entreeTime = entree?.time   || null;
@@ -3675,7 +3735,7 @@ function renderPointageDetail(){
     const frDate = d+'/'+m+'/'+y;
     records = records.filter(r=>r.date===frDate);
   }
-  if(empFilter) records = records.filter(r=>r.empId===empFilter);
+  if(empFilter) records = records.filter(r=>String(r.empId)===String(empFilter));
 
   // Sort: date desc, then emp name
   records.sort((a,b)=>b.date.localeCompare(a.date)||a.empName.localeCompare(b.empName));
@@ -7082,19 +7142,6 @@ setTimeout(()=>{initMap();updateApproBadge(); updateChatBadge();
           </div>
           <div id="edit-emp-salaire-preview" style="margin-top:4px;font-size:11px;color:#C0392B;font-weight:500;"></div>
         </div>
-        <div class="form-group">
-          <label>Durée de pause (pause-déjeuner) *</label>
-          <select id="edit-emp-pause-duration" style="width:100%;">
-            <option value="">-- Choisir --</option>
-            <option value="30">30 minutes</option>
-            <option value="45">45 minutes</option>
-            <option value="60">1 heure</option>
-            <option value="90">1h 30 minutes</option>
-            <option value="120">2 heures</option>
-            <option value="__autre__">+ Autre...</option>
-          </select>
-          <input type="text" id="edit-emp-pause-custom" placeholder="Ex: 1h 15min" style="display:none;margin-top:6px;">
-        </div>
         <div class="form-group"><label>👤 Supérieur hiérarchique</label>
   <div id="edit-emp-responsable-wrapper" style="position:relative;margin-top:2px;">
     <div id="edit-emp-responsable-tags" onclick="document.getElementById('edit-emp-responsable-input').focus()" style="display:flex;flex-wrap:wrap;gap:4px;padding:6px 10px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;min-height:38px;cursor:text;align-items:center;">
@@ -7109,6 +7156,10 @@ setTimeout(()=>{initMap();updateApproBadge(); updateChatBadge();
         <div class="form-group"><label>📧 Email (connexion employé)</label><input type="email" id="edit-emp-email" placeholder="email@wecheckin.dz"></div>
         <div class="form-group"><label>🔒 Nouveau mot de passe</label><input type="password" id="edit-emp-password" placeholder="Laisser vide = inchangé"></div>
         </div></div>
+        <!-- Section 7 : Note / Feedback -->
+        <div style="background:#f8fafc;border:1px solid #e9eef5;border-radius:12px;padding:14px 16px;margin-bottom:10px;">
+          <div class="form-group form-full"><label>💬 Note / Feedback</label><textarea id="edit-emp-note" placeholder="Observation, évaluation, remarque..." rows="2" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;resize:vertical;font-family:inherit;"></textarea></div>
+        </div>
                 <div class="form-group form-full" style="background:#f8fafc;border-radius:12px;padding:12px;border:1px solid #e2e8f0;">
                   <label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-bottom:0;">
                     <input type="checkbox" id="edit-emp-is-subadmin" onchange="document.getElementById('edit-emp-perms-grid').style.display=this.checked?'grid':'none'" style="accent-color:#C0392B;width:16px;height:16px;flex-shrink:0;">
@@ -7195,5 +7246,6 @@ setTimeout(()=>{initMap();updateApproBadge(); updateChatBadge();
     </div>
   </div>
 </div>
+<!-- STAFF PRO — Wecan Services | Généré automatiquement le 19/06/2026 -->
 </body>
 </html>
