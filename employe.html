@@ -1256,50 +1256,52 @@ function closeGeoAlert(){
 // SWIPE INTERACTION — glisser de gauche à droite
 // ──────────────────────────────────────────────────────────────
 function initSwipe(track, wrap, onSuccess){
-  const wrapW  = ()=>wrap.getBoundingClientRect().width;
-  const maxX   = ()=>wrapW()-56;
-  let dragging = false, startX=0, curX=0;
+  const wrapW = ()=>wrap.getBoundingClientRect().width;
+  const maxX  = ()=>wrapW()-56;
+  let dragging=false, startX=0, curX=0;
+
+  // Remplacer le noeud pour supprimer les anciens listeners, PUIS definir
+  // les closures sur la nouvelle reference — sinon track pointe vers un noeud
+  // retire du DOM et le pouce ne bouge pas visuellement sur mobile.
+  track.replaceWith(track.cloneNode(true));
+  const t = document.getElementById('geo-swipe-track');
 
   function getEvX(e){ return e.touches?e.touches[0].clientX:e.clientX; }
 
   function onStart(e){
-    if(track.classList.contains('success')) return;
+    if(t.classList.contains('success')) return;
     dragging=true; startX=getEvX(e)-4;
-    track.style.transition='none';
+    t.style.transition='none';
   }
   function onMove(e){
     if(!dragging) return;
     e.preventDefault();
     curX = Math.max(0, Math.min(getEvX(e)-startX, maxX()));
-    track.style.left = (4+curX)+'px';
-    // Arrow fades to checkmark
+    t.style.left = (4+curX)+'px';
     const pct = curX/maxX();
     document.getElementById('geo-swipe-arrow').textContent = pct>0.7?'✓':'→';
-    track.style.background = `hsl(${Math.round(0+pct*135)},70%,${pct>0.7?38:35}%)`;
+    t.style.background = 'hsl('+Math.round(pct*135)+',70%,'+(pct>0.7?38:35)+'%)';
   }
   function onEnd(){
     if(!dragging) return;
     dragging=false;
-    track.style.transition='left .2s, background .2s';
+    t.style.transition='left .2s, background .2s';
     if(curX >= maxX()*0.8){
-      track.style.left=maxX()+4+'px';
-      track.classList.add('success');
+      t.style.left = (maxX()+4)+'px';
+      t.classList.add('success');
       document.getElementById('geo-swipe-arrow').textContent='✓';
-      track.style.background='#16a34a';
+      t.style.background='#16a34a';
       setTimeout(()=>onSuccess(), 300);
     } else {
-      track.style.left='4px';
+      t.style.left='4px';
       document.getElementById('geo-swipe-arrow').textContent='→';
-      track.style.background='#C0392B';
+      t.style.background='#C0392B';
       curX=0;
     }
   }
 
-  // Remove old listeners (avoid duplicates)
-  track.replaceWith(track.cloneNode(true));
-  const newTrack = document.getElementById('geo-swipe-track');
-  newTrack.addEventListener('mousedown', onStart);
-  newTrack.addEventListener('touchstart', onStart, {passive:false});
+  t.addEventListener('mousedown', onStart);
+  t.addEventListener('touchstart', onStart, {passive:false});
   document.addEventListener('mousemove', onMove);
   document.addEventListener('touchmove', onMove, {passive:false});
   document.addEventListener('mouseup', onEnd);
