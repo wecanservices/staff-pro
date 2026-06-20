@@ -2108,7 +2108,7 @@ function _applyFbData(k, val){
     if(k==='pushNotifications'&&arr){ pushNotifications  = arr; try{renderPushList();}catch(e){} }
     if(k==='feries'          && arr){ joursFeries        = arr; try{renderFeries();}catch(e){} }
     if(k==='ramadan'         && arr){ ramadanPeriodes    = arr; try{renderRamadan();}catch(e){} }
-    if(k==='conversations'   && arr){ conversations      = arr; try{renderConversationList();}catch(e){} }
+    if(k==='conversations'   && arr){ conversations      = arr; try{renderConvList();updateChatBadge();}catch(e){} }
     if(k==='chatMessages'        ){ chatMessages        = val||{}; }
   }catch(e){}
 }
@@ -2164,14 +2164,31 @@ function fbInitSync(){
       }catch(e){}
     }
   });
-  // Autres clés : sync unique au démarrage
-  ['shifts','conversations','chatMessages','pushNotifications','feries','ramadan'].forEach(k=>{
-    db.ref('wecan/'+k).once('value', snap=>{
-      const val = snap.val();
+  // Shifts, feries, ramadan, pushNotifications : listener temps reel
+  // Premier evenement : si Firebase vide → pousser le local une seule fois
+  var _fbInitDone = {};
+  ['shifts','pushNotifications','feries','ramadan'].forEach(function(k){
+    _fbInitDone[k] = false;
+    db.ref('wecan/'+k).on('value', function(snap){
+      var val = snap.val();
       if(val !== null && val !== undefined){
         _applyFbData(k, val);
-      } else {
-        const local = localStorage.getItem('wecan_'+k);
+      } else if(!_fbInitDone[k]){
+        // Firebase vide : pousser donnees locales une seule fois
+        var local = localStorage.getItem('wecan_'+k);
+        if(local){ try{ db.ref('wecan/'+k).set(JSON.parse(local)); }catch(e){} }
+      }
+      _fbInitDone[k] = true;
+    });
+  });
+  // conversations et chatMessages : geres par initChat() + emp_outbox listener
+  // Lecture initiale pour les avoir disponibles avant l ouverture du chat
+  ['conversations','chatMessages'].forEach(function(k){
+    db.ref('wecan/'+k).once('value', function(snap){
+      var val = snap.val();
+      if(val !== null && val !== undefined){ _applyFbData(k, val); }
+      else {
+        var local = localStorage.getItem('wecan_'+k);
         if(local){ try{ db.ref('wecan/'+k).set(JSON.parse(local)); }catch(e){} }
       }
     });
@@ -6119,7 +6136,7 @@ function initChat(){
           nextConvId = conversations.length ? Math.max(...conversations.map(c=>c.id))+1 : 1;
         }
       }
-      db.ref('wecan/chatMessages').once('value', snap2=>{
+      db.ref('wecan/chatMessages').on('value', function(snap2){
         const val2 = snap2.val();
         if(val2 && typeof val2 === 'object'){
           // Firebase peut convertir les arrays en objects: {"0":{...}} → reconstruire
