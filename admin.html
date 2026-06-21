@@ -2119,8 +2119,17 @@ function fbInitSync(){
   // Firebase est TOUJOURS la source de vérité — jamais écrasé par les données par défaut
   db.ref('wecan/employees').on('value', snap=>{
     const val = snap.val();
-    // Firebase est toujours la source de verite — jamais de push local vers Firebase ici
-    _applyFbData('employees', val || {});
+    let arr = Array.isArray(val) ? val : (val && typeof val==='object' ? Object.values(val) : []);
+    // PURGE AUTOMATIQUE — supprimer faux employes meme si un ancien appareil les a repousses
+    const _FAKE_NAMES=['Karim','Amira','Yacine','Sonia','Ryad'];
+    const _FAKE_IDS=[1,2,3,4,5];
+    const _cleaned = arr.filter(function(e){ return !(e && _FAKE_NAMES.includes(e.prenom) && _FAKE_IDS.includes(Number(e.id))); });
+    if(_cleaned.length < arr.length){
+      // Des faux etaient dans Firebase — les supprimer immediatement
+      db.ref('wecan/employees').set(_cleaned);
+      arr = _cleaned;
+    }
+    _applyFbData('employees', arr.length ? arr : {});
   });
   db.ref('wecan/agencies').on('value', snap=>{
     const val = snap.val();
