@@ -657,7 +657,7 @@ const db = firebase.database();
  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
  <span data-t="nav_help">Help</span>
  </div>
- <div style="text-align:center;padding:8px 0 4px;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.5px;">STAFF PRO Admin<br><span id="app-version">v3.9</span></div>
+ <div style="text-align:center;padding:8px 0 4px;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.5px;">STAFF PRO Admin<br><span id="app-version">v4.0</span></div>
  </div>
  <div class="nav-globe">
  <div class="globe-btn">
@@ -2341,7 +2341,7 @@ function nowTime(){return new Date().toLocaleTimeString('fr-DZ',{hour:'2-digit',
 
 
 // ── VERSION / RESET ──
-const DATA_VERSION = '3.9';
+const DATA_VERSION = '4.0';
 
 function resetToExamples(){
  if(!confirm('Réinitialiser toutes les données avec les exemples par défaut ?')) return;
@@ -2352,30 +2352,12 @@ function resetToExamples(){
  location.reload();
 }
 
-// Au premier chargement ou si version différente → mise à jour SÉCURISÉE (ne jamais effacer les employés réels)
+// Mise à jour de version : NE JAMAIS effacer les données.
+// Firebase est la source de vérité — il resynchronise tout au démarrage.
+// On enregistre juste le nouveau numéro de version.
 (function seedIfNeeded(){
  const v = localStorage.getItem('wecan_version');
  if(v !== DATA_VERSION){
- const hasEmployees = (()=>{
- try{
- const raw = localStorage.getItem('wecan_employees');
- if(!raw) return false;
- const arr = JSON.parse(raw);
- return Array.isArray(arr) && arr.length > 0;
- }catch(e){ return false; }
- })();
-
- if(!hasEmployees){
- // Première installation : effacer tout pour charger les exemples
- ['agencies','employees','pointages','shifts','approbations','conversations','chatMessages','pushNotifications'].forEach(k=>
- localStorage.removeItem('wecan_'+k)
- );
- }
- // Si des employés existent, NE JAMAIS les toucher — juste mettre à jour le numéro de version
- // Effacer uniquement les données transitoires comme les notifications
- if(hasEmployees){
- ['pushNotifications'].forEach(k=> localStorage.removeItem('wecan_'+k));
- }
  localStorage.setItem('wecan_version', DATA_VERSION);
  }
 })();
