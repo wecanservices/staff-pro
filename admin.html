@@ -2233,31 +2233,17 @@ let employees=loadData('employees',[]);
 let pointages=loadData('pointages',[]);
 let nextEmpId=employees.length?Math.max(...employees.map(e=>e.id))+1:1;
 
-// ── MIGRATION: ajouter email+password aux employés qui n'en ont pas ──
-(function migrateCredentials(){
-  let changed=false;
-  employees.forEach(e=>{
-    if(!e.email){
-      const base=(e.prenom+'.'+e.nom).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9.]/g,'');
-      e.email=base+'@wecheckin.dz';
-      changed=true;
-    }
-    if(!e.password){
-      e.password=e.prenom.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z]/g,'')+'123';
-      changed=true;
-    }
+// PURGE IMMEDIATE — supprimer les faux employes du cache local AVANT tout
+// Garantit qu ils ne seront jamais repousses vers Firebase accidentellement
+(function purgeLocalFakes(){
+  const FAKE_NAMES=['Karim','Amira','Yacine','Sonia','Ryad'];
+  const FAKE_IDS=[1,2,3,4,5];
+  const before=employees.length;
+  employees=employees.filter(function(e){
+    return !(FAKE_NAMES.includes(e.prenom) && FAKE_IDS.includes(Number(e.id)));
   });
-  if(changed){
-    // ⚠️ Garde : ne jamais pousser vers Firebase si ce sont les 5 employés par défaut.
-    // saveData() écrit sur Firebase — on évite d'écraser Firebase avec des données de démo.
-    const isDefaultSet = employees.length <= 5 && employees[0] &&
-      employees[0].prenom === 'Karim' && employees[0].nom === 'Bensalem';
-    if(isDefaultSet){
-      // Migration locale uniquement (localStorage), sans toucher Firebase
-      try{ localStorage.setItem('wecan_employees', JSON.stringify(employees)); }catch(e){}
-    } else {
-      saveData('employees', employees);
-    }
+  if(employees.length<before){
+    localStorage.setItem('wecan_employees',JSON.stringify(employees));
   }
 })();
 
