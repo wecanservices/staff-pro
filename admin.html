@@ -2119,49 +2119,14 @@ function fbInitSync(){
   // Firebase est TOUJOURS la source de vérité — jamais écrasé par les données par défaut
   db.ref('wecan/employees').on('value', snap=>{
     const val = snap.val();
-    if(val !== null && val !== undefined){
-      const fbArr = Array.isArray(val) ? val : Object.values(val);
-      try{
-        const localRaw = localStorage.getItem('wecan_employees');
-        const localArr = localRaw ? JSON.parse(localRaw) : [];
-        const isDefault = localArr.length <= 5 && localArr[0] && localArr[0].prenom==='Karim' && localArr[0].nom==='Bensalem';
-        if(!isDefault && Array.isArray(localArr) && localArr.length > fbArr.length){
-          // Local a plus d employes : Firebase est en retard, on pousse le local
-          db.ref('wecan/employees').set(localArr);
-        } else {
-          _applyFbData('employees', val);
-        }
-      }catch(e){ _applyFbData('employees', val); }
-    } else {
-      // Firebase vide : pousser uniquement si des vrais employes existent en local
-      try{
-        const local = JSON.parse(localStorage.getItem('wecan_employees')||'null');
-        if(local && Array.isArray(local) && local.length > 0){
-          const isDefault = local.length <= 5 && local[0] && local[0].prenom==='Karim' && local[0].nom==='Bensalem';
-          if(!isDefault) db.ref('wecan/employees').set(local);
-        }
-      }catch(e){}
-    }
+    // Firebase est toujours la source de verite — jamais de push local vers Firebase ici
+    _applyFbData('employees', val || {});
   });
   db.ref('wecan/agencies').on('value', snap=>{
     const val = snap.val();
+    // Firebase est toujours la source de verite pour les agences
     if(val !== null && val !== undefined){
-      const fbArr = Array.isArray(val) ? val : Object.values(val);
-      try{
-        const localRaw = localStorage.getItem('wecan_agencies');
-        const localArr = localRaw ? JSON.parse(localRaw) : [];
-        if(Array.isArray(localArr) && localArr.length > fbArr.length){
-          // Local a plus d agences : Firebase est en retard, on pousse le local vers Firebase
-          db.ref('wecan/agencies').set(localArr);
-        } else {
-          _applyFbData('agencies', val);
-        }
-      }catch(e){ _applyFbData('agencies', val); }
-    } else {
-      try{
-        const local = JSON.parse(localStorage.getItem('wecan_agencies')||'null');
-        if(local && Array.isArray(local) && local.length > 0) db.ref('wecan/agencies').set(local);
-      }catch(e){}
+      _applyFbData('agencies', val);
     }
   });
   // Shifts, feries, ramadan, pushNotifications : listener temps reel
