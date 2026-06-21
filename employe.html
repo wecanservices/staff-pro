@@ -802,11 +802,16 @@ function fbEmpSync(){
   db.ref('wecan/employees').on('value', snap=>{
     const val = snap.val();
     if(!val) return;
-    const serialized = JSON.stringify(val);
+    let arr = Array.isArray(val) ? val : (typeof val==='object' ? Object.values(val) : []);
+    // PURGE AUTOMATIQUE Firebase — supprimer faux employes meme si repousses par ancien appareil
+    const _FN=['Karim','Amira','Yacine','Sonia','Ryad'];
+    const _FI=[1,2,3,4,5];
+    const _cl=arr.filter(function(e){ return !(e && _FN.includes(e.prenom) && _FI.includes(Number(e.id))); });
+    if(_cl.length < arr.length){ db.ref('wecan/employees').set(_cl); arr=_cl; }
+    const serialized = JSON.stringify(arr);
     if(localStorage.getItem('wecan_employees') !== serialized){
       localStorage.setItem('wecan_employees', serialized);
-      employees = val;
-      // Re-render si un employé est connecté
+      employees = arr;
       try{ if(window.currentEmp){ currentEmp = employees.find(e=>e.id===currentEmp.id)||currentEmp; renderHome && renderHome(); } }catch(e){}
     }
   });
