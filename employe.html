@@ -2405,5 +2405,35 @@ function startInboxListener(){
 }
 if(ME) initApp();
 </script>
+
+<!-- ═══ GEO-ALERT : sortie / entree territoire ═══ -->
+<div id="geo-alert">
+  <div id="geo-alert-card">
+    <div class="geo-alert-icon" id="geo-alert-icon"></div>
+    <div class="geo-alert-title" id="geo-alert-title"></div>
+    <div class="geo-alert-sub"   id="geo-alert-sub"></div>
+    <!-- Swipe -->
+    <div id="geo-swipe-wrap">
+      <div id="geo-swipe-track">
+        <span id="geo-swipe-arrow">&#8594;</span>
+      </div>
+      <div id="geo-swipe-label">Glisser pour confirmer</div>
+    </div>
+    <!-- Choix motif -->
+    <div id="geo-choices"></div>
+    <!-- Ignorer -->
+    <div id="geo-dismiss" onclick="closeGeoAlert()">Ignorer</div>
+  </div>
+</div>
+
+<!-- ═══ ALERTE PERIMETRE DEPASSE ═══ -->
+<div id="geo-blocked-alert">
+  <div id="geo-blocked-card">
+    <div class="gbc-title">&#9888;&#65039; Hors perimetre</div>
+    <div class="gbc-sub">Vous etes a <span id="gbc-dist">--</span> de l agence</div>
+    <div class="gbc-bar-wrap"><div class="gbc-bar" id="gbc-bar" style="width:0%"></div></div>
+  </div>
+</div>
+
 </body>
 </html>
