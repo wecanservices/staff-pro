@@ -477,7 +477,7 @@ const db = firebase.database();
     <p id="subadmin-title-lbl" style="font-size:11px;opacity:.8;margin-bottom:6px;"></p>
     <div class="subadmin-perm-grid" id="subadmin-perm-grid"></div>
   </div>
-  <div class="sec-title">Bonjour, <span id="home-name">Karim</span> 👋</div>
+  <div class="sec-title">Bonjour, <span id="home-name">--</span> 👋</div>
   <div id="geo-status-bar" style="display:none;padding:8px 12px;border-radius:10px;font-size:12px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px;"></div>
   <div class="card" id="home-pt-card">
     <div class="card-title">Pointage aujourd\u2019hui</div>
@@ -584,9 +584,9 @@ const db = firebase.database();
 <!-- ===== PAGE PROFIL ===== -->
 <div class="page" id="page-profil">
   <div class="profile-header">
-    <div class="profile-av" id="prof-av">KB</div>
-    <div class="profile-name" id="prof-name">Karim Bensalem</div>
-    <div class="profile-post" id="prof-post">Resp. livraison · SD Beaulieu</div>
+    <div class="profile-av" id="prof-av">--</div>
+    <div class="profile-name" id="prof-name">--</div>
+    <div class="profile-post" id="prof-post">--</div>
   </div>
   <div class="card">
     <div class="card-title">Informations</div>
@@ -864,31 +864,8 @@ let msgs = ld('emp_msgs',{});
 let leaves = ld('emp_leaves',[]);
 let docs = ld('emp_docs',[]);
 
-// Seed employees si vide (local seulement — NE PAS écrire sur Firebase pour éviter d'écraser les vrais comptes)
-if(!employees.length){
-  employees=[
-    {id:1,prenom:'Karim',nom:'Bensalem',poste:'Resp. livraison',agenceId:'161503',tel:'0551234567',status:'Admin branche',salaire:65000,role:'admin',email:'karim.bensalem@wecheckin.dz',password:'karim123'},
-    {id:2,prenom:'Amira',nom:'Hadj Ali',poste:'Agent de tri',agenceId:'161601',tel:'0552345678',status:'Actif',salaire:48000,email:'amira.hadjali@wecheckin.dz',password:'amira123'},
-    {id:3,prenom:'Yacine',nom:'Meziane',poste:'Livreur',agenceId:'161503',tel:'0553456789',status:'Conge',salaire:42000,email:'yacine.meziane@wecheckin.dz',password:'yacine123'},
-    {id:4,prenom:'Sonia',nom:'Belaid',poste:'Comptable',agenceId:'353601',tel:'0554567890',status:'Actif',salaire:58000,email:'sonia.belaid@wecheckin.dz',password:'sonia123'},
-    {id:5,prenom:'Ryad',nom:'Ouali',poste:'Developpeur',agenceId:'161601',tel:'0555678901',status:'Actif',salaire:55000,email:'ryad.ouali@wecheckin.dz',password:'ryad123'}
-  ];
-  // Sauvegarde locale uniquement — doLogin() récupérera toujours les vrais comptes depuis Firebase
-  localStorage.setItem('wecan_employees', JSON.stringify(employees));
-} else {
-  // Migration: ajouter email+password aux anciens comptes qui n'en ont pas
-  let changed=false;
-  employees.forEach(e=>{
-    if(!e.email){
-      const base=(e.prenom+'.'+e.nom).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z0-9.]/g,'');
-      e.email=base+'@wecheckin.dz'; changed=true;
-    }
-    if(!e.password){
-      e.password=e.prenom.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'').replace(/[^a-z]/g,'')+'123'; changed=true;
-    }
-  });
-  if(changed)sv('employees',employees);
-}
+// ⚠️ PAS DE SEED PAR DEFAUT — Firebase est la seule source de verite
+// Les employes sont charges uniquement depuis Firebase via fbEmpSync() + doLogin()
 
 // Démarrer sync Firebase cross-device (immédiat + 500ms de sécurité)
 fbEmpSync();
