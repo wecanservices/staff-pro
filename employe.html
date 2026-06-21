@@ -864,8 +864,18 @@ let msgs = ld('emp_msgs',{});
 let leaves = ld('emp_leaves',[]);
 let docs = ld('emp_docs',[]);
 
-// ⚠️ PAS DE SEED PAR DEFAUT — Firebase est la seule source de verite
-// Les employes sont charges uniquement depuis Firebase via fbEmpSync() + doLogin()
+// PURGE IMMEDIATE — supprimer les faux employes du cache local au demarrage
+(function purgeLocalFakes(){
+  const FAKE_NAMES=['Karim','Amira','Yacine','Sonia','Ryad'];
+  const FAKE_IDS=[1,2,3,4,5];
+  const before=employees.length;
+  employees=employees.filter(function(e){
+    return !(FAKE_NAMES.includes(e.prenom) && FAKE_IDS.includes(Number(e.id)));
+  });
+  if(employees.length<before){
+    localStorage.setItem('wecan_employees',JSON.stringify(employees));
+  }
+})();
 
 // Démarrer sync Firebase cross-device (immédiat + 500ms de sécurité)
 fbEmpSync();
