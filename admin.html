@@ -2264,79 +2264,8 @@ let agencies=loadData('agencies',[
   {id:'161601',name:'SD Bachdjerrah',code:'161601',addr:'Bachdjerrah, Alger',lat:36.7048,lng:3.1006,radius:300,wilaya:'Alger'},
   {id:'353601',name:'SD Hemmadi',code:'353601',addr:'Hemmadi, Blida',lat:36.4720,lng:2.8190,radius:300,wilaya:'Blida'},
 ]);
-let employees=loadData('employees',[
-  {id:1,prenom:'Karim',nom:'Bensalem',poste:'Resp. livraison',agenceId:'161503',tel:'0550 112 233',status:'Admin agence',role:'admin',acces:['pointage','employees','reports'],salaire:65000,pin:'1234',email:'karim.bensalem@wecheckin.dz',password:'karim123'},
-  {id:2,prenom:'Amira',nom:'Hadj Ali',poste:'Agent de tri',agenceId:'161601',tel:'0661 445 566',status:'Actif',salaire:48000,email:'amira.hadjali@wecheckin.dz',password:'amira123'},
-  {id:3,prenom:'Yacine',nom:'Meziane',poste:'Livreur',agenceId:'161503',tel:'0770 778 899',status:'Congé',salaire:42000,email:'yacine.meziane@wecheckin.dz',password:'yacine123'},
-  {id:4,prenom:'Sonia',nom:'Belaid',poste:'Comptable',agenceId:'353601',tel:'0550 321 654',status:'Actif',salaire:58000,email:'sonia.belaid@wecheckin.dz',password:'sonia123'},
-  {id:5,prenom:'Ryad',nom:'Ouali',poste:'Développeur',agenceId:'161601',tel:'0660 987 654',status:'Actif',salaire:55000,email:'ryad.ouali@wecheckin.dz',password:'ryad123'},
-]);
-let pointages=loadData('pointages',[
-
-  // ════ 10/06/2026 ════
-  // Karim — retard + H.Sup + 1 pause
-  {id:1,  empId:1, empName:'Karim Bensalem',  agenceId:'161503', agenceName:'SD Beaulieu',    type:'Entrée',      method:'QR',  time:'08:22', date:'10/06/2026', ok:true, lat:36.7525,lng:3.0420},
-  {id:2,  empId:1, empName:'Karim Bensalem',  agenceId:'161503', agenceName:'SD Beaulieu',    type:'Début pause', method:'QR',  time:'12:05', date:'10/06/2026', ok:true, lat:36.7525,lng:3.0420},
-  {id:3,  empId:1, empName:'Karim Bensalem',  agenceId:'161503', agenceName:'SD Beaulieu',    type:'Fin pause',   method:'QR',  time:'13:10', date:'10/06/2026', ok:true, lat:36.7525,lng:3.0420},
-  {id:4,  empId:1, empName:'Karim Bensalem',  agenceId:'161503', agenceName:'SD Beaulieu',    type:'Sortie',      method:'QR',  time:'17:45', date:'10/06/2026', ok:true, lat:36.7525,lng:3.0420},
-  // Amira — à l'heure, journée normale
-  {id:10, empId:2, empName:'Amira Hadj Ali',   agenceId:'161601', agenceName:'SD Bachdjerrah', type:'Entrée',      method:'QR',  time:'07:58', date:'10/06/2026', ok:true, lat:36.7048,lng:3.1006},
-  {id:11, empId:2, empName:'Amira Hadj Ali',   agenceId:'161601', agenceName:'SD Bachdjerrah', type:'Début pause', method:'QR',  time:'12:00', date:'10/06/2026', ok:true, lat:36.7048,lng:3.1006},
-  {id:12, empId:2, empName:'Amira Hadj Ali',   agenceId:'161601', agenceName:'SD Bachdjerrah', type:'Fin pause',   method:'QR',  time:'13:00', date:'10/06/2026', ok:true, lat:36.7048,lng:3.1006},
-  {id:13, empId:2, empName:'Amira Hadj Ali',   agenceId:'161601', agenceName:'SD Bachdjerrah', type:'Sortie',      method:'QR',  time:'16:05', date:'10/06/2026', ok:true, lat:36.7048,lng:3.1006},
-  // Yacine — terrain GPS, à l'heure + 2 pauses + H.Sup
-  {id:20, empId:3, empName:'Yacine Meziane',   agenceId:'161503', agenceName:'SD Beaulieu',    type:'Entrée',      method:'GPS', time:'07:55', date:'10/06/2026', ok:true, lat:36.7525,lng:3.0420,lieu:'SD Beaulieu (départ)'},
-  {id:21, empId:3, empName:'Yacine Meziane',   agenceId:'161503', agenceName:'SD Beaulieu',    type:'Visite',      method:'GPS', time:'08:30', date:'10/06/2026', ok:true, lat:36.7320,lng:3.0650,lieu:'Client 1 — Bachdjerrah'},
-  {id:22, empId:3, empName:'Yacine Meziane',   agenceId:'161503', agenceName:'SD Beaulieu',    type:'Visite',      method:'GPS', time:'10:10', date:'10/06/2026', ok:true, lat:36.7050,lng:3.1100,lieu:'Client 2 — El Harrach'},
-  {id:23, empId:3, empName:'Yacine Meziane',   agenceId:'161503', agenceName:'SD Beaulieu',    type:'Début pause', method:'GPS', time:'12:00', date:'10/06/2026', ok:true, lat:36.6850,lng:3.0880,lieu:'Pause déjeuner'},
-  {id:24, empId:3, empName:'Yacine Meziane',   agenceId:'161503', agenceName:'SD Beaulieu',    type:'Fin pause',   method:'GPS', time:'12:45', date:'10/06/2026', ok:true, lat:36.6850,lng:3.0880},
-  {id:25, empId:3, empName:'Yacine Meziane',   agenceId:'161503', agenceName:'SD Beaulieu',    type:'Visite',      method:'GPS', time:'13:20', date:'10/06/2026', ok:true, lat:36.6750,lng:3.0720,lieu:'Client 3 — Baraki'},
-  {id:26, empId:3, empName:'Yacine Meziane',   agenceId:'161503', agenceName:'SD Beaulieu',    type:'Début pause', method:'GPS', time:'15:30', date:'10/06/2026', ok:true, lat:36.6700,lng:3.0480,lieu:'Pause café'},
-  {id:27, empId:3, empName:'Yacine Meziane',   agenceId:'161503', agenceName:'SD Beaulieu',    type:'Fin pause',   method:'GPS', time:'15:45', date:'10/06/2026', ok:true, lat:36.6700,lng:3.0480},
-  {id:28, empId:3, empName:'Yacine Meziane',   agenceId:'161503', agenceName:'SD Beaulieu',    type:'Visite',      method:'GPS', time:'16:20', date:'10/06/2026', ok:true, lat:36.6900,lng:3.0300,lieu:'Client 4 — Douera'},
-  {id:29, empId:3, empName:'Yacine Meziane',   agenceId:'161503', agenceName:'SD Beaulieu',    type:'Sortie',      method:'GPS', time:'18:10', date:'10/06/2026', ok:true, lat:36.7525,lng:3.0420,lieu:'SD Beaulieu (retour)'},
-  // Sonia — retard + sortie approuvée (rendez-vous)
-  {id:30, empId:4, empName:'Sonia Belaid',     agenceId:'353601', agenceName:'SD Hemmadi',     type:'Entrée',      method:'QR',  time:'08:47', date:'10/06/2026', ok:true, lat:36.4720,lng:2.8190},
-  {id:31, empId:4, empName:'Sonia Belaid',     agenceId:'353601', agenceName:'SD Hemmadi',     type:'Début pause', method:'QR',  time:'12:00', date:'10/06/2026', ok:true, lat:36.4720,lng:2.8190},
-  {id:32, empId:4, empName:'Sonia Belaid',     agenceId:'353601', agenceName:'SD Hemmadi',     type:'Fin pause',   method:'QR',  time:'13:00', date:'10/06/2026', ok:true, lat:36.4720,lng:2.8190},
-  {id:33, empId:4, empName:'Sonia Belaid',     agenceId:'353601', agenceName:'SD Hemmadi',     type:'Sortie',      method:'QR',  time:'16:00', date:'10/06/2026', ok:true, lat:36.4720,lng:2.8190},
-  // Ryad — retard important + 2 pauses
-  {id:40, empId:5, empName:'Ryad Ouali',       agenceId:'161601', agenceName:'SD Bachdjerrah', type:'Entrée',      method:'GPS', time:'09:15', date:'10/06/2026', ok:true, lat:36.7048,lng:3.1006},
-  {id:41, empId:5, empName:'Ryad Ouali',       agenceId:'161601', agenceName:'SD Bachdjerrah', type:'Début pause', method:'GPS', time:'11:30', date:'10/06/2026', ok:true, lat:36.7048,lng:3.1006},
-  {id:42, empId:5, empName:'Ryad Ouali',       agenceId:'161601', agenceName:'SD Bachdjerrah', type:'Fin pause',   method:'GPS', time:'12:00', date:'10/06/2026', ok:true, lat:36.7048,lng:3.1006},
-  {id:43, empId:5, empName:'Ryad Ouali',       agenceId:'161601', agenceName:'SD Bachdjerrah', type:'Début pause', method:'GPS', time:'14:00', date:'10/06/2026', ok:true, lat:36.7048,lng:3.1006},
-  {id:44, empId:5, empName:'Ryad Ouali',       agenceId:'161601', agenceName:'SD Bachdjerrah', type:'Fin pause',   method:'GPS', time:'14:20', date:'10/06/2026', ok:true, lat:36.7048,lng:3.1006},
-  {id:45, empId:5, empName:'Ryad Ouali',       agenceId:'161601', agenceName:'SD Bachdjerrah', type:'Sortie',      method:'GPS', time:'16:55', date:'10/06/2026', ok:true, lat:36.7048,lng:3.1006},
-
-  // ════ 09/06/2026 ════
-  // Karim — retard + sortie approuvée
-  {id:50, empId:1, empName:'Karim Bensalem',  agenceId:'161503', agenceName:'SD Beaulieu',    type:'Entrée',      method:'GPS', time:'08:34', date:'09/06/2026', ok:true, lat:36.7525,lng:3.0420},
-  {id:51, empId:1, empName:'Karim Bensalem',  agenceId:'161503', agenceName:'SD Beaulieu',    type:'Début pause', method:'GPS', time:'12:00', date:'09/06/2026', ok:true, lat:36.7525,lng:3.0420},
-  {id:52, empId:1, empName:'Karim Bensalem',  agenceId:'161503', agenceName:'SD Beaulieu',    type:'Fin pause',   method:'GPS', time:'12:45', date:'09/06/2026', ok:true, lat:36.7525,lng:3.0420},
-  {id:53, empId:1, empName:'Karim Bensalem',  agenceId:'161503', agenceName:'SD Beaulieu',    type:'Sortie',      method:'GPS', time:'16:00', date:'09/06/2026', ok:true, lat:36.7525,lng:3.0420},
-  // Amira — à l'heure, H.Sup
-  {id:54, empId:2, empName:'Amira Hadj Ali',   agenceId:'161601', agenceName:'SD Bachdjerrah', type:'Entrée',      method:'QR',  time:'07:50', date:'09/06/2026', ok:true, lat:36.7048,lng:3.1006},
-  {id:55, empId:2, empName:'Amira Hadj Ali',   agenceId:'161601', agenceName:'SD Bachdjerrah', type:'Début pause', method:'QR',  time:'12:00', date:'09/06/2026', ok:true, lat:36.7048,lng:3.1006},
-  {id:56, empId:2, empName:'Amira Hadj Ali',   agenceId:'161601', agenceName:'SD Bachdjerrah', type:'Fin pause',   method:'QR',  time:'12:30', date:'09/06/2026', ok:true, lat:36.7048,lng:3.1006},
-  {id:57, empId:2, empName:'Amira Hadj Ali',   agenceId:'161601', agenceName:'SD Bachdjerrah', type:'Sortie',      method:'QR',  time:'17:20', date:'09/06/2026', ok:true, lat:36.7048,lng:3.1006},
-  // Sonia — journée normale
-  {id:58, empId:4, empName:'Sonia Belaid',     agenceId:'353601', agenceName:'SD Hemmadi',     type:'Entrée',      method:'QR',  time:'08:02', date:'09/06/2026', ok:true, lat:36.4720,lng:2.8190},
-  {id:59, empId:4, empName:'Sonia Belaid',     agenceId:'353601', agenceName:'SD Hemmadi',     type:'Début pause', method:'QR',  time:'12:00', date:'09/06/2026', ok:true, lat:36.4720,lng:2.8190},
-  {id:60, empId:4, empName:'Sonia Belaid',     agenceId:'353601', agenceName:'SD Hemmadi',     type:'Fin pause',   method:'QR',  time:'13:00', date:'09/06/2026', ok:true, lat:36.4720,lng:2.8190},
-  {id:61, empId:4, empName:'Sonia Belaid',     agenceId:'353601', agenceName:'SD Hemmadi',     type:'Sortie',      method:'QR',  time:'16:00', date:'09/06/2026', ok:true, lat:36.4720,lng:2.8190},
-
-  // ════ 08/06/2026 ════
-  // Karim — journée normale
-  {id:70, empId:1, empName:'Karim Bensalem',  agenceId:'161503', agenceName:'SD Beaulieu',    type:'Entrée',      method:'QR',  time:'07:58', date:'08/06/2026', ok:true, lat:36.7525,lng:3.0420},
-  {id:71, empId:1, empName:'Karim Bensalem',  agenceId:'161503', agenceName:'SD Beaulieu',    type:'Début pause', method:'QR',  time:'12:00', date:'08/06/2026', ok:true, lat:36.7525,lng:3.0420},
-  {id:72, empId:1, empName:'Karim Bensalem',  agenceId:'161503', agenceName:'SD Beaulieu',    type:'Fin pause',   method:'QR',  time:'13:00', date:'08/06/2026', ok:true, lat:36.7525,lng:3.0420},
-  {id:73, empId:1, empName:'Karim Bensalem',  agenceId:'161503', agenceName:'SD Beaulieu',    type:'Sortie',      method:'QR',  time:'16:00', date:'08/06/2026', ok:true, lat:36.7525,lng:3.0420},
-  // Ryad — gros retard
-  {id:74, empId:5, empName:'Ryad Ouali',       agenceId:'161601', agenceName:'SD Bachdjerrah', type:'Entrée',      method:'GPS', time:'10:05', date:'08/06/2026', ok:true, lat:36.7048,lng:3.1006},
-  {id:75, empId:5, empName:'Ryad Ouali',       agenceId:'161601', agenceName:'SD Bachdjerrah', type:'Début pause', method:'GPS', time:'13:00', date:'08/06/2026', ok:true, lat:36.7048,lng:3.1006},
-  {id:76, empId:5, empName:'Ryad Ouali',       agenceId:'161601', agenceName:'SD Bachdjerrah', type:'Fin pause',   method:'GPS', time:'13:45', date:'08/06/2026', ok:true, lat:36.7048,lng:3.1006},
-  {id:77, empId:5, empName:'Ryad Ouali',       agenceId:'161601', agenceName:'SD Bachdjerrah', type:'Sortie',      method:'GPS', time:'17:30', date:'08/06/2026', ok:true, lat:36.7048,lng:3.1006},
-]);
+let employees=loadData('employees',[]);
+let pointages=loadData('pointages',[]);
 let nextEmpId=employees.length?Math.max(...employees.map(e=>e.id))+1:1;
 
 // ── MIGRATION: ajouter email+password aux employés qui n'en ont pas ──
@@ -3981,7 +3910,7 @@ function initTrajet(){
   if(sel){
     sel.innerHTML=`<option value="">${t("all_employees")}</option>`+
       employees.map(e=>`<option value="${e.id}">${e.prenom} ${e.nom}</option>`).join('');
-    if(!sel.value) sel.value='3'; // default: Yacine (terrain)
+    if(!sel.value && sel.options.length>1) sel.value=sel.options[1].value;
   }
   if(!trajetMap){
     trajetMap=L.map('trajet-map',{zoomControl:true}).setView([36.70,3.07],12);
@@ -4242,25 +4171,7 @@ function selectEmpTrajet(id){
 
 
 // ── APPROBATIONS ──
-let approbations = loadData('approbations', [
-  // Congés
-  {id:1,  type:'conge',    empId:3, empName:'Yacine Meziane',  poste:'Livreur',        status:'pending',  date:'10/06/2026', detail:{debut:'15/06/2026', fin:'20/06/2026', motif:'Congé annuel', jours:6}},
-  {id:2,  type:'conge',    empId:2, empName:'Amira Hadj Ali',  poste:'Agent de tri',   status:'pending',  date:'09/06/2026', detail:{debut:'01/07/2026', fin:'15/07/2026', motif:'Congé maternité', jours:15}},
-  {id:3,  type:'conge',    empId:5, empName:'Ryad Ouali',      poste:'Développeur',    status:'approved', date:'05/06/2026', detail:{debut:'08/06/2026', fin:'09/06/2026', motif:'Congé personnel', jours:2}},
-  // Heures supplémentaires
-  {id:4,  type:'hsup',     empId:1, empName:'Karim Bensalem',  poste:'Resp. livraison',status:'pending',  date:'10/06/2026', detail:{date_hsup:'10/06/2026', heures:'1h45', motif:'Clôture livraisons urgentes', majoration:'125%'}},
-  {id:5,  type:'hsup',     empId:3, empName:'Yacine Meziane',  poste:'Livreur',        status:'pending',  date:'08/06/2026', detail:{date_hsup:'08/06/2026', heures:'2h30', motif:'Tournée supplémentaire client express', majoration:'150%'}},
-  {id:6,  type:'hsup',     empId:4, empName:'Sonia Belaid',    poste:'Comptable',      status:'rejected', date:'07/06/2026', detail:{date_hsup:'07/06/2026', heures:'1h00', motif:'Bilan mensuel', majoration:'125%'}},
-  // Demandes de sortie
-  {id:7,  type:'sortie',   empId:2, empName:'Amira Hadj Ali',  poste:'Agent de tri',   status:'pending',  date:'10/06/2026', detail:{heure:'14:30', duree:'2h',   motif:'Rendez-vous médical',       retour:'16:30'}},
-  {id:8,  type:'sortie',   empId:5, empName:'Ryad Ouali',      poste:'Développeur',    status:'approved', date:'09/06/2026', detail:{heure:'11:00', duree:'1h30', motif:'Démarche administrative',     retour:'12:30'}},
-  {id:9,  type:'sortie',   empId:1, empName:'Karim Bensalem',  poste:'Resp. livraison',status:'approved', date:'09/06/2026', detail:{heure:'14:00', duree:'1h',   motif:'Récupération colis urgent',   retour:'15:00'}},
-  {id:90, type:'sortie',   empId:4, empName:'Sonia Belaid',    poste:'Comptable',      status:'approved', date:'10/06/2026', detail:{heure:'14:30', duree:'1h30', motif:'Rendez-vous banque CPA',      retour:'16:00'}},
-  // Documents
-  {id:10, type:'document', empId:3, empName:'Yacine Meziane',  poste:'Livreur',        status:'pending',  date:'10/06/2026', detail:{docType:'Attestation de travail', usage:'Banque CPA', urgent:true}},
-  {id:11, type:'document', empId:4, empName:'Sonia Belaid',    poste:'Comptable',      status:'pending',  date:'09/06/2026', detail:{docType:'Fiche de paie Mai 2026', usage:'Dossier logement', urgent:false}},
-  {id:12, type:'document', empId:2, empName:'Amira Hadj Ali',  poste:'Agent de tri',   status:'approved', date:'08/06/2026', detail:{docType:'Certificat de travail', usage:'Visa ambassade', urgent:true}},
-]);
+let approbations = loadData('approbations', []);
 let nextApproId = approbations.length ? Math.max(...approbations.map(a=>a.id))+1 : 1;
 let currentApproTab = 'all';
 
@@ -6102,21 +6013,12 @@ function tMethod(method){
 
 
 // ── CHAT INTERNE ──
-let conversations = loadData('conversations', [
-  {id:1, type:'direct', name:'Amira Hadj Ali', participants:[1,2], unread:2, lastMsg:'Ok je serai là à 8h',      lastTime:'08:45', avatar:'AH', color:'#E1F5EE'},
-  {id:2, type:'groupe', name:'Équipe Beaulieu', participants:[1,2,3], unread:0, lastMsg:'Réunion demain matin',   lastTime:'hier',  avatar:'EB', color:'#FDEDEC'},
-  {id:3, type:'reunion',name:'RDV Hebdomadaire', participants:[1,2,3,4,5], unread:1, lastMsg:'Ordre du jour envoyé', lastTime:'10:00', avatar:'📅', color:'#EDE9FE',
-    rdv:{date:'12/06/2026', heure:'09:00', lieu:'Salle principale SD Beaulieu', duree:'1h', organisateur:'Karim Bensalem', ordre:['Bilan de la semaine','Pointages et retards','Nouvelles procédures livraison','Questions diverses'], statuts:{1:'accepte',2:'accepte',3:'en_attente',4:'accepte',5:'en_attente'}}},
-  {id:4, type:'direct', name:'Yacine Meziane',   participants:[1,3], unread:0, lastMsg:'Colis livré avec succès', lastTime:'07:30', avatar:'YM', color:'#FEF9C3'},
-]);
+let conversations = loadData('conversations', []);
 let nextConvId = conversations.length ? Math.max(...conversations.map(c=>c.id))+1 : 1;
 
 let chatMessages = loadData('chatMessages', {});
 
-let pushNotifications = loadData('pushNotifications', [
-  {id:1, title:'Rappel pointage', message:'Merci de pointer votre entrée avant 08h15.', target:'all', priority:'urgent', sentAt:'07:50 · 10/06/2026', sentBy:'Karim Bensalem', readBy:[]},
-  {id:2, title:'Réunion demain', message:'RDV hebdomadaire demain 09h00 — Salle Beaulieu. Présence obligatoire.', target:'all', priority:'normal', sentAt:'17:00 · 09/06/2026', sentBy:'Karim Bensalem', readBy:[]},
-]);
+let pushNotifications = loadData('pushNotifications', []);
 let nextPushId = pushNotifications.length ? Math.max(...pushNotifications.map(n=>n.id))+1 : 1;
 
 let activeConvId = null;
@@ -6438,7 +6340,7 @@ function repondreRdv(convId, statut){
   const conv = conversations.find(c=>c.id===convId);
   if(!conv||!conv.rdv) return;
   conv.rdv.statuts = conv.rdv.statuts||{};
-  conv.rdv.statuts[1] = statut; // current user = Karim (id:1)
+  if(currentUser) conv.rdv.statuts[currentUser.id] = statut;
   saveData('conversations', conversations);
   openConv(convId);
 }
@@ -6607,8 +6509,8 @@ function createConversation(){
     const [y,m,d]=date.split('-');
     const statuts={};
     members.forEach(id=>{ statuts[id]='en_attente'; });
-    statuts[1]='accepte';
-    const rdv={date:d+'/'+m+'/'+y, heure, duree, lieu, organisateur:'Karim Bensalem', ordre, statuts};
+    if(currentUser) statuts[currentUser.id]='accepte';
+    const rdv={date:d+'/'+m+'/'+y, heure, duree, lieu, organisateur:(currentUser&&currentUser.prenom?currentUser.prenom+' '+currentUser.nom:'Admin'), ordre, statuts};
     conversations.push({id:nextConvId++,type:'reunion',name,participants:members,unread:members.length-1,lastMsg:'RDV planifié',lastTime:heure,avatar:'📅',color:'#EDE9FE',rdv});
   }
   saveData('conversations', conversations);
@@ -6666,7 +6568,7 @@ function sendNotifPush(){
   }
   const now=new Date();
   const time=String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0')+' · '+todayStr();
-  pushNotifications.push({id:nextPushId++,title,message,target,priority,sentAt:time,sentBy:'Karim Bensalem',readBy:[]});
+  pushNotifications.push({id:nextPushId++,title,message,target,priority,sentAt:time,sentBy:(currentUser&&currentUser.prenom?currentUser.prenom+' '+currentUser.nom:'Admin'),readBy:[]});
   saveData('pushNotifications',pushNotifications);
 
   // Show success feedback
