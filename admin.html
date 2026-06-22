@@ -2279,7 +2279,7 @@ function toggleSidebar(){
 
 // ── NAVIGATION ──
 function showPage(name,el){
-  try{history.replaceState(null,'','#'+name);}catch(e){}
+  try{history.replaceState(null,'','#'+name);}catch(ignore){}
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -2694,12 +2694,11 @@ function printTpl(items){
   <br><button class="btn" onclick="window.print()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg> Imprimer</button>
 <script>
 (function(){
-  function restoreSection(){
-    var h=(location.hash||'').replace('#','');
-    if(h && typeof showPage==='function') showPage(h,document.querySelector('[onclick*=\'showPage(\''+h+'\')\']'));
-  }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',restoreSection);
-  else restoreSection();
+  var h=(location.hash||"").replace("#","");
+  if(!h||h==="dashboard") return;
+  function tryRestore(){ if(typeof showPage==="function"){ showPage(h,null); } else { setTimeout(tryRestore,100); } }
+  if(document.readyState==="loading"){ document.addEventListener("DOMContentLoaded",function(){ setTimeout(tryRestore,300); }); }
+  else { setTimeout(tryRestore,300); }
 })();
 </script>
 </body></html>`;
