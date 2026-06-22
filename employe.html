@@ -1103,6 +1103,8 @@ function showGeoAlert(type, choices, lat, lng, ag){
 
   // Vibration (si supportée)
   try{ navigator.vibrate && navigator.vibrate([300,100,300]); }catch(e){}
+  if(type==='exit') pushNotif('🚶 Vous quittez la zone','Indiquez votre motif',{action:'geo_exit'},{sticky:true,tag:'geo-exit'});
+  else if(type==='entry') pushNotif('🏢 Arrivée','Glissez pour confirmer votre entrée',{action:'geo_entry'},{sticky:false,tag:'geo-entry'});
 
   if(type==='entry'){
     icon.textContent = '🏢';
@@ -1893,6 +1895,7 @@ function _listenDirectConv(convId){
         if(aCid===convId) renderMsgs(convId);
         updBadge();
         showToast('💬 '+m.name+': '+m.text.slice(0,40));
+        if(document.hidden||!document.hasFocus()) pushNotif('💬 '+m.name,m.text.slice(0,80),{action:'chat',convId},{sticky:false,tag:'chat-x'});
       }
     });
     _convListeners[convId]=true;
@@ -2409,6 +2412,7 @@ function initApp(){
   startInboxListener();
   // Démarrer surveillance périmètre GPS
   setTimeout(()=>{ try{ startGeoWatch(); }catch(e){} }, 1500);
+  initSW();
 }
 
 function startInboxListener(){
@@ -2434,8 +2438,36 @@ function startInboxListener(){
     localStorage.setItem('wecan_emp_convs', JSON.stringify(convs));
     try{ renderConvs && renderConvs(); updBadge && updBadge(); }catch(e){}
     if(window.aCid==='admin_direct') renderMsgs('admin_direct');
+    if(document.hidden||!document.hasFocus()) pushNotif('💬 Admin RH',m.text.slice(0,80),{action:'chat',convId:'admin_direct'},{sticky:false,tag:'chat-admin'});
   });
 }
+
+// ── SERVICE WORKER + NOTIFICATIONS LOCK SCREEN ──
+async function initSW(){
+  if(!('serviceWorker' in navigator)) return;
+  try{
+    const reg = await navigator.serviceWorker.register('/staff-pro/sw.js',{scope:'/staff-pro/'});
+    window._swReg = reg;
+    await navigator.serviceWorker.ready;
+    if(Notification.permission==='default') await Notification.requestPermission();
+    navigator.serviceWorker.addEventListener('message',ev=>{
+      if(!ev.data||ev.data.type!=='NOTIF_CLICK') return;
+      if(ev.data.action==='geo_exit'){ const el=document.getElementById('geo-alert'); if(el)el.style.display='flex'; }
+      else if(ev.data.action==='chat'){ showPage('chat'); }
+    });
+  }catch(err){ console.warn('SW:',err); }
+}
+
+function pushNotif(title,body,data,opts){
+  data=data||{}; opts=opts||{};
+  const sw=window._swReg&&(window._swReg.active||window._swReg.waiting||window._swReg.installing);
+  if(sw&&Notification.permission==='granted'){
+    sw.postMessage({type:'SHOW_NOTIF',title,body,icon:'/staff-pro/logo.svg',vibrate:[300,100,300],requireInteraction:opts.sticky!==false,tag:opts.tag||'staffpro',data});
+    return;
+  }
+  if(Notification.permission==='granted'){ try{new Notification(title,{body});}catch(x){} }
+}
+
 if(ME) initApp();
 </script>
 
