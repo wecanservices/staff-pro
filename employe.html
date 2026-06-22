@@ -10,7 +10,7 @@
   <meta name="theme-color" content="#C0392B">
   <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>WeCheckin — Employé</title>
+<title>WeCheckin â EmployÃ©</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -310,7 +310,7 @@ body.dark input,body.dark select,body.dark textarea{background:#334155;color:#e2
 .login-spinner{display:none;margin:14px auto 0;width:30px;height:30px;border:3px solid rgba(192,57,43,.2);border-top-color:#C0392B;border-radius:50%;animation:spin-login .7s linear infinite;}
 @keyframes spin-login{to{transform:rotate(360deg);}}
 
-/* ══ WECHECKIN — MODERN EMPLOYEE THEME ══ */
+/* ââ WECHECKIN â MODERN EMPLOYEE THEME ââ */
 :root {
   --red: #E84040;
   --dark: #C0392B;
@@ -325,12 +325,12 @@ body::before {
   pointer-events: none;
   z-index: 0;
 }
-/* Topbar modernisée */
+/* Topbar modernisÃ©e */
 .topbar {
   background: linear-gradient(135deg, #1C2340 0%, #8B1A3A 50%, #E84040 100%) !important;
   box-shadow: 0 2px 20px rgba(0,0,0,0.2);
 }
-/* Cards modernisées */
+/* Cards modernisÃ©es */
 .card {
   border-radius: 16px !important;
   box-shadow: 0 1px 4px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04) !important;
@@ -364,7 +364,7 @@ input:focus, select:focus, textarea:focus {
   box-shadow: 0 0 0 3px rgba(232,64,64,0.1) !important;
   outline: none !important;
 }
-/* Login screen déjà moderne */
+/* Login screen dÃ©jÃ  moderne */
 /* Animation page */
 @keyframes slideUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
 .page.active { animation: slideUp 0.25s ease; }
@@ -389,7 +389,7 @@ input:focus, select:focus, textarea:focus {
   background: linear-gradient(135deg, #FFF0F0, #FEE2E2) !important;
 }
 
-/* ── GEOFENCE ALERTS ── */
+/* ââ GEOFENCE ALERTS ââ */
 #geo-alert{position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0.55);display:none;align-items:flex-end;justify-content:center;padding-bottom:0;}
 #geo-alert.show{display:flex;animation:fadeInBg .3s forwards;opacity:1;}
 #geo-alert-card{width:100%;max-width:430px;background:#1e293b;border-radius:28px 28px 0 0;padding:24px 20px 40px;color:#fff;box-shadow:0 -8px 40px rgba(0,0,0,.4);}
@@ -409,7 +409,7 @@ input:focus, select:focus, textarea:focus {
 .geo-choice-btn{padding:14px;border-radius:14px;border:none;font-size:14px;font-weight:600;cursor:pointer;text-align:center;transition:transform .1s;}
 .geo-choice-btn:active{transform:scale(.97);}
 #geo-dismiss{display:block;text-align:center;color:#64748b;font-size:13px;margin-top:10px;cursor:pointer;padding:6px;}
-/* Alerte périmètre dépassé (rouge) */
+/* Alerte pÃ©rimÃ¨tre dÃ©passÃ© (rouge) */
 #geo-blocked-alert{position:fixed;bottom:100px;left:0;right:0;z-index:7000;display:none;justify-content:center;padding:0 16px;}
 #geo-blocked-alert.show{display:flex;animation:slideUp .4s;}
 #geo-blocked-card{background:#7f1d1d;color:#fff;border-radius:18px;padding:16px 18px;max-width:360px;width:100%;box-shadow:0 4px 24px rgba(0,0,0,.3);}
@@ -442,18 +442,18 @@ const db = firebase.database();
 
 <!-- ===== LOGIN SCREEN ===== -->
 <div id="login-screen">
-  <div class="login-logo">🏢</div>
+  <div class="login-logo">ð¢</div>
   <div class="login-title">WeCheckin</div>
-  <div class="login-sub">Connexion Employé</div>
-  <div style="color:rgba(255,255,255,.4);font-size:11px;margin-top:-20px;margin-bottom:24px;">version 3.3 • STAFF PRO</div>
+  <div class="login-sub">Connexion EmployÃ©</div>
+  <div style="color:rgba(255,255,255,.4);font-size:11px;margin-top:-20px;margin-bottom:24px;">version 3.3 â¢ STAFF PRO</div>
   <div class="login-card">
     <div class="login-field">
-      <label>📧 Email</label>
+      <label>ð§ Email</label>
       <input type="email" id="login-email" placeholder="votre@email.com" autocomplete="email">
     </div>
     <div class="login-field">
-      <label>🔒 Mot de passe</label>
-      <input type="password" id="login-password" placeholder="••••••" autocomplete="current-password">
+      <label>ð Mot de passe</label>
+      <input type="password" id="login-password" placeholder="â¢â¢â¢â¢â¢â¢" autocomplete="current-password">
     </div>
     <button class="login-btn" onclick="doLogin()">Se connecter</button>
     <div class="login-spinner" id="login-spinner"></div>
@@ -465,7 +465,7 @@ const db = firebase.database();
 <!-- TOP BAR -->
 <div class="topbar">
   <div style="display:flex;align-items:center;gap:10px">
-    <div style="width:28px;height:28px;background:rgba(255,255,255,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px">🏢</div>
+    <div style="width:28px;height:28px;background:rgba(255,255,255,.2);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px">ð¢</div>
     <h1 style="font-weight:800;letter-spacing:-0.5px;">WeCheckin</h1>
   </div>
   <div class="topbar-right">
@@ -476,42 +476,42 @@ const db = firebase.database();
 <!-- ===== PAGE ACCUEIL ===== -->
 <div class="page active" id="page-accueil">
   <div id="mgr-banner" class="mgr-banner" onclick="openManagerSpace()">
-    <h3>🛡️ Espace Manager</h3>
+    <h3>ð¡ï¸ Espace Manager</h3>
     <p id="mgr-banner-txt">Voir les demandes en attente</p>
   </div>
   <div id="subadmin-card" class="subadmin-card">
-    <h3>🛡️ Mon espace sous-admin</h3>
+    <h3>ð¡ï¸ Mon espace sous-admin</h3>
     <p id="subadmin-title-lbl" style="font-size:11px;opacity:.8;margin-bottom:6px;"></p>
     <div class="subadmin-perm-grid" id="subadmin-perm-grid"></div>
   </div>
-  <div class="sec-title">Bonjour, <span id="home-name">--</span> 👋</div>
+  <div class="sec-title">Bonjour, <span id="home-name">--</span> ð</div>
   <div id="geo-status-bar" style="display:none;padding:8px 12px;border-radius:10px;font-size:12px;font-weight:600;margin-bottom:10px;display:flex;align-items:center;gap:8px;"></div>
   <div class="card" id="home-pt-card">
-    <div class="card-title">Pointage aujourd\u2019hui</div>
+    <div class="card-title">Pointage aujourd'hui</div>
     <div id="home-pt-content" style="text-align:center;color:var(--gray);font-size:13px">Pas encore de pointage</div>
   </div>
-  <div class="card-title" style="margin-bottom:8px">Accès rapide</div>
+  <div class="card-title" style="margin-bottom:8px">AccÃ¨s rapide</div>
   <div class="quick-grid">
     <div class="quick-card" onclick="showPage('profil')">
-      <div class="ico">💰</div><div class="lbl">Fiches de paie</div>
+      <div class="ico">ð°</div><div class="lbl">Fiches de paie</div>
     </div>
     <div class="quick-card" onclick="showPage('conges')">
-      <div class="ico">📋</div><div class="lbl">Mes demandes</div>
+      <div class="ico">ð</div><div class="lbl">Mes demandes</div>
     </div>
     <div class="quick-card" onclick="showPage('pointage')">
-      <div class="ico">📷</div><div class="lbl">Pointage QR</div>
+      <div class="ico">ð·</div><div class="lbl">Pointage QR</div>
     </div>
     <div class="quick-card" onclick="openAgentChat()">
-      <div class="ico">🤖</div><div class="lbl">Agent RH IA</div>
+      <div class="ico">ð¤</div><div class="lbl">Agent RH IA</div>
     </div>
   </div>
   <div class="card">
-    <div class="card-title">Activité récente</div>
-    <div id="activity-list"><div style="text-align:center;color:var(--gray);font-size:13px;padding:16px">Aucune activité</div></div>
+    <div class="card-title">ActivitÃ© rÃ©cente</div>
+    <div id="activity-list"><div style="text-align:center;color:var(--gray);font-size:13px;padding:16px">Aucune activitÃ©</div></div>
   </div>
   <!-- Dashboard Postes -->
   <div class="card" id="postes-dash-card">
-    <div class="card-title" style="margin-bottom:10px;">📊 Équipe par poste</div>
+    <div class="card-title" style="margin-bottom:10px;">ð Ãquipe par poste</div>
     <div id="postes-dash-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;"></div>
   </div>
 </div>
@@ -530,27 +530,27 @@ const db = firebase.database();
   </div>
   <div class="pt-btns" style="margin-top:16px">
     <button class="pt-btn entry" onclick="openScanModal('Entree')" style="padding:20px 10px">
-      <div class="pt-ico" style="font-size:30px">📲</div>
-      <div class="pt-lbl" style="font-size:13px;font-weight:700;margin-top:6px">Entrée</div>
+      <div class="pt-ico" style="font-size:30px">ð²</div>
+      <div class="pt-lbl" style="font-size:13px;font-weight:700;margin-top:6px">EntrÃ©e</div>
       <div style="font-size:10px;color:#94a3b8;margin-top:2px">Scanner QR</div>
     </button>
     <button class="pt-btn exit" onclick="openScanModal('Sortie')" style="padding:20px 10px">
-      <div class="pt-ico" style="font-size:30px">🚪</div>
+      <div class="pt-ico" style="font-size:30px">ðª</div>
       <div class="pt-lbl" style="font-size:13px;font-weight:700;margin-top:6px">Sortie</div>
       <div style="font-size:10px;color:#94a3b8;margin-top:2px">Scanner QR</div>
     </button>
   </div>
-  <!-- Modal scanner plein écran -->
+  <!-- Modal scanner plein Ã©cran -->
   <div id="scan-modal" style="display:none;position:fixed;inset:0;z-index:9000;background:#000;flex-direction:column">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:rgba(0,0,0,.8)">
       <div style="display:flex;align-items:center;gap:10px">
-        <span id="scan-modal-ico" style="font-size:22px">📲</span>
+        <span id="scan-modal-ico" style="font-size:22px">ð²</span>
         <div>
-          <div id="scan-modal-title" style="color:#fff;font-size:16px;font-weight:700">Pointer Entrée</div>
+          <div id="scan-modal-title" style="color:#fff;font-size:16px;font-weight:700">Pointer EntrÃ©e</div>
           <div style="color:rgba(255,255,255,.5);font-size:11px">Scannez le QR de votre agence</div>
         </div>
       </div>
-      <button onclick="closeScanModal()" style="background:rgba(255,255,255,.15);border:none;color:#fff;font-size:18px;width:36px;height:36px;border-radius:50%;cursor:pointer">✕</button>
+      <button onclick="closeScanModal()" style="background:rgba(255,255,255,.15);border:none;color:#fff;font-size:18px;width:36px;height:36px;border-radius:50%;cursor:pointer">â</button>
     </div>
     <div style="flex:1;position:relative">
       <div id="scan-wrap" style="width:100%;height:100%">
@@ -563,7 +563,7 @@ const db = firebase.database();
     <div style="padding:20px;text-align:center;color:rgba(255,255,255,.6);font-size:13px">Centrez le QR code dans le cadre rouge</div>
   </div>
   <div class="card" id="pt-summary-card">
-    <div class="card-title">Résumé du jour</div>
+    <div class="card-title">RÃ©sumÃ© du jour</div>
     <div class="sum-row" id="sum-row"><div style="grid-column:1/-1;text-align:center;color:var(--gray);font-size:13px">Aucun pointage</div></div>
   </div>
   <div class="card">
@@ -576,14 +576,14 @@ const db = firebase.database();
 <div class="page" id="page-conges">
   <div class="sec-title">Mes demandes</div>
   <div id="leaves-list"><div style="text-align:center;color:var(--gray);font-size:13px;padding:24px">Aucune demande</div></div>
-  <button class="fab" onclick="openLF()">＋</button>
+  <button class="fab" onclick="openLF()">ï¼</button>
 </div>
 
 <!-- ===== PAGE CHAT ===== -->
 <div class="page" id="page-chat">
   <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
     <div class="sec-title" style="margin-bottom:0">Messages</div>
-    <button onclick="openNewConvModal()" style="background:#C0392B;color:#fff;border:none;border-radius:10px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;">✏️ Nouveau</button>
+    <button onclick="openNewConvModal()" style="background:#C0392B;color:#fff;border:none;border-radius:10px;padding:7px 14px;font-size:12px;font-weight:600;cursor:pointer;">âï¸ Nouveau</button>
   </div>
   <div id="conv-list"></div>
 </div>
@@ -600,38 +600,38 @@ const db = firebase.database();
     <div id="prof-info"></div>
   </div>
   <div class="card">
-    <div class="card-title">Thème</div>
+    <div class="card-title">ThÃ¨me</div>
     <div class="theme-row">
-      <button class="theme-btn on" onclick="setTh(this,'light')">☀️ Clair</button>
-      <button class="theme-btn" onclick="setTh(this,'dark')">🌙 Sombre</button>
-      <button class="theme-btn" onclick="setTh(this,'auto')">⚙️ Auto</button>
+      <button class="theme-btn on" onclick="setTh(this,'light')">âï¸ Clair</button>
+      <button class="theme-btn" onclick="setTh(this,'dark')">ð Sombre</button>
+      <button class="theme-btn" onclick="setTh(this,'auto')">âï¸ Auto</button>
     </div>
   </div>
   <div class="card">
-    <div class="card-title">🌐 Langue / Language / اللغة</div>
+    <div class="card-title">ð Langue / Language / Ø§ÙÙØºØ©</div>
     <div class="theme-row">
-      <button class="theme-btn" id="lang-btn-fr" onclick="setAppLang('fr',this)">🇫🇷 Français</button>
-      <button class="theme-btn" id="lang-btn-ar" onclick="setAppLang('ar',this)">🇩🇿 عربي</button>
-      <button class="theme-btn" id="lang-btn-en" onclick="setAppLang('en',this)">🇬🇧 English</button>
+      <button class="theme-btn" id="lang-btn-fr" onclick="setAppLang('fr',this)">ð«ð· FranÃ§ais</button>
+      <button class="theme-btn" id="lang-btn-ar" onclick="setAppLang('ar',this)">ð©ð¿ Ø¹Ø±Ø¨Ù</button>
+      <button class="theme-btn" id="lang-btn-en" onclick="setAppLang('en',this)">ð¬ð§ English</button>
     </div>
   </div>
   <!-- document section hidden: use demandes tab instead -->
   <div class="card" style="display:none">
-    <!-- section documents désactivée — utiliser onglet Congés/Demandes -->
+    <!-- section documents dÃ©sactivÃ©e â utiliser onglet CongÃ©s/Demandes -->
     <div id="doc-sec" style="display:none"></div>
   </div>
   <div class="card">
-    <button class="btn btn-outline btn-full" onclick="doLogout()" style="color:#C0392B;border-color:#C0392B;">🚪 Se déconnecter</button>
+    <button class="btn btn-outline btn-full" onclick="doLogout()" style="color:#C0392B;border-color:#C0392B;">ðª Se dÃ©connecter</button>
   </div>
 </div>
 
 <!-- ===== TAB BAR ===== -->
 <div class="tab-bar">
-  <button class="tab-btn active" onclick="showPage('accueil')" id="tab-accueil"><span>🏠</span>Accueil</button>
+  <button class="tab-btn active" onclick="showPage('accueil')" id="tab-accueil"><span>ð </span>Accueil</button>
+  <button class="tab-btn" onclick="showPage('conges')" id="tab-conges"><span>ð</span>CongÃ©s</button>
   <button class="tab-btn" onclick="showPage('pointage')" id="tab-pointage"><span><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 10a2 2 0 0 0-2 2c0 1.5-.1 3-.3 4.5"/><path d="M14.5 12a2.5 2.5 0 0 0-5 0"/><path d="M16.5 11.5A4.5 4.5 0 0 0 7.5 12c0 2-.2 4-.5 5.5"/><path d="M19 10.5A7 7 0 0 0 5 12c0 2.5-.3 5-.8 7"/><path d="M21 9.5A9.5 9.5 0 0 0 2.5 12c0 3-.4 6-1 8.5"/><path d="M12 10V7"/></svg></span>Pointage</button>
-  <button class="tab-btn" onclick="showPage('conges')" id="tab-conges"><span>📅</span>Congés</button>
-  <button class="tab-btn" onclick="showPage('chat')" id="tab-chat"><span>💬</span>Chat<span class="tab-badge" id="chat-badge" style="display:none">0</span></button>
-  <button class="tab-btn" onclick="showPage('profil')" id="tab-profil"><span>👤</span>Profil</button>
+  <button class="tab-btn" onclick="showPage('chat')" id="tab-chat"><span>ð¬</span>Chat<span class="tab-badge" id="chat-badge" style="display:none">0</span></button>
+  <button class="tab-btn" onclick="showPage('profil')" id="tab-profil"><span>ð¤</span>Profil</button>
 </div>
 
 <!-- ===== MODAL FORMULAIRE DEMANDE ===== -->
@@ -640,10 +640,10 @@ const db = firebase.database();
     <div class="modal-handle"></div>
     <div class="modal-title">Nouvelle demande</div>
     <div class="req-type-row">
-      <div class="req-type-card on" onclick="selReqType('conge')"><div class="rt-ico">☀️</div><div class="rt-lbl">Congé</div></div>
-      <div class="req-type-card" onclick="selReqType('sortie')"><div class="rt-ico">🚪</div><div class="rt-lbl">Sortie</div></div>
-      <div class="req-type-card" onclick="selReqType('document')"><div class="rt-ico">📄</div><div class="rt-lbl">Document</div></div>
-      <div class="req-type-card" onclick="selReqType('hsup')"><div class="rt-ico">➕</div><div class="rt-lbl">Heures sup</div></div>
+      <div class="req-type-card on" onclick="selReqType('conge')"><div class="rt-ico">âï¸</div><div class="rt-lbl">CongÃ©</div></div>
+      <div class="req-type-card" onclick="selReqType('sortie')"><div class="rt-ico">ðª</div><div class="rt-lbl">Sortie</div></div>
+      <div class="req-type-card" onclick="selReqType('document')"><div class="rt-ico">ð</div><div class="rt-lbl">Document</div></div>
+      <div class="req-type-card" onclick="selReqType('hsup')"><div class="rt-ico">â</div><div class="rt-lbl">Heures sup</div></div>
     </div>
 
     <!-- CONGE -->
@@ -654,7 +654,7 @@ const db = firebase.database();
           <div class="chip" id="chip-m" onclick="selH('maladie')">Maladie</div>
         </div>
       </div>
-      <div class="field-group"><label>Date début</label><input type="date" id="ld"></div>
+      <div class="field-group"><label>Date dÃ©but</label><input type="date" id="ld"></div>
       <div class="field-group"><label>Date fin</label><input type="date" id="lf"></div>
       <div class="field-group"><label>Motif *</label><textarea id="lm-conge" placeholder="Motif obligatoire..." oninput="updSubBtn()"></textarea></div>
     </div>
@@ -672,15 +672,15 @@ const db = firebase.database();
     <div id="fields-document" class="fields-hidden">
       <div class="field-group"><label>Type de document</label>
         <div class="doc-type-row">
-          <div class="doc-type-opt" onclick="selDocType('Certificat Salaire')"><input type="radio" name="doc-type" value="Certificat Salaire">💼 Certificat Salaire</div>
-          <div class="doc-type-opt" onclick="selDocType('Attestation Travail')"><input type="radio" name="doc-type" value="Attestation Travail">📃 Attestation Travail</div>
-          <div class="doc-type-opt" onclick="selDocType('Fiche de Paie')"><input type="radio" name="doc-type" value="Fiche de Paie">💰 Fiche de Paie</div>
-          <div class="doc-type-opt" onclick="selDocType('Autre')"><input type="radio" name="doc-type" value="Autre">📂 Autre</div>
+          <div class="doc-type-opt" onclick="selDocType('Certificat Salaire')"><input type="radio" name="doc-type" value="Certificat Salaire">ð¼ Certificat Salaire</div>
+          <div class="doc-type-opt" onclick="selDocType('Attestation Travail')"><input type="radio" name="doc-type" value="Attestation Travail">ð Attestation Travail</div>
+          <div class="doc-type-opt" onclick="selDocType('Fiche de Paie')"><input type="radio" name="doc-type" value="Fiche de Paie">ð° Fiche de Paie</div>
+          <div class="doc-type-opt" onclick="selDocType('Autre')"><input type="radio" name="doc-type" value="Autre">ð Autre</div>
         </div>
       </div>
       <div class="field-group"><label>Usage / Destination</label><input type="text" id="doc-usage" placeholder="Ex: Banque, visa..."></div>
       <div class="urgent-toggle" onclick="toggleUrgent()">
-        <span>🔴 Urgent</span>
+        <span>ð´ Urgent</span>
         <div class="toggle-sw" id="urgent-sw"></div>
       </div>
     </div>
@@ -688,7 +688,7 @@ const db = firebase.database();
     <!-- HEURES SUP -->
     <div id="fields-hsup" class="fields-hidden">
       <div class="field-group"><label>Date</label><input type="date" id="hs-date" oninput="updHsDate()"></div>
-      <div class="field-group"><label>Heures travaillées</label>
+      <div class="field-group"><label>Heures travaillÃ©es</label>
         <div class="chip-row" style="margin-bottom:8px">
           <div class="h-chip" onclick="selHChip(this,1)">1h</div>
           <div class="h-chip" onclick="selHChip(this,2)">2h</div>
@@ -702,11 +702,11 @@ const db = firebase.database();
       <div class="field-group"><label>Photo justificative *</label>
         <div class="photo-area">
           <div id="hs-photo-btns" class="photo-btns">
-            <button class="btn btn-outline" onclick="openHsCamera()">📷 Prendre une photo</button>
+            <button class="btn btn-outline" onclick="openHsCamera()">ð· Prendre une photo</button>
           </div>
           <div id="hs-photo-preview">
             <img id="hs-photo-img" src="" alt="Photo">
-            <button class="btn btn-gray" onclick="removeHsPhoto()" style="margin-top:8px">🗑 Supprimer</button>
+            <button class="btn btn-gray" onclick="removeHsPhoto()" style="margin-top:8px">ð Supprimer</button>
           </div>
         </div>
       </div>
@@ -720,21 +720,21 @@ const db = firebase.database();
 <!-- ===== CHAT WINDOW ===== -->
 <div id="chat-win">
   <div class="cw-header">
-    <button class="cw-back" onclick="closeWin()">‹</button>
-    <div class="cw-av" id="cw-av">🤖</div>
+    <button class="cw-back" onclick="closeWin()">â¹</button>
+    <div class="cw-av" id="cw-av">ð¤</div>
     <div style="flex:1"><div class="cw-name" id="cw-name">Agent RH IA</div><div class="cw-sub" id="cw-sub">En ligne</div></div>
-    <button id="rdv-btn" onclick="openRdvModal()" style="display:none;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:10px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;">📅 RDV</button>
+    <button id="rdv-btn" onclick="openRdvModal()" style="display:none;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:10px;padding:5px 10px;font-size:11px;font-weight:600;cursor:pointer;">ð RDV</button>
   </div>
   <!-- RDV Modal -->
   <div id="rdv-modal" style="display:none;position:absolute;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;">
     <div style="background:#fff;border-radius:16px;width:88%;max-width:340px;padding:20px;">
-      <div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:14px;">📅 Planifier un rendez-vous</div>
+      <div style="font-size:15px;font-weight:700;color:#1e293b;margin-bottom:14px;">ð Planifier un rendez-vous</div>
       <div style="margin-bottom:10px;"><label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:4px;">Date</label><input type="date" id="rdv-date" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;"></div>
       <div style="margin-bottom:10px;"><label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:4px;">Heure</label><input type="time" id="rdv-time" style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;"></div>
       <div style="margin-bottom:16px;"><label style="font-size:12px;font-weight:600;color:#64748b;display:block;margin-bottom:4px;">Objet</label><input type="text" id="rdv-objet" placeholder="Sujet du rendez-vous..." style="width:100%;padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;box-sizing:border-box;"></div>
       <div style="display:flex;gap:8px;">
         <button onclick="closeRdvModal()" style="flex:1;padding:9px;background:#f1f5f9;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">Annuler</button>
-        <button onclick="sendRdv()" style="flex:1;padding:9px;background:#C0392B;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">📅 Envoyer</button>
+        <button onclick="sendRdv()" style="flex:1;padding:9px;background:#C0392B;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;">ð Envoyer</button>
       </div>
     </div>
   </div>
@@ -743,7 +743,7 @@ const db = firebase.database();
   </div>
   <div class="msg-input-row">
     <input id="msg-inp" type="text" placeholder="Message..." onkeydown="if(event.key==='Enter')sMsg()">
-    <button class="msg-send" onclick="sMsg()">➤</button>
+    <button class="msg-send" onclick="sMsg()">â¤</button>
   </div>
 </div>
 
@@ -751,8 +751,8 @@ const db = firebase.database();
 <div id="hs-cam-modal">
   <video id="hs-cam-video" autoplay playsinline></video>
   <div class="cam-controls">
-    <button class="btn btn-gray" onclick="closeHsCamera()">✕ Annuler</button>
-    <button class="btn btn-red" onclick="captureHsPhoto()">📷 Capturer</button>
+    <button class="btn btn-gray" onclick="closeHsCamera()">â Annuler</button>
+    <button class="btn btn-red" onclick="captureHsPhoto()">ð· Capturer</button>
   </div>
   <canvas id="hs-canvas" style="display:none"></canvas>
 </div>
@@ -760,15 +760,15 @@ const db = firebase.database();
 <!-- ===== ESPACE MANAGER ===== -->
 <div id="mgr-space">
   <div class="mgr-header">
-    <span>🛡️</span>
+    <span>ð¡ï¸</span>
     <h2>Espace Manager</h2>
-    <button class="mgr-close" onclick="closeMgrSpace()">✕</button>
+    <button class="mgr-close" onclick="closeMgrSpace()">â</button>
   </div>
   <div class="mgr-tabs">
-    <button class="mgr-tab active" onclick="switchMgrTab('conge',this)">☀️ Congés</button>
-    <button class="mgr-tab" onclick="switchMgrTab('hsup',this)">➕ H.Sup</button>
-    <button class="mgr-tab" onclick="switchMgrTab('sortie',this)">🚪 Sorties</button>
-    <button class="mgr-tab" onclick="switchMgrTab('document',this)">📄 Docs</button>
+    <button class="mgr-tab active" onclick="switchMgrTab('conge',this)">âï¸ CongÃ©s</button>
+    <button class="mgr-tab" onclick="switchMgrTab('hsup',this)">â H.Sup</button>
+    <button class="mgr-tab" onclick="switchMgrTab('sortie',this)">ðª Sorties</button>
+    <button class="mgr-tab" onclick="switchMgrTab('document',this)">ð Docs</button>
   </div>
   <div class="mgr-content" id="mgr-content"></div>
 </div>
@@ -791,7 +791,7 @@ const DV = '3.8';
 function ld(k,fb){try{const d=localStorage.getItem('wecan_'+k);return d?JSON.parse(d):fb;}catch(e){return fb;}}
 function sv(k,d){
   localStorage.setItem('wecan_'+k,JSON.stringify(d));
-  // emp_msgs/emp_convs stockés par employé pour éviter conflits entre utilisateurs
+  // emp_msgs/emp_convs stockÃ©s par employÃ© pour Ã©viter conflits entre utilisateurs
   const perEmpKeys=['emp_msgs','emp_convs','emp_leaves','emp_docs'];
   const fbKey = (perEmpKeys.includes(k) && window.ME) ? 'wecan/per_emp/'+window.ME.id+'/'+k : 'wecan/'+k;
   try{ db.ref(fbKey).set(d); }catch(e){}
@@ -801,16 +801,16 @@ function sv(k,d){
   }
 }
 
-// Sync Firebase → localStorage en temps réel (cross-device)
+// Sync Firebase â localStorage en temps rÃ©el (cross-device)
 let _fbEmpReady = false;
 function fbEmpSync(){
   if(_fbEmpReady) return; _fbEmpReady = true;
-  // Écouter employees et agencies depuis Firebase
+  // Ãcouter employees et agencies depuis Firebase
   db.ref('wecan/employees').on('value', snap=>{
     const val = snap.val();
     if(!val) return;
     let arr = Array.isArray(val) ? val : (typeof val==='object' ? Object.values(val) : []);
-    // PURGE AUTOMATIQUE Firebase — supprimer faux employes meme si repousses par ancien appareil
+    // PURGE AUTOMATIQUE Firebase â supprimer faux employes meme si repousses par ancien appareil
     const _FN=['Karim','Amira','Yacine','Sonia','Ryad'];
     const _FI=[1,2,3,4,5];
     const _cl=arr.filter(function(e){ return !(e && _FN.includes(e.prenom) && _FI.includes(Number(e.id))); });
@@ -846,7 +846,7 @@ function fbEmpSync(){
     });
     if(changed) localStorage.setItem('approbations',JSON.stringify(existing));
   });
-  // Sync tous les pointages depuis Firebase → localStorage (pour sous-admin et rapports cross-device)
+  // Sync tous les pointages depuis Firebase â localStorage (pour sous-admin et rapports cross-device)
   db.ref('wecan/pointages').on('value', snap=>{
     const val = snap.val();
     if(!val) return;
@@ -876,7 +876,7 @@ let msgs = ld('emp_msgs',{});
 let leaves = ld('emp_leaves',[]);
 let docs = ld('emp_docs',[]);
 
-// PURGE IMMEDIATE — supprimer les faux employes du cache local au demarrage
+// PURGE IMMEDIATE â supprimer les faux employes du cache local au demarrage
 (function purgeLocalFakes(){
   const FAKE_NAMES=['Karim','Amira','Yacine','Sonia','Ryad'];
   const FAKE_IDS=[1,2,3,4,5];
@@ -889,7 +889,7 @@ let docs = ld('emp_docs',[]);
   }
 })();
 
-// Démarrer sync Firebase cross-device (immédiat + 500ms de sécurité)
+// DÃ©marrer sync Firebase cross-device (immÃ©diat + 500ms de sÃ©curitÃ©)
 fbEmpSync();
 setTimeout(fbEmpSync, 500);
 
@@ -902,7 +902,7 @@ if(!agencies.length){
   sv('agencies',agencies);
 }
 
-// ── LOGIN ──
+// ââ LOGIN ââ
 function doLogin(){
   const email=document.getElementById('login-email').value.trim().toLowerCase();
   const pwd=document.getElementById('login-password').value;
@@ -916,7 +916,7 @@ function doLogin(){
     if(spinner)spinner.style.display='none';
     const emp=emps.find(e=>e.email&&e.email.toLowerCase()===email&&e.password===pwd);
     if(!emp){
-      errEl.textContent='Email ou mot de passe incorrect. ('+emps.length+' comptes trouvés)';
+      errEl.textContent='Email ou mot de passe incorrect. ('+emps.length+' comptes trouvÃ©s)';
       if(btn){btn.disabled=false;btn.textContent='Se connecter';}
       return;
     }
@@ -928,7 +928,7 @@ function doLogin(){
     initApp();
   }
 
-  // Toujours vérifier Firebase en premier pour avoir les comptes à jour
+  // Toujours vÃ©rifier Firebase en premier pour avoir les comptes Ã  jour
   if(btn){btn.disabled=true;btn.textContent='Connexion...';}
   if(spinner)spinner.style.display='block';
   try{
@@ -939,18 +939,18 @@ function doLogin(){
         ? (Array.isArray(fbRaw) ? fbRaw : Object.values(fbRaw)).filter(e=>e&&e.id)
         : [];
       if(fbEmps.length){
-        // Mettre à jour localStorage ET la variable globale employees avec les données Firebase
+        // Mettre Ã  jour localStorage ET la variable globale employees avec les donnÃ©es Firebase
         localStorage.setItem('wecan_employees',JSON.stringify(fbEmps));
         employees = fbEmps;
         _tryLogin(fbEmps);
       } else {
-        // Firebase vide → utiliser localStorage (fallback)
+        // Firebase vide â utiliser localStorage (fallback)
         const localEmps = ld('employees',[]);
         employees = localEmps;
         _tryLogin(localEmps);
       }
     }).catch(()=>{
-      // Pas de réseau → utiliser localStorage
+      // Pas de rÃ©seau â utiliser localStorage
       const localEmps = ld('employees',[]);
       employees = localEmps;
       _tryLogin(localEmps);
@@ -960,18 +960,18 @@ function doLogin(){
   }
 }
 function doLogout(){
-  if(!confirm('Se déconnecter ?'))return;
+  if(!confirm('Se dÃ©connecter ?'))return;
   localStorage.removeItem('wecan_logged_id');
   document.getElementById('login-screen').classList.remove('hidden');
 }
-// Touche Entrée sur le champ password
+// Touche EntrÃ©e sur le champ password
 document.addEventListener('DOMContentLoaded',()=>{
   const pwdEl=document.getElementById('login-password');
   if(pwdEl)pwdEl.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 });
 
 const savedId=localStorage.getItem('wecan_logged_id');
-// Relire les données fraîches (permissions peuvent avoir changé via admin)
+// Relire les donnÃ©es fraÃ®ches (permissions peuvent avoir changÃ© via admin)
 if(savedId){const _freshAtStart=ld('employees',[]);if(_freshAtStart.length)employees=_freshAtStart;}
 const savedEmp=savedId?employees.find(e=>String(e.id)===String(savedId)):null;
 let ME = savedEmp || null;
@@ -1009,14 +1009,14 @@ setInterval(tickClock,1000);tickClock();
 
 // ===== POINTAGE =====
 
-// ══════════════════════════════════════════════════════════════
-// GÉOFENCING — Surveillance périmètre en temps réel
-// ══════════════════════════════════════════════════════════════
+// ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// GÃOFENCING â Surveillance pÃ©rimÃ¨tre en temps rÃ©el
+// ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 let _geoWatchId   = null;
 let _geoWasInside = null;    // null=inconnu, true=dedans, false=dehors
 let _geoAlertOpen = false;
 let _geoAlertType = null;    // 'entry' | 'exit'
-let _geoChoiceCb  = null;    // callback après swipe
+let _geoChoiceCb  = null;    // callback aprÃ¨s swipe
 let _blockedTimer = null;
 
 function geoDist(lat,lng,agLat,agLng){
@@ -1043,9 +1043,9 @@ function startGeoWatch(){
     if(!agLat||!agLng) return;
 
     const dist = geoDist(lat,lng,agLat,agLng);
-    const inside = dist <= rayon * 1.1; // 1.1× tolérance GPS mobile stricte
+    const inside = dist <= rayon * 1.1; // 1.1Ã tolÃ©rance GPS mobile stricte
 
-    // ── Passage DEHORS → DEDANS : alerte Entrée ──
+    // ââ Passage DEHORS â DEDANS : alerte EntrÃ©e ââ
     if(inside && _geoWasInside===false && !_geoAlertOpen){
       if(window._activeSortieId && !window._activeSortieMission){
         const now = new Date();
@@ -1061,8 +1061,8 @@ function startGeoWatch(){
       }
     }
 
-    // ── Passage DEDANS → DEHORS : alerte Sortie ──
-    if(!inside && _geoWasInside===true && !_geoAlertOpen){
+    // ââ Passage DEDANS â DEHORS : alerte Sortie ââ
+    if(!inside && (_geoWasInside===true||(_geoWasInside===null&&ld('pointages',[]).some(p=>p.empId===ME?.id&&p.date===tday()&&p.type==='Entree'))) && !_geoAlertOpen){
       const todayPts = ld('pointages',[]).filter(p=>p.empId===ME.id&&p.date===tday());
       const hasEntree = todayPts.some(p=>p.type==='Entree');
       const hasSortie = todayPts.some(p=>p.type==='Sortie');
@@ -1072,7 +1072,7 @@ function startGeoWatch(){
       }
     }
 
-    // ── Mise à jour alerte périmètre dépassé (si hors zone) ──
+    // ââ Mise Ã  jour alerte pÃ©rimÃ¨tre dÃ©passÃ© (si hors zone) ââ
     if(!inside && !_geoAlertOpen){
       showBlockedAlert(Math.round(dist), rayon);
     } else if(inside){
@@ -1096,9 +1096,9 @@ function stopGeoWatch(){
   }
 }
 
-// ──────────────────────────────────────────────────────────────
-// ALERTE style appel téléphonique
-// ──────────────────────────────────────────────────────────────
+// ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ALERTE style appel tÃ©lÃ©phonique
+// ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function showGeoAlert(type, choices, lat, lng, ag){
   _geoAlertOpen = true;
   _geoAlertType = type;
@@ -1108,16 +1108,16 @@ function showGeoAlert(type, choices, lat, lng, ag){
   const sub   = document.getElementById('geo-alert-sub');
   const choicesEl = document.getElementById('geo-choices');
 
-  // Vibration (si supportée)
+  // Vibration (si supportÃ©e)
   try{ navigator.vibrate && navigator.vibrate([300,100,300]); }catch(e){}
-  if(type==='exit') pushNotif('🚶 Vous quittez la zone','Indiquez votre motif',{action:'geo_exit'},{sticky:true,tag:'geo-exit'});
-  else if(type==='entry') pushNotif('🏢 Arrivée','Glissez pour confirmer votre entrée',{action:'geo_entry'},{sticky:false,tag:'geo-entry'});
+  if(type==='exit') pushNotif('ð¶ Vous quittez la zone','Indiquez votre motif',{action:'geo_exit'},{sticky:true,tag:'geo-exit'});
+  else if(type==='entry') pushNotif('ð¢ ArrivÃ©e','Glissez pour confirmer votre entrÃ©e',{action:'geo_entry'},{sticky:false,tag:'geo-entry'});
 
   if(type==='entry'){
-    icon.textContent = '🏢';
+    icon.textContent = 'ð¢';
     icon.style.background = '#16a34a33';
-    title.textContent = 'Vous êtes arrivé !';
-    sub.textContent = 'Glissez pour enregistrer votre entrée';
+    title.textContent = 'Vous Ãªtes arrivÃ© !';
+    sub.textContent = 'Glissez pour enregistrer votre entrÃ©e';
     choicesEl.classList.remove('show');
     choicesEl.innerHTML = '';
     _geoChoiceCb = ()=>{
@@ -1125,25 +1125,25 @@ function showGeoAlert(type, choices, lat, lng, ag){
       closeGeoAlert();
     };
   } else if(type==='exit'){
-    icon.textContent = '🚶';
+    icon.textContent = 'ð¶';
     icon.style.background = '#C0392B33';
     title.textContent = 'Vous quittez la zone';
     sub.textContent = 'Glissez pour choisir votre statut';
     choicesEl.classList.remove('show');
     choicesEl.innerHTML = '';
     _geoChoiceCb = ()=>{
-      // Après swipe → afficher les choix
+      // AprÃ¨s swipe â afficher les choix
       sub.textContent = 'Que se passe-t-il ?';
       document.getElementById('geo-swipe-wrap').style.display='none';
       document.getElementById('geo-dismiss').style.display='none';
       const exitChoices = [
-        {label:'🚀 Mission',           motif:'Mission',                   color:'#7c3aed', bg:'#ede9fe', mission:true},
-        {label:'📦 Livraison',         motif:'Livraison',                 color:'#0369a1', bg:'#e0f2fe', mission:false},
-        {label:'🛒 Achat personnel',   motif:'Achat personnel',           color:'#854F0B', bg:'#FAEEDA', mission:false},
-        {label:'🏢 Achat entreprise',  motif:'Achat pour l entreprise',   color:'#065f46', bg:'#d1fae5', mission:false},
-        {label:'☕ Pause',             motif:'Pause',                     color:'#92400E', bg:'#FEF9C3', mission:false},
-        {label:'🚻 Toilettes',         motif:'Toilettes',                 color:'#374151', bg:'#f3f4f6', mission:false},
-        {label:'🏥 Sante medecin',    motif:'Sante voir medecin',        color:'#1d4ed8', bg:'#dbeafe', mission:false},
+        {label:'ð Mission',           motif:'Mission',                   color:'#7c3aed', bg:'#ede9fe', mission:true},
+        {label:'ð¦ Livraison',         motif:'Livraison',                 color:'#0369a1', bg:'#e0f2fe', mission:false},
+        {label:'ð Achat personnel',   motif:'Achat personnel',           color:'#854F0B', bg:'#FAEEDA', mission:false},
+        {label:'ð¢ Achat entreprise',  motif:'Achat pour l entreprise',   color:'#065f46', bg:'#d1fae5', mission:false},
+        {label:'â Pause',             motif:'Pause',                     color:'#92400E', bg:'#FEF9C3', mission:false},
+        {label:'ð» Toilettes',         motif:'Toilettes',                 color:'#374151', bg:'#f3f4f6', mission:false},
+        {label:'ð¥ Sante medecin',    motif:'Sante voir medecin',        color:'#1d4ed8', bg:'#dbeafe', mission:false},
       ];
       choicesEl.innerHTML = exitChoices.map(ch=>
         `<button class="geo-choice-btn" style="background:${ch.bg};color:${ch.color};" onclick="onGeoExitChoice('${ch.motif}',${ch.mission})">${ch.label}</button>`
@@ -1158,7 +1158,7 @@ function showGeoAlert(type, choices, lat, lng, ag){
   const dismiss = document.getElementById('geo-dismiss');
   track.style.left = '4px';
   track.classList.remove('success');
-  document.getElementById('geo-swipe-arrow').textContent = '→';
+  document.getElementById('geo-swipe-arrow').textContent = 'â';
   wrap.style.display = 'block';
   dismiss.style.display = 'block';
 
@@ -1263,7 +1263,7 @@ function showMissionBadge(show){
     badge = document.createElement('div');
     badge.id = 'mission-badge';
     badge.style.cssText = 'position:fixed;top:60px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#7c3aed,#5b21b6);color:#fff;padding:8px 18px;border-radius:20px;font-size:13px;font-weight:700;z-index:7000;display:none;box-shadow:0 2px 12px rgba(124,58,237,0.4);';
-    badge.innerHTML = '🚀 Mission en cours - GPS actif';
+    badge.innerHTML = 'ð Mission en cours - GPS actif';
     document.body.appendChild(badge);
   }
   badge.style.display = show ? 'block' : 'none';
@@ -1276,16 +1276,16 @@ function closeGeoAlert(){
   _geoChoiceCb  = null;
 }
 
-// ──────────────────────────────────────────────────────────────
-// SWIPE INTERACTION — glisser de gauche à droite
-// ──────────────────────────────────────────────────────────────
+// ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// SWIPE INTERACTION â glisser de gauche Ã  droite
+// ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 function initSwipe(track, wrap, onSuccess){
   const wrapW = ()=>wrap.getBoundingClientRect().width;
   const maxX  = ()=>wrapW()-56;
   let dragging=false, startX=0, curX=0;
 
   // Remplacer le noeud pour supprimer les anciens listeners, PUIS definir
-  // les closures sur la nouvelle reference — sinon track pointe vers un noeud
+  // les closures sur la nouvelle reference â sinon track pointe vers un noeud
   // retire du DOM et le pouce ne bouge pas visuellement sur mobile.
   track.replaceWith(track.cloneNode(true));
   const t = document.getElementById('geo-swipe-track');
@@ -1294,6 +1294,7 @@ function initSwipe(track, wrap, onSuccess){
 
   function onStart(e){
     if(t.classList.contains('success')) return;
+    e.preventDefault();
     dragging=true; startX=getEvX(e)-4;
     t.style.transition='none';
   }
@@ -1303,7 +1304,7 @@ function initSwipe(track, wrap, onSuccess){
     curX = Math.max(0, Math.min(getEvX(e)-startX, maxX()));
     t.style.left = (4+curX)+'px';
     const pct = curX/maxX();
-    document.getElementById('geo-swipe-arrow').textContent = pct>0.7?'✓':'→';
+    document.getElementById('geo-swipe-arrow').textContent = pct>0.7?'â':'â';
     t.style.background = 'hsl('+Math.round(pct*135)+',70%,'+(pct>0.7?38:35)+'%)';
   }
   function onEnd(){
@@ -1313,39 +1314,39 @@ function initSwipe(track, wrap, onSuccess){
     if(curX >= maxX()*0.8){
       t.style.left = (maxX()+4)+'px';
       t.classList.add('success');
-      document.getElementById('geo-swipe-arrow').textContent='✓';
+      document.getElementById('geo-swipe-arrow').textContent='â';
       t.style.background='#16a34a';
       setTimeout(()=>onSuccess(), 300);
     } else {
       t.style.left='4px';
-      document.getElementById('geo-swipe-arrow').textContent='→';
+      document.getElementById('geo-swipe-arrow').textContent='â';
       t.style.background='#C0392B';
       curX=0;
     }
   }
 
   t.addEventListener('mousedown', onStart);
-  t.addEventListener('touchstart', onStart, {passive:false});
+  t.addEventListener('touchstart', onStart, {passive:false, capture:true});
   document.addEventListener('mousemove', onMove);
   document.addEventListener('touchmove', onMove, {passive:false});
   document.addEventListener('mouseup', onEnd);
   document.addEventListener('touchend', onEnd);
 }
 
-// ──────────────────────────────────────────────────────────────
-// ALERTE PÉRIMÈTRE DÉPASSÉ
-// ──────────────────────────────────────────────────────────────
+// ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
+// ALERTE PÃRIMÃTRE DÃPASSÃ
+// ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 let _blockedVisible = false;
 function showBlockedAlert(dist, rayon){
   if(_blockedVisible) return;
   _blockedVisible = true;
   const el = document.getElementById('geo-blocked-alert');
   document.getElementById('gbc-dist').textContent = dist+' m';
-  // Barre: pleine quand très loin, vide quand proche
+  // Barre: pleine quand trÃ¨s loin, vide quand proche
   const pct = Math.min(100, Math.round((dist/rayon)*50));
   document.getElementById('gbc-bar').style.width = pct+'%';
   el.classList.add('show');
-  // Auto-hide après 8s
+  // Auto-hide aprÃ¨s 8s
   clearTimeout(_blockedTimer);
   _blockedTimer = setTimeout(()=>hideBlockedAlert(), 8000);
 }
@@ -1368,14 +1369,14 @@ function doPoint(ag,method,typeOvr,lat,lng){
   sv('pointages',pts);
   // Sync to Firebase so admin platform sees the pointage
   try{ db.ref('wecan/pointages').set(pts); }catch(e){}
-  showToast('✅ '+type+' - '+agenceName+' - '+now());
+  showToast('â '+type+' - '+agenceName+' - '+now());
   renderPtSummary();renderPtHist();updPt();updHomePt();updateStatutBadge();
 }
 
 function gps(typeOverride){
   // GPS pointage
   if(!navigator.geolocation){showToast('GPS non disponible');return;}
-  showToast('📍 Localisation GPS...');
+  showToast('ð Localisation GPS...');
   navigator.geolocation.getCurrentPosition(pos=>{
     const lat=pos.coords.latitude,lng=pos.coords.longitude;
     // Use employee's assigned agency
@@ -1385,7 +1386,7 @@ function gps(typeOverride){
       return d<=(a.rayon||300)*3;
     });
     const ag = assignedAg || nearestAg || agencies[0];
-    // Contrôle géographique : bloquer si hors périmètre (sauf employé externe)
+    // ContrÃ´le gÃ©ographique : bloquer si hors pÃ©rimÃ¨tre (sauf employÃ© externe)
     if(!ME.externe){
       const agLat=parseFloat(ag.lat||0), agLng=parseFloat(ag.lng||0);
       const agRayon=parseInt(ag.rayon||ag.radius||300);
@@ -1393,7 +1394,7 @@ function gps(typeOverride){
         const dist=Math.sqrt(Math.pow((lat-agLat)*111000,2)+Math.pow((lng-agLng)*111000*Math.cos(agLat*Math.PI/180),2));
         if(dist>agRayon){
           showBlockedAlert(Math.round(dist),agRayon);
-          showToast('🚫 Hors périmètre ('+Math.round(dist)+'m) — rapprochez-vous de '+(ag.name||ag.nom||ag.id));
+          showToast('ð« Hors pÃ©rimÃ¨tre ('+Math.round(dist)+'m) â rapprochez-vous de '+(ag.name||ag.nom||ag.id));
           return;
         }
       }
@@ -1412,19 +1413,19 @@ function gps(typeOverride){
     else{showToast('Deja pointe complet');return;}
     doPoint(ag,'GPS',auto,lat,lng);
   },err=>{
-    // Bloquer le pointage si GPS indisponible (sécurité géographique obligatoire)
-    const codes={1:'Permission refusée — activez la localisation',2:'Signal GPS faible — déplacez-vous vers une zone ouverte',3:'GPS trop lent — réessayez'};
-    showToast('🚫 GPS requis: '+(codes[err.code]||'Erreur GPS'));
+    // Bloquer le pointage si GPS indisponible (sÃ©curitÃ© gÃ©ographique obligatoire)
+    const codes={1:'Permission refusÃ©e â activez la localisation',2:'Signal GPS faible â dÃ©placez-vous vers une zone ouverte',3:'GPS trop lent â rÃ©essayez'};
+    showToast('ð« GPS requis: '+(codes[err.code]||'Erreur GPS'));
     showBlockedAlert(0,0);
   },{timeout:8000,enableHighAccuracy:true});
 }
 
-var _pendingScanType = 'Entree'; // type à enregistrer après scan
+var _pendingScanType = 'Entree'; // type Ã  enregistrer aprÃ¨s scan
 
 function openScanModal(type){
   _pendingScanType = type || 'Entree';
   var isEntree = _pendingScanType === 'Entree';
-  document.getElementById('scan-modal-ico').textContent = isEntree ? '📲' : '🚪';
+  document.getElementById('scan-modal-ico').textContent = isEntree ? 'ð²' : 'ðª';
   document.getElementById('scan-modal-title').textContent = isEntree ? 'Pointer Entree' : 'Pointer Sortie';
   document.getElementById('scan-frame').style.borderColor = isEntree ? '#16a34a' : '#C0392B';
   document.getElementById('scan-modal').style.display='flex';
@@ -1466,7 +1467,7 @@ function onQR(text){
     // Validate that scanned QR belongs to employee's ASSIGNED agency
     const assignedAgId = String(ME.agenceId||ME.agenceIds?.[0]||'');
     if(assignedAgId && code !== assignedAgId){
-      showToast('🚫 Ce QR appartient à une autre agence ('+parts[2]+') — vous êtes assigné à '+assignedAgId);
+      showToast('ð« Ce QR appartient Ã  une autre agence ('+parts[2]+') â vous Ãªtes assignÃ© Ã  '+assignedAgId);
       startScan();
       return;
     }
@@ -1474,29 +1475,29 @@ function onQR(text){
     // Auto-detect next pointage type
     // Utiliser le type choisi par l'utilisateur (Entree ou Sortie)
     let nextType = _pendingScanType || 'Entree';
-    // OBLIGATOIRE : vérifier GPS + périmètre avant d'accepter le pointage
+    // OBLIGATOIRE : vÃ©rifier GPS + pÃ©rimÃ¨tre avant d'accepter le pointage
     if(navigator.geolocation){
-      showToast('📍 Vérification position GPS...');
+      showToast('ð VÃ©rification position GPS...');
       navigator.geolocation.getCurrentPosition(pos=>{
         const lat=pos.coords.latitude,lng=pos.coords.longitude;
         const agLat=parseFloat(ag.lat)||parseFloat(parts[3]);
         const agLng=parseFloat(ag.lng)||parseFloat(parts[4]);
         const agRayon=parseInt(ag.rayon||ag.radius||parts[5]||300);
         const dist=Math.sqrt(Math.pow((lat-agLat)*111000,2)+Math.pow((lng-agLng)*111000*Math.cos(agLat*Math.PI/180),2));
-        // Bloquer strictement si hors périmètre (sauf employé externe)
+        // Bloquer strictement si hors pÃ©rimÃ¨tre (sauf employÃ© externe)
         if(!ME.externe && dist>agRayon){
           const agName=ag.name||ag.nom||ag.id;
           showBlockedAlert(Math.round(dist),agRayon);
-          showToast('🚫 Hors périmètre ('+Math.round(dist)+'m) — QR refusé. Rapprochez-vous de '+agName);
+          showToast('ð« Hors pÃ©rimÃ¨tre ('+Math.round(dist)+'m) â QR refusÃ©. Rapprochez-vous de '+agName);
           startScan();
           return;
         }
         doPoint(ag,'QR',nextType,lat,lng);
       },err=>{
-        showToast('⚠️ GPS requis pour le pointage QR — activez la localisation');
+        showToast('â ï¸ GPS requis pour le pointage QR â activez la localisation');
       },{timeout:8000,enableHighAccuracy:true});
     } else {
-      showToast('⚠️ GPS non disponible — pointage QR impossible sans localisation');
+      showToast('â ï¸ GPS non disponible â pointage QR impossible sans localisation');
     }
   }else{showToast('QR invalide - format attendu: WECAN|code|nom|lat|lng|rayon');}
 }
@@ -1539,7 +1540,7 @@ function renderPtHist(){
   const byDate={};
   pts.forEach(p=>{if(!byDate[p.date])byDate[p.date]=[];byDate[p.date].push(p);});
   const dates=Object.keys(byDate).reverse();
-  const typeIco={'Entree':['✅','h-in'],'Sortie':['🔴','h-out'],'Debut pause':['☕','h-pb'],'Fin pause':['▶️','h-pe']};
+  const typeIco={'Entree':['â','h-in'],'Sortie':['ð´','h-out'],'Debut pause':['â','h-pb'],'Fin pause':['â¶ï¸','h-pe']};
   hist.innerHTML=dates.slice(0,7).map(dt=>{
     const dpts=byDate[dt];
     let tPause=0;
@@ -1551,8 +1552,8 @@ function renderPtHist(){
     let netH='';
     if(ent&&srt){const n=Math.max(0,toMins2(srt.time)-toMins2(ent.time)-tPause);netH=Math.floor(n/60)+'h'+(n%60?n%60+'m':'');}
     const pauseH=tPause?Math.floor(tPause/60)+'h'+(tPause%60?tPause%60+'m':''):'';
-    return `<div class="hist-day">${dt}<div class="hist-badges">${pauseH?'<span class="hist-badge hb-pause">☕ '+pauseH+'</span>':''}${netH?'<span class="hist-badge hb-work">⏱ '+netH+'</span>':''}</div></div>`+
-    dpts.map(p=>{const[ico,cls]=typeIco[p.type]||['📍','h-in'];return `<div class="hist-item"><div class="h-dot ${cls}">${ico}</div><div class="h-info"><div class="h-type">${p.type}</div><div class="h-meta">${p.agenceName||'Inconnu'} · ${p.method}</div></div><div class="h-time">${p.time}</div></div>`;}).join('');
+    return `<div class="hist-day">${dt}<div class="hist-badges">${pauseH?'<span class="hist-badge hb-pause">â '+pauseH+'</span>':''}${netH?'<span class="hist-badge hb-work">â± '+netH+'</span>':''}</div></div>`+
+    dpts.map(p=>{const[ico,cls]=typeIco[p.type]||['ð','h-in'];return `<div class="hist-item"><div class="h-dot ${cls}">${ico}</div><div class="h-info"><div class="h-type">${p.type}</div><div class="h-meta">${p.agenceName||'Inconnu'} Â· ${p.method}</div></div><div class="h-time">${p.time}</div></div>`;}).join('');
   }).join('');
 }
 
@@ -1564,12 +1565,12 @@ function renderActivity(){
   const pts=ld('pointages',[]).filter(p=>p.empId===ME.id).slice(-5).reverse();
   const al=document.getElementById('activity-list');
   if(!pts.length){al.innerHTML='<div style="text-align:center;color:var(--gray);font-size:13px;padding:16px">Aucune activite</div>';return;}
-  const ico={'Entree':['✅','in'],'Sortie':['🔴','out'],'Debut pause':['☕','pause'],'Fin pause':['▶️','pause']};
-  al.innerHTML=pts.map(p=>{const[i,c]=ico[p.type]||['📍','in'];return `<div class="act-item"><div class="act-ico ${c}">${i}</div><div class="act-info"><div class="atype">${p.type}</div><div class="ameta">${p.agenceName||'Agence'} · ${p.date}</div></div><div class="act-time">${p.time}</div></div>`;}).join('');
+  const ico={'Entree':['â','in'],'Sortie':['ð´','out'],'Debut pause':['â','pause'],'Fin pause':['â¶ï¸','pause']};
+  al.innerHTML=pts.map(p=>{const[i,c]=ico[p.type]||['ð','in'];return `<div class="act-item"><div class="act-ico ${c}">${i}</div><div class="act-info"><div class="atype">${p.type}</div><div class="ameta">${p.agenceName||'Agence'} Â· ${p.date}</div></div><div class="act-time">${p.time}</div></div>`;}).join('');
   // Refresh home pointage card
   const hp=document.getElementById('home-pt-content');
   const todayPts=ld('pointages',[]).filter(p=>p.empId===ME.id&&p.date===tday());
-  if(todayPts.length){const last=todayPts[todayPts.length-1];hp.innerHTML=`<div style="font-size:15px;font-weight:700">${last.type}</div><div style="font-size:12px;color:var(--gray)">${last.time} · ${last.agenceName||'Agence'}</div>`;}
+  if(todayPts.length){const last=todayPts[todayPts.length-1];hp.innerHTML=`<div style="font-size:15px;font-weight:700">${last.type}</div><div style="font-size:12px;color:var(--gray)">${last.time} Â· ${last.agenceName||'Agence'}</div>`;}
   else hp.textContent='Pas encore de pointage';
 }
 
@@ -1589,14 +1590,14 @@ function renderHome(){
     document.getElementById('mgr-banner-txt').textContent=pending.length+' demande'+(pending.length>1?'s':'')+' en attente';
   }
   // Sub-admin card for employees with permissions
-  const PERM_MAP={dashboard:['📊','Tableau de bord','#1d4ed8'],employees:['👥','Employés','#C0392B'],agencies:['🏢','Agences','#047857'],stats:['📈','Statistiques','#7c3aed'],approbations:['✅','Approbations','#b45309'],pointage:['🕐','Pointage','#0369a1'],paie:['💰','Paie','#065f46'],reports:['📋','Rapports','#6b21a8']};
+  const PERM_MAP={dashboard:['ð','Tableau de bord','#1d4ed8'],employees:['ð¥','EmployÃ©s','#C0392B'],agencies:['ð¢','Agences','#047857'],stats:['ð','Statistiques','#7c3aed'],approbations:['â','Approbations','#b45309'],pointage:['ð','Pointage','#0369a1'],paie:['ð°','Paie','#065f46'],reports:['ð','Rapports','#6b21a8']};
   const subCard=document.getElementById('subadmin-card');
   const empPerms = ME.permissions||[];
   if(subCard && empPerms.length>0 && ME.role!=='admin' && ME.role!=='superadmin'){
     subCard.style.display='block';
-    document.getElementById('subadmin-title-lbl').textContent="Accès accordés par l'administrateur · "+empPerms.length+' section'+(empPerms.length>1?'s':'');
+    document.getElementById('subadmin-title-lbl').textContent="AccÃ¨s accordÃ©s par l'administrateur Â· "+empPerms.length+' section'+(empPerms.length>1?'s':'');
     document.getElementById('subadmin-perm-grid').innerHTML=empPerms.map(pk=>{
-      const [icon,label]=PERM_MAP[pk]||['🔹',pk];
+      const [icon,label]=PERM_MAP[pk]||['ð¹',pk];
       return `<button class="subadmin-perm-btn" onclick="openSubAdminSection('${pk}')"><span style="font-size:14px;">${icon}</span>${label}</button>`;
     }).join('');
   } else if(subCard){ subCard.style.display='none'; }
@@ -1609,7 +1610,7 @@ function renderHome(){
 function updateGeoStatusBar(){
   const bar = document.getElementById('geo-status-bar');
   if(!bar) return;
-  if(!navigator.geolocation){ bar.style.cssText='display:flex;padding:8px 12px;border-radius:10px;font-size:12px;font-weight:600;margin-bottom:10px;align-items:center;gap:8px;background:#FEF9C3;color:#92400E;'; bar.innerHTML='⚠️ GPS non disponible sur cet appareil'; return; }
+  if(!navigator.geolocation){ bar.style.cssText='display:flex;padding:8px 12px;border-radius:10px;font-size:12px;font-weight:600;margin-bottom:10px;align-items:center;gap:8px;background:#FEF9C3;color:#92400E;'; bar.innerHTML='â ï¸ GPS non disponible sur cet appareil'; return; }
   const ag = getMyAgency();
   if(!ag){ bar.style.display='none'; return; }
   navigator.geolocation.getCurrentPosition(pos=>{
@@ -1617,26 +1618,26 @@ function updateGeoStatusBar(){
     const rayon = parseInt(ag.rayon||ag.radius||300);
     const inside = dist <= rayon;
     bar.style.cssText='display:flex;padding:8px 12px;border-radius:10px;font-size:12px;font-weight:600;margin-bottom:10px;align-items:center;gap:8px;background:'+(inside?'#EAF3DE':'#FCEBEB')+';color:'+(inside?'#3B6D11':'#A32D2D')+';';
-    bar.innerHTML=(inside?'📍 Dans le périmètre':'🚫 Hors périmètre')+' — '+(ag.name||ag.nom||ag.id)+' ('+dist+'m)';
+    bar.innerHTML=(inside?'ð Dans le pÃ©rimÃ¨tre':'ð« Hors pÃ©rimÃ¨tre')+' â '+(ag.name||ag.nom||ag.id)+' ('+dist+'m)';
   },()=>{
     bar.style.cssText='display:flex;padding:8px 12px;border-radius:10px;font-size:12px;font-weight:600;margin-bottom:10px;align-items:center;gap:8px;background:#F1F5F9;color:#64748b;';
-    bar.innerHTML='📡 Localisation en cours...';
+    bar.innerHTML='ð¡ Localisation en cours...';
   },{timeout:5000,enableHighAccuracy:true});
 }
 
 const POSTE_CATS=[
-  {key:'Responsable',    icon:'👔', color:'#C0392B', bg:'#FDEDEC'},
-  {key:'Gérant',         icon:'⭐', color:'#92400e', bg:'#FEF3C7'},
-  {key:'Chef d’agence', icon:'🏢', color:'#1d4ed8', bg:'#EFF6FF'},
-  {key:'Call center',    icon:'📞', color:'#065f46', bg:'#ECFDF5'},
-  {key:'Polyvalent',     icon:'🔄', color:'#6d28d9', bg:'#F5F3FF'},
-  {key:'Resp. commercial',icon:'💼',color:'#b45309', bg:'#FFFBEB'},
+  {key:'Responsable',    icon:'ð', color:'#C0392B', bg:'#FDEDEC'},
+  {key:'GÃ©rant',         icon:'â­', color:'#92400e', bg:'#FEF3C7'},
+  {key:'Chef dâagence', icon:'ð¢', color:'#1d4ed8', bg:'#EFF6FF'},
+  {key:'Call center',    icon:'ð', color:'#065f46', bg:'#ECFDF5'},
+  {key:'Polyvalent',     icon:'ð', color:'#6d28d9', bg:'#F5F3FF'},
+  {key:'Resp. commercial',icon:'ð¼',color:'#b45309', bg:'#FFFBEB'},
 ];
 function renderPostesDash(){
   const grid=document.getElementById('postes-dash-grid');
   if(!grid)return;
   const employees=ld('employees',[]);
-  if(!employees.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:#94a3b8;font-size:12px;padding:8px;">Aucun employé</div>';return;}
+  if(!employees.length){grid.innerHTML='<div style="grid-column:1/-1;text-align:center;color:#94a3b8;font-size:12px;padding:8px;">Aucun employÃ©</div>';return;}
   const counts={};
   employees.forEach(e=>{
     const p=(e.poste||'Autre').trim();
@@ -1661,12 +1662,12 @@ function renderPostesDash(){
   // Other postes not in categories
   Object.entries(counts).filter(([k])=>!shown.has(k)).sort((a,b)=>b[1]-a[1]).slice(0,3).forEach(([k,v])=>{
     html+=`<div style="background:#F8FAFC;border-radius:10px;padding:10px 8px;text-align:center;">
-      <div style="font-size:20px;">👤</div>
+      <div style="font-size:20px;">ð¤</div>
       <div style="font-size:20px;font-weight:800;color:#475569;line-height:1.1;">${v}</div>
-      <div style="font-size:9px;font-weight:600;color:#64748b;margin-top:2px;">${k.length>12?k.slice(0,11)+'…':k}</div>
+      <div style="font-size:9px;font-weight:600;color:#64748b;margin-top:2px;">${k.length>12?k.slice(0,11)+'â¦':k}</div>
     </div>`;
   });
-  grid.innerHTML=html||'<div style="grid-column:1/-1;text-align:center;color:#94a3b8;font-size:12px;padding:8px;">Aucune donnée</div>';
+  grid.innerHTML=html||'<div style="grid-column:1/-1;text-align:center;color:#94a3b8;font-size:12px;padding:8px;">Aucune donnÃ©e</div>';
 }
 
 // ===== CONGES =====
@@ -1762,7 +1763,7 @@ function subRequest(){
     const allAppros=JSON.parse(localStorage.getItem('wecan_approbations')||'[]');
     if(!Array.isArray(allAppros)) { const arr=Object.values(allAppros); arr.push(req); localStorage.setItem('wecan_approbations',JSON.stringify(arr)); db.ref('wecan/approbations').set(arr); } else { allAppros.push(req); localStorage.setItem('wecan_approbations',JSON.stringify(allAppros)); db.ref('wecan/approbations').set(allAppros); }
   }catch(fbErr){}
-  closeLF();showToast('✅ Demande envoyee');
+  closeLF();showToast('â Demande envoyee');
   renderLeaves();renderHome();
   hsPhotoData=null;document.getElementById('hs-photo-preview').style.display='none';document.getElementById('hs-photo-btns').style.display='flex';
 }
@@ -1771,7 +1772,7 @@ function renderLeaves(){
   leaves=ld('emp_leaves',[]).filter(l=>l.empId===ME.id);
   const ll=document.getElementById('leaves-list');
   if(!leaves.length){ll.innerHTML='<div style="text-align:center;color:var(--gray);font-size:13px;padding:24px">Aucune demande</div>';return;}
-  const icoMap={conge:'☀️',sortie:'🚪',document:'📄',hsup:'➕'};
+  const icoMap={conge:'âï¸',sortie:'ðª',document:'ð',hsup:'â'};
   const sbMap={pending:'sb-pending',approved:'sb-approved',rejected:'sb-rejected'};
   const slMap={pending:'En attente',approved:'Approuvee',rejected:'Refusee'};
   ll.innerHTML=[...leaves].reverse().map(l=>{
@@ -1779,9 +1780,9 @@ function renderLeaves(){
     let info='';
     if(l.type==='conge') info=`${d.debut} - ${d.fin} (${d.jours}j)`;
     else if(l.type==='sortie') info=`${d.date} de ${d.heure} a ${d.retour}`;
-    else if(l.type==='document') info=d.docType+(d.urgent?' 🔴 URGENT':'');
-    else if(l.type==='hsup') info=`${d.date_hsup} · ${d.heures}h`;
-    return `<div class="leave-item"><div class="leave-ico">${icoMap[l.type]||'📋'}</div><div class="leave-info"><div class="leave-type" style="display:flex;align-items:center;justify-content:space-between">${l.type.charAt(0).toUpperCase()+l.type.slice(1)}<span class="status-badge ${sbMap[l.status]||'sb-pending'}">${slMap[l.status]||l.status}</span></div><div class="leave-date">${info}</div><div class="leave-motif">${d.motif||d.usage||''}</div></div></div>`;
+    else if(l.type==='document') info=d.docType+(d.urgent?' ð´ URGENT':'');
+    else if(l.type==='hsup') info=`${d.date_hsup} Â· ${d.heures}h`;
+    return `<div class="leave-item"><div class="leave-ico">${icoMap[l.type]||'ð'}</div><div class="leave-info"><div class="leave-type" style="display:flex;align-items:center;justify-content:space-between">${l.type.charAt(0).toUpperCase()+l.type.slice(1)}<span class="status-badge ${sbMap[l.status]||'sb-pending'}">${slMap[l.status]||l.status}</span></div><div class="leave-date">${info}</div><div class="leave-motif">${d.motif||d.usage||''}</div></div></div>`;
   }).join('');
 }
 
@@ -1822,13 +1823,13 @@ function removeHsPhoto(){
 function renderConvs(){
   convs=ld('emp_convs',[]);
   if(!convs.length){
-    convs=[{id:'agent',type:'agent',name:'Agent RH IA',participants:[ME.id],unread:0,lastMsg:'Bonjour ! Comment puis-je vous aider ?',lastTime:now(),avatar:'🤖',color:'#ede9fe'}];
+    convs=[{id:'agent',type:'agent',name:'Agent RH IA',participants:[ME.id],unread:0,lastMsg:'Bonjour ! Comment puis-je vous aider ?',lastTime:now(),avatar:'ð¤',color:'#ede9fe'}];
     sv('emp_convs',convs);
   }
   const cl=document.getElementById('conv-list');
   cl.innerHTML=convs.map(c=>{
     const isAI=c.type==='agent';
-    const av=isAI?`<div class="conv-av" style="background:${c.color||'#ede9fe'};color:#7c3aed;font-size:20px">${c.avatar||'🤖'}</div>`
+    const av=isAI?`<div class="conv-av" style="background:${c.color||'#ede9fe'};color:#7c3aed;font-size:20px">${c.avatar||'ð¤'}</div>`
       :`<div class="conv-av" style="background:linear-gradient(135deg,#8B1A1A,#C0392B);color:#fff">${c.name.split(' ').map(w=>w[0]).join('').slice(0,2)}</div>`;
     return `<div class="conv-item" onclick="openConv('${c.id}')">${av}<div class="conv-info"><div class="conv-name">${c.name}${isAI?' <span class="ia-chip">IA</span>':''}</div><div class="conv-last">${c.lastMsg||''}</div></div><div class="conv-meta"><div class="conv-time">${c.lastTime||''}</div>${c.unread?'<div class="conv-unread">'+c.unread+'</div>':''}</div></div>`;
   }).join('');
@@ -1842,17 +1843,17 @@ function openConv(id){
   c.unread=0;sv('emp_convs',convs);
   const isAI=c.type==='agent';
   const isAdmin=id==='admin_direct';
-  document.getElementById('cw-av').textContent=c.avatar||'🤖';
+  document.getElementById('cw-av').textContent=c.avatar||'ð¤';
   document.getElementById('cw-av').style.background='rgba(255,255,255,.25)';
   document.getElementById('cw-name').textContent=c.name;
-  document.getElementById('cw-sub').textContent=isAI?'Agent IA · Toujours disponible':'En ligne';
+  document.getElementById('cw-sub').textContent=isAI?'Agent IA Â· Toujours disponible':'En ligne';
   // Afficher bouton RDV uniquement pour conversations humaines (pas AI)
   const rdvBtn=document.getElementById('rdv-btn');
   if(rdvBtn) rdvBtn.style.display=isAI?'none':'block';
   document.getElementById('chat-win').classList.add('open');
   renderMsgs(id);
   updBadge();
-  // Pour conversations directes (non-AI), écouter les réponses Firebase
+  // Pour conversations directes (non-AI), Ã©couter les rÃ©ponses Firebase
   if(!isAI && id){
     _listenDirectConv(id);
   }
@@ -1875,7 +1876,7 @@ function sendRdv(){
   const time=document.getElementById('rdv-time').value;
   const objet=document.getElementById('rdv-objet').value.trim();
   if(!date||!time||!objet){showToast('Remplissez tous les champs RDV');return;}
-  const rdvText=`📅 *Rendez-vous planifié*\nDate: ${date}\nHeure: ${time}\nObjet: ${objet}`;
+  const rdvText=`ð *Rendez-vous planifiÃ©*\nDate: ${date}\nHeure: ${time}\nObjet: ${objet}`;
   closeRdvModal();
   // Injecter dans le champ message et envoyer
   const inp=document.getElementById('msg-inp');
@@ -1901,8 +1902,8 @@ function _listenDirectConv(convId){
         if(c){c.lastMsg=m.text;c.lastTime=m.time;if(aCid!==convId)c.unread=(c.unread||0)+1;sv('emp_convs',convs);}
         if(aCid===convId) renderMsgs(convId);
         updBadge();
-        showToast('💬 '+m.name+': '+m.text.slice(0,40));
-        if(document.hidden||!document.hasFocus()) pushNotif('💬 '+m.name,m.text.slice(0,80),{action:'chat',convId},{sticky:false,tag:'chat-x'});
+        showToast('ð¬ '+m.name+': '+m.text.slice(0,40));
+        if(document.hidden||!document.hasFocus()) pushNotif('ð¬ '+m.name,m.text.slice(0,80),{action:'chat',convId},{sticky:false,tag:'chat-x'});
       }
     });
     _convListeners[convId]=true;
@@ -1951,7 +1952,7 @@ function sMsg(){
     window._lastOutboxMsg={...m,ts,empName:ME.prenom+' '+ME.nom,empId:ME.id,convId:aCid};
     try{ db.ref('wecan/emp_outbox/'+ME.id+'/msgs').push(window._lastOutboxMsg); }catch(e){}
   } else {
-    // Message employé → employé : pousser dans Firebase inbox du destinataire
+    // Message employÃ© â employÃ© : pousser dans Firebase inbox du destinataire
     const conv=convs.find(x=>x.id===aCid);
     if(conv&&conv.participants){
       conv.participants.filter(pid=>pid!==ME.id).forEach(pid=>{
@@ -1977,14 +1978,14 @@ async function aiR(text,cid){
   if(!gk){
     typing.classList.remove('show');
     msgs=ld('emp_msgs',{});if(!msgs[cid])msgs[cid]=[];
-    msgs[cid].push({from:'ai',name:'Agent IA',text:"\u26a0\ufe0f Clé API manquante.\n\nAllez sur console.groq.com (gratuit), copiez votre clé, puis dans la console du navigateur (F12) tapez :\n\nlocalStorage.setItem('groq_api_key', 'gsk_VOTRE_CLE')",time:now(),date:tday()});
+    msgs[cid].push({from:'ai',name:'Agent IA',text:"\u26a0\ufe0f ClÃ© API manquante.\n\nAllez sur console.groq.com (gratuit), copiez votre clÃ©, puis dans la console du navigateur (F12) tapez :\n\nlocalStorage.setItem('groq_api_key', 'gsk_VOTRE_CLE')",time:now(),date:tday()});
     sv('emp_msgs',msgs);renderMsgs(cid);return;
   }
   const history=(msgs[cid]||[]).slice(-6).map(m=>({role:m.from==='ai'?'assistant':'user',content:m.text}));
   try{
     const res=await fetch(GU,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+gk},body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'system',content:context},...history,{role:'user',content:text}],max_tokens:300,temperature:0.7})});
     const data=await res.json();
-    const reply=data.choices?.[0]?.message?.content||'Desolee, je ne peux pas repondre maintenant. 😔';
+    const reply=data.choices?.[0]?.message?.content||'Desolee, je ne peux pas repondre maintenant. ð';
     typing.classList.remove('show');
     msgs=ld('emp_msgs',{});
     if(!msgs[cid])msgs[cid]=[];
@@ -1997,7 +1998,7 @@ async function aiR(text,cid){
     typing.classList.remove('show');
     msgs=ld('emp_msgs',{});
     if(!msgs[cid])msgs[cid]=[];
-    msgs[cid].push({from:'ai',name:'Agent IA',text:'Desolee, service temporairement indisponible. Reessayez. 🙏',time:now(),date:tday()});
+    msgs[cid].push({from:'ai',name:'Agent IA',text:'Desolee, service temporairement indisponible. Reessayez. ð',time:now(),date:tday()});
     sv('emp_msgs',msgs);renderMsgs(cid);
   }
 }
@@ -2013,14 +2014,14 @@ function updBadge(){
 
 function openNewConvModal(){
   const employees=ld('employees',[]).filter(e=>String(e.id)!==String(ME.id));
-  if(!employees.length){showToast('Aucun collègue disponible');return;}
+  if(!employees.length){showToast('Aucun collÃ¨gue disponible');return;}
   const sheet=document.createElement('div');
   sheet.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;flex-direction:column;justify-content:flex-end;';
   const list=employees.map(e=>`<div onclick="startNewConv(${e.id},'${e.prenom} ${e.nom}');this.closest('[style]').remove()" style="display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #f1f5f9;cursor:pointer;">
     <div style="width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,#8B1A1A,#C0392B);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0;">${(e.prenom||'?')[0]}${(e.nom||'?')[0]}</div>
-    <div><div style="font-size:13px;font-weight:600;color:#1e293b;">${e.prenom} ${e.nom}</div><div style="font-size:11px;color:#64748b;">${e.poste||'Employé'}</div></div>
+    <div><div style="font-size:13px;font-weight:600;color:#1e293b;">${e.prenom} ${e.nom}</div><div style="font-size:11px;color:#64748b;">${e.poste||'EmployÃ©'}</div></div>
   </div>`).join('');
-  sheet.innerHTML=`<div style="background:#fff;border-radius:20px 20px 0 0;max-height:70vh;display:flex;flex-direction:column;"><div style="padding:16px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;"><div style="font-size:15px;font-weight:700;color:#1e293b;">💬 Nouvelle conversation</div><button onclick="this.closest('[style]').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#64748b;">✕</button></div><div style="overflow-y:auto;padding:0 16px 24px;">${list}</div></div>`;
+  sheet.innerHTML=`<div style="background:#fff;border-radius:20px 20px 0 0;max-height:70vh;display:flex;flex-direction:column;"><div style="padding:16px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;"><div style="font-size:15px;font-weight:700;color:#1e293b;">ð¬ Nouvelle conversation</div><button onclick="this.closest('[style]').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#64748b;">â</button></div><div style="overflow-y:auto;padding:0 16px 24px;">${list}</div></div>`;
   sheet.addEventListener('click',e=>{if(e.target===sheet)sheet.remove();});
   document.body.appendChild(sheet);
 }
@@ -2043,14 +2044,14 @@ function renderProfil(){
   document.getElementById('prof-av').textContent=initials;
   document.getElementById('prof-name').textContent=ME.prenom+' '+ME.nom;
   const ag=agencies.find(a=>a.id==ME.agenceId)||agencies.find(a=>String(a.id)===String(ME.agenceId));
-  const agName=ag?ag.name||ag.nom||ag.id:'—';
-  document.getElementById('prof-post').textContent=ME.poste+(agName&&agName!=='—'?' · '+agName:'');
+  const agName=ag?ag.name||ag.nom||ag.id:'â';
+  document.getElementById('prof-post').textContent=ME.poste+(agName&&agName!=='â'?' Â· '+agName:'');
   document.getElementById('prof-info').innerHTML=`
-    <div class="info-row"><div class="info-ico">📧</div><div><div class="info-lbl">Email</div><div class="info-val">${ME.email||ME.prenom.toLowerCase()+'.'+ME.nom.toLowerCase().replace(' ','')+'@wecheckin.dz'}</div></div></div>
-    <div class="info-row"><div class="info-ico">📞</div><div><div class="info-lbl">Tel</div><div class="info-val">${ME.tel||'N/A'}</div></div></div>
-    <div class="info-row"><div class="info-ico">🏢</div><div><div class="info-lbl">Agence</div><div class="info-val">${agName}</div></div></div>
-    <div class="info-row"><div class="info-ico">💰</div><div><div class="info-lbl">Salaire net</div><div class="info-val">${(ME.salaire||0).toLocaleString()} DA</div></div></div>
-    <div class="info-row"><div class="info-ico">🏷️</div><div><div class="info-lbl">Statut</div><div class="info-val">${ME.status||'Actif'}</div></div></div>
+    <div class="info-row"><div class="info-ico">ð§</div><div><div class="info-lbl">Email</div><div class="info-val">${ME.email||ME.prenom.toLowerCase()+'.'+ME.nom.toLowerCase().replace(' ','')+'@wecheckin.dz'}</div></div></div>
+    <div class="info-row"><div class="info-ico">ð</div><div><div class="info-lbl">Tel</div><div class="info-val">${ME.tel||'N/A'}</div></div></div>
+    <div class="info-row"><div class="info-ico">ð¢</div><div><div class="info-lbl">Agence</div><div class="info-val">${agName}</div></div></div>
+    <div class="info-row"><div class="info-ico">ð°</div><div><div class="info-lbl">Salaire net</div><div class="info-val">${(ME.salaire||0).toLocaleString()} DA</div></div></div>
+    <div class="info-row"><div class="info-ico">ð·ï¸</div><div><div class="info-lbl">Statut</div><div class="info-val">${ME.status||'Actif'}</div></div></div>
   `;
   renderDocs();
 }
@@ -2066,27 +2067,27 @@ function setTh(btn,mode){
 // ===== LANGUE / LANGUAGE =====
 const LANG_STRINGS = {
   fr: {
-    tab_home:'Accueil', tab_pointage:'Pointage', tab_conge:'Congés', tab_chat:'Chat', tab_profil:'Profil',
-    pt_entree:'Entrée', pt_sortie:'Sortie', pt_pause:'Pause', pt_net:'Travail net', pt_agence:'Agence',
-    btn_pointer:'📍 Pointer GPS', btn_scan:'📷 Scanner QR',
+    tab_home:'Accueil', tab_pointage:'Pointage', tab_conge:'CongÃ©s', tab_chat:'Chat', tab_profil:'Profil',
+    pt_entree:'EntrÃ©e', pt_sortie:'Sortie', pt_pause:'Pause', pt_net:'Travail net', pt_agence:'Agence',
+    btn_pointer:'ð Pointer GPS', btn_scan:'ð· Scanner QR',
     pt_aucun:'Aucun pointage', pt_hist:'Historique',
     home_bonjour:'Bonjour', home_statut:'Statut', home_auj:'Aujourd\'hui',
-    profil_theme:'Thème', profil_langue:'Langue', profil_deconnect:'Se déconnecter',
-    statut_entree:'Pointé à', statut_sortie:'Sorti à', statut_pause:'En pause', statut_travail:'En cours de travail', statut_aucun:'Non pointé',
+    profil_theme:'ThÃ¨me', profil_langue:'Langue', profil_deconnect:'Se dÃ©connecter',
+    statut_entree:'PointÃ© Ã ', statut_sortie:'Sorti Ã ', statut_pause:'En pause', statut_travail:'En cours de travail', statut_aucun:'Non pointÃ©',
   },
   ar: {
-    tab_home:'الرئيسية', tab_pointage:'الحضور', tab_conge:'الإجازات', tab_chat:'المحادثة', tab_profil:'الملف',
-    pt_entree:'دخول', pt_sortie:'خروج', pt_pause:'استراحة', pt_net:'وقت العمل', pt_agence:'الوكالة',
-    btn_pointer:'📍 تسجيل GPS', btn_scan:'📷 مسح QR',
-    pt_aucun:'لا يوجد حضور', pt_hist:'السجل',
-    home_bonjour:'مرحبا', home_statut:'الحالة', home_auj:'اليوم',
-    profil_theme:'المظهر', profil_langue:'اللغة', profil_deconnect:'تسجيل الخروج',
-    statut_entree:'حضر في', statut_sortie:'غادر في', statut_pause:'في الاستراحة', statut_travail:'في العمل', statut_aucun:'لم يسجل',
+    tab_home:'Ø§ÙØ±Ø¦ÙØ³ÙØ©', tab_pointage:'Ø§ÙØ­Ø¶ÙØ±', tab_conge:'Ø§ÙØ¥Ø¬Ø§Ø²Ø§Øª', tab_chat:'Ø§ÙÙØ­Ø§Ø¯Ø«Ø©', tab_profil:'Ø§ÙÙÙÙ',
+    pt_entree:'Ø¯Ø®ÙÙ', pt_sortie:'Ø®Ø±ÙØ¬', pt_pause:'Ø§Ø³ØªØ±Ø§Ø­Ø©', pt_net:'ÙÙØª Ø§ÙØ¹ÙÙ', pt_agence:'Ø§ÙÙÙØ§ÙØ©',
+    btn_pointer:'ð ØªØ³Ø¬ÙÙ GPS', btn_scan:'ð· ÙØ³Ø­ QR',
+    pt_aucun:'ÙØ§ ÙÙØ¬Ø¯ Ø­Ø¶ÙØ±', pt_hist:'Ø§ÙØ³Ø¬Ù',
+    home_bonjour:'ÙØ±Ø­Ø¨Ø§', home_statut:'Ø§ÙØ­Ø§ÙØ©', home_auj:'Ø§ÙÙÙÙ',
+    profil_theme:'Ø§ÙÙØ¸ÙØ±', profil_langue:'Ø§ÙÙØºØ©', profil_deconnect:'ØªØ³Ø¬ÙÙ Ø§ÙØ®Ø±ÙØ¬',
+    statut_entree:'Ø­Ø¶Ø± ÙÙ', statut_sortie:'ØºØ§Ø¯Ø± ÙÙ', statut_pause:'ÙÙ Ø§ÙØ§Ø³ØªØ±Ø§Ø­Ø©', statut_travail:'ÙÙ Ø§ÙØ¹ÙÙ', statut_aucun:'ÙÙ ÙØ³Ø¬Ù',
   },
   en: {
     tab_home:'Home', tab_pointage:'Attendance', tab_conge:'Leaves', tab_chat:'Chat', tab_profil:'Profile',
     pt_entree:'Entry', pt_sortie:'Exit', pt_pause:'Break', pt_net:'Net work', pt_agence:'Agency',
-    btn_pointer:'📍 GPS Check-in', btn_scan:'📷 Scan QR',
+    btn_pointer:'ð GPS Check-in', btn_scan:'ð· Scan QR',
     pt_aucun:'No attendance', pt_hist:'History',
     home_bonjour:'Hello', home_statut:'Status', home_auj:'Today',
     profil_theme:'Theme', profil_langue:'Language', profil_deconnect:'Log out',
@@ -2115,18 +2116,18 @@ function setAppLang(lang, btn){
   });
   // Update pointage summary labels
   document.querySelectorAll('.sl').forEach(el=>{
-    if(el.textContent==='Entree'||el.textContent==='Entry'||el.textContent==='دخول') el.textContent=tApp('pt_entree');
-    else if(el.textContent==='Sortie'||el.textContent==='Exit'||el.textContent==='خروج') el.textContent=tApp('pt_sortie');
-    else if(el.textContent==='Pause'||el.textContent==='Break'||el.textContent==='استراحة') el.textContent=tApp('pt_pause');
-    else if(el.textContent==='Travail net'||el.textContent==='Net work'||el.textContent==='وقت العمل') el.textContent=tApp('pt_net');
-    else if(el.textContent==='Agence'||el.textContent==='Agency'||el.textContent==='الوكالة') el.textContent=tApp('pt_agence');
+    if(el.textContent==='Entree'||el.textContent==='Entry'||el.textContent==='Ø¯Ø®ÙÙ') el.textContent=tApp('pt_entree');
+    else if(el.textContent==='Sortie'||el.textContent==='Exit'||el.textContent==='Ø®Ø±ÙØ¬') el.textContent=tApp('pt_sortie');
+    else if(el.textContent==='Pause'||el.textContent==='Break'||el.textContent==='Ø§Ø³ØªØ±Ø§Ø­Ø©') el.textContent=tApp('pt_pause');
+    else if(el.textContent==='Travail net'||el.textContent==='Net work'||el.textContent==='ÙÙØª Ø§ÙØ¹ÙÙ') el.textContent=tApp('pt_net');
+    else if(el.textContent==='Agence'||el.textContent==='Agency'||el.textContent==='Ø§ÙÙÙØ§ÙØ©') el.textContent=tApp('pt_agence');
   });
   // Update GPS and QR buttons
   const gpsBtn=document.getElementById('gps-btn');
   const scanBtn=document.getElementById('scan-btn');
   if(gpsBtn) gpsBtn.textContent=tApp('btn_pointer');
   if(scanBtn) scanBtn.textContent=tApp('btn_scan');
-  showToast(lang==='ar'?'تم تغيير اللغة ✓':lang==='en'?'Language changed ✓':'Langue changée ✓');
+  showToast(lang==='ar'?'ØªÙ ØªØºÙÙØ± Ø§ÙÙØºØ© â':lang==='en'?'Language changed â':'Langue changÃ©e â');
 }
 
 function initLangBtn(){
@@ -2148,18 +2149,18 @@ function renderDocs(){
   docs=ld('emp_docs',[]).filter(d=>d.empId===ME.id);
   const dl=document.getElementById('doc-list');
   if(!docs.length){dl.innerHTML='<div style="text-align:center;color:var(--gray);font-size:12px;padding:12px">Aucun document</div>';return;}
-  dl.innerHTML=docs.map(d=>`<div class="doc-item"><div class="di-ico">📄</div><div class="di-info"><div class="di-type">${d.type}</div><div class="di-date">${d.date}</div></div><span class="status-badge ${d.status==='ready'?'sb-approved':'sb-pending'}">${d.status==='ready'?'Pret':'En attente'}</span></div>`).join('');
+  dl.innerHTML=docs.map(d=>`<div class="doc-item"><div class="di-ico">ð</div><div class="di-info"><div class="di-type">${d.type}</div><div class="di-date">${d.date}</div></div><span class="status-badge ${d.status==='ready'?'sb-approved':'sb-pending'}">${d.status==='ready'?'Pret':'En attente'}</span></div>`).join('');
 }
 
 function newDoc(){
   docs=ld('emp_docs',[]);
   const d={id:'doc-'+Date.now(),empId:ME.id,type:'Certificat de travail',date:tday(),status:'pending'};
-  docs.push(d);sv('emp_docs',docs);renderDocs();showToast('✅ Demande envoyee');
+  docs.push(d);sv('emp_docs',docs);renderDocs();showToast('â Demande envoyee');
 }
 
 // ===== SOUS-ADMIN =====
 function openSubAdminSection(section){
-  const LABELS={dashboard:'Tableau de bord',employees:'Employés',agencies:'Agences',stats:'Statistiques',approbations:'Approbations',pointage:'Pointage',paie:'Paie',reports:'Rapports'};
+  const LABELS={dashboard:'Tableau de bord',employees:'EmployÃ©s',agencies:'Agences',stats:'Statistiques',approbations:'Approbations',pointage:'Pointage',paie:'Paie',reports:'Rapports'};
   const empsFresh=ld('employees',[]);
   const agsFresh=ld('agencies',[]);
   // Merge pointages personnels + tous les pointages Firebase (cross-device)
@@ -2170,9 +2171,9 @@ function openSubAdminSection(section){
   const ptsFresh=_ptMerged;
   let content='';
   if(section==='employees'){
-    content=empsFresh.map(e=>`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f1f5f9;"><div style="width:36px;height:36px;border-radius:50%;background:#C0392B;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;">${(e.prenom||'?')[0]}${(e.nom||'?')[0]}</div><div><div style="font-size:13px;font-weight:600;color:#1e293b;">${e.prenom} ${e.nom}</div><div style="font-size:11px;color:#64748b;">${e.poste||''} · ${e.status||''}</div></div></div>`).join('')||'<p style="color:#94a3b8;text-align:center;padding:20px;">Aucun employé</p>';
+    content=empsFresh.map(e=>`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f1f5f9;"><div style="width:36px;height:36px;border-radius:50%;background:#C0392B;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;">${(e.prenom||'?')[0]}${(e.nom||'?')[0]}</div><div><div style="font-size:13px;font-weight:600;color:#1e293b;">${e.prenom} ${e.nom}</div><div style="font-size:11px;color:#64748b;">${e.poste||''} Â· ${e.status||''}</div></div></div>`).join('')||'<p style="color:#94a3b8;text-align:center;padding:20px;">Aucun employÃ©</p>';
   } else if(section==='agencies'){
-    content=agsFresh.map(ag=>`<div style="padding:10px 0;border-bottom:1px solid #f1f5f9;"><div style="font-size:13px;font-weight:600;color:#1e293b;">🏢 ${ag.name||ag.nom||ag.id}</div><div style="font-size:11px;color:#64748b;margin-top:2px;">Code: ${ag.code||ag.id} · ${ag.addr||ag.wilaya||'Algérie'}</div></div>`).join('')||'<p style="color:#94a3b8;text-align:center;padding:20px;">Aucune agence</p>';
+    content=agsFresh.map(ag=>`<div style="padding:10px 0;border-bottom:1px solid #f1f5f9;"><div style="font-size:13px;font-weight:600;color:#1e293b;">ð¢ ${ag.name||ag.nom||ag.id}</div><div style="font-size:11px;color:#64748b;margin-top:2px;">Code: ${ag.code||ag.id} Â· ${ag.addr||ag.wilaya||'AlgÃ©rie'}</div></div>`).join('')||'<p style="color:#94a3b8;text-align:center;padding:20px;">Aucune agence</p>';
   } else if(section==='pointage'){
     // Fix: use tday() format (DD/MM/YYYY) to match stored pointage dates
     const todayStr=tday();
@@ -2181,23 +2182,23 @@ function openSubAdminSection(section){
     const todayPts=ptsFresh.filter(p=>p.date===todayStr&&(isAdmin||!myAgId||String(p.agenceId)===String(myAgId)));
     const sortedPts=todayPts.slice().sort((a,b)=>b.time.localeCompare(a.time)).slice(0,30);
     const typeColors={'Entree':'#047857','Sortie':'#C0392B','Debut pause':'#92400E','Fin pause':'#1d4ed8'};
-    content=sortedPts.length?sortedPts.map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f1f5f9;"><div><div style="font-size:12px;font-weight:600;color:#1e293b;">${p.empName||p.empId}</div><div style="font-size:10px;color:#64748b;">${p.agenceName||'—'} · ${p.method||'GPS'}</div></div><div style="text-align:right;"><div style="font-size:11px;font-weight:700;color:${typeColors[p.type]||'#374151'};">${p.type}</div><div style="font-size:10px;color:#94a3b8;">${p.time||''}</div></div></div>`).join(''):'<p style="color:#94a3b8;text-align:center;padding:20px;">Aucun pointage aujourd&#39;hui</p>';
+    content=sortedPts.length?sortedPts.map(p=>`<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f1f5f9;"><div><div style="font-size:12px;font-weight:600;color:#1e293b;">${p.empName||p.empId}</div><div style="font-size:10px;color:#64748b;">${p.agenceName||'â'} Â· ${p.method||'GPS'}</div></div><div style="text-align:right;"><div style="font-size:11px;font-weight:700;color:${typeColors[p.type]||'#374151'};">${p.type}</div><div style="font-size:10px;color:#94a3b8;">${p.time||''}</div></div></div>`).join(''):'<p style="color:#94a3b8;text-align:center;padding:20px;">Aucun pointage aujourd&#39;hui</p>';
   } else if(section==='stats'){
     const todayStr2=tday();
     const today=ptsFresh.filter(p=>p.date===todayStr2).length;
     const entrToday=ptsFresh.filter(p=>p.date===todayStr2&&p.type==='Entree').length;
-    content=`<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:10px 0;"><div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center;"><div style="font-size:22px;font-weight:800;color:#C0392B;">${empsFresh.length}</div><div style="font-size:11px;color:#64748b;">Employés</div></div><div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center;"><div style="font-size:22px;font-weight:800;color:#047857;">${entrToday}</div><div style="font-size:11px;color:#64748b;">Présents auj.</div></div><div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center;"><div style="font-size:22px;font-weight:800;color:#0369a1;">${today}</div><div style="font-size:11px;color:#64748b;">Pointages auj.</div></div><div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center;"><div style="font-size:22px;font-weight:800;color:#6b21a8;">${agsFresh.length}</div><div style="font-size:11px;color:#64748b;">Agences</div></div></div>`;
+    content=`<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:10px;padding:10px 0;"><div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center;"><div style="font-size:22px;font-weight:800;color:#C0392B;">${empsFresh.length}</div><div style="font-size:11px;color:#64748b;">EmployÃ©s</div></div><div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center;"><div style="font-size:22px;font-weight:800;color:#047857;">${entrToday}</div><div style="font-size:11px;color:#64748b;">PrÃ©sents auj.</div></div><div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center;"><div style="font-size:22px;font-weight:800;color:#0369a1;">${today}</div><div style="font-size:11px;color:#64748b;">Pointages auj.</div></div><div style="background:#f8fafc;border-radius:10px;padding:12px;text-align:center;"><div style="font-size:22px;font-weight:800;color:#6b21a8;">${agsFresh.length}</div><div style="font-size:11px;color:#64748b;">Agences</div></div></div>`;
   } else if(section==='approbations'){
     // Merge local requests + Firebase-synced approbations (wecan_approbations key)
     const fbAppros=JSON.parse(localStorage.getItem('wecan_approbations')||'[]');
     const allReqs=[...ld('mgr_requests',[]),...(Array.isArray(fbAppros)?fbAppros:Object.values(fbAppros||{}))].filter((r,i,a)=>r&&r.id&&a.findIndex(x=>x.id===r.id)===i);
     const reqs=allReqs.filter(r=>r.status==='pending'&&r.empId!==ME.id);
     content=reqs.length?reqs.map(r=>`<div style="padding:10px 0;border-bottom:1px solid #f1f5f9;" id="sa-req-${r.id}">
-      <div style="font-size:12px;font-weight:600;color:#1e293b;">${r.empName||'Employé'} — ${r.type}</div>
+      <div style="font-size:12px;font-weight:600;color:#1e293b;">${r.empName||'EmployÃ©'} â ${r.type}</div>
       <div style="font-size:11px;color:#64748b;margin:2px 0;">${r.date||''}</div>
       <div style="display:flex;gap:8px;margin-top:6px;">
-        <button onclick="saApprove('${r.id}')" style="flex:1;padding:6px;background:#EAF3DE;color:#3B6D11;border:1px solid #C0DD97;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;">✅ Approuver</button>
-        <button onclick="saReject('${r.id}')" style="flex:1;padding:6px;background:#FCEBEB;color:#A32D2D;border:1px solid #F7C1C1;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;">❌ Refuser</button>
+        <button onclick="saApprove('${r.id}')" style="flex:1;padding:6px;background:#EAF3DE;color:#3B6D11;border:1px solid #C0DD97;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;">â Approuver</button>
+        <button onclick="saReject('${r.id}')" style="flex:1;padding:6px;background:#FCEBEB;color:#A32D2D;border:1px solid #F7C1C1;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;">â Refuser</button>
       </div>
     </div>`).join(''):'<p style="color:#94a3b8;text-align:center;padding:20px;">Aucune demande en attente</p>';
   } else {
@@ -2205,7 +2206,7 @@ function openSubAdminSection(section){
   }
   const sheet=document.createElement('div');
   sheet.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:9999;display:flex;flex-direction:column;justify-content:flex-end;';
-  sheet.innerHTML=`<div style="background:#fff;border-radius:20px 20px 0 0;max-height:80vh;display:flex;flex-direction:column;"><div style="padding:16px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;"><div style="font-size:15px;font-weight:700;color:#1e293b;">${LABELS[section]||section}</div><button onclick="this.closest('[style]').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#64748b;">✕</button></div><div style="overflow-y:auto;padding:0 16px 24px;">${content}</div></div>`;
+  sheet.innerHTML=`<div style="background:#fff;border-radius:20px 20px 0 0;max-height:80vh;display:flex;flex-direction:column;"><div style="padding:16px;border-bottom:1px solid #f1f5f9;display:flex;justify-content:space-between;align-items:center;"><div style="font-size:15px;font-weight:700;color:#1e293b;">${LABELS[section]||section}</div><button onclick="this.closest('[style]').remove()" style="background:none;border:none;font-size:20px;cursor:pointer;color:#64748b;">â</button></div><div style="overflow-y:auto;padding:0 16px 24px;">${content}</div></div>`;
   sheet.addEventListener('click',e=>{if(e.target===sheet)sheet.remove();});
   document.body.appendChild(sheet);
 }
@@ -2214,14 +2215,14 @@ function openSubAdminSection(section){
 function saApprove(id){
   _saUpdateRequest(id,'approved');
   const el=document.getElementById('sa-req-'+id);
-  if(el){el.style.opacity='.4';el.innerHTML+='<div style="color:#3B6D11;font-size:11px;font-weight:600;margin-top:4px;">✅ Approuvée</div>';}
-  showToast('✅ Demande approuvée');
+  if(el){el.style.opacity='.4';el.innerHTML+='<div style="color:#3B6D11;font-size:11px;font-weight:600;margin-top:4px;">â ApprouvÃ©e</div>';}
+  showToast('â Demande approuvÃ©e');
 }
 function saReject(id){
   _saUpdateRequest(id,'rejected');
   const el=document.getElementById('sa-req-'+id);
-  if(el){el.style.opacity='.4';el.innerHTML+='<div style="color:#A32D2D;font-size:11px;font-weight:600;margin-top:4px;">❌ Refusée</div>';}
-  showToast('Demande refusée');
+  if(el){el.style.opacity='.4';el.innerHTML+='<div style="color:#A32D2D;font-size:11px;font-weight:600;margin-top:4px;">â RefusÃ©e</div>';}
+  showToast('Demande refusÃ©e');
 }
 function _saUpdateRequest(id,status){
   // Update in mgr_requests
@@ -2287,7 +2288,7 @@ function renderMgrList(){
   const done=filtered.filter(r=>r.status!=='pending');
   const sorted=[...pending,...done];
   const content=document.getElementById('mgr-content');
-  const icoMap={conge:'☀️',hsup:'➕',sortie:'🚪',document:'📄'};
+  const icoMap={conge:'âï¸',hsup:'â',sortie:'ðª',document:'ð'};
   const sbMap={pending:'sb-pending',approved:'sb-approved',rejected:'sb-rejected'};
   const slMap={pending:'En attente',approved:'Approuvee',rejected:'Refusee'};
   content.innerHTML=`<div class="mgr-stats">
@@ -2299,10 +2300,10 @@ function renderMgrList(){
     const d=r.detail;
     let det='';
     if(r.type==='conge') det=d.debut+' - '+d.fin+' ('+d.jours+'j)';
-    else if(r.type==='hsup') det=d.date_hsup+' · '+d.heures+'h';
+    else if(r.type==='hsup') det=d.date_hsup+' Â· '+d.heures+'h';
     else if(r.type==='sortie') det=(d.date||'')+' '+d.heure+'-'+d.retour;
-    else if(r.type==='document') det=d.docType+(d.urgent?' 🔴':'');
-    return `<div class="mgr-item" onclick="openMgrDetail('${r.id}')"><div class="mgr-item-ico">${icoMap[r.type]||'📋'}</div><div class="mgr-item-info"><div class="mgr-item-name">${r.empName} <span class="status-badge ${sbMap[r.status]}">${slMap[r.status]}</span></div><div class="mgr-item-det">${det} · ${r.date}</div></div></div>`;
+    else if(r.type==='document') det=d.docType+(d.urgent?' ð´':'');
+    return `<div class="mgr-item" onclick="openMgrDetail('${r.id}')"><div class="mgr-item-ico">${icoMap[r.type]||'ð'}</div><div class="mgr-item-info"><div class="mgr-item-name">${r.empName} <span class="status-badge ${sbMap[r.status]}">${slMap[r.status]}</span></div><div class="mgr-item-det">${det} Â· ${r.date}</div></div></div>`;
   }).join(''):'<div style="text-align:center;color:var(--gray);font-size:13px;padding:24px">Aucune demande</div>');
 }
 
@@ -2313,13 +2314,13 @@ function openMgrDetail(id){
   if(!r)return;
   const d=r.detail;
   const isPending=r.status==='pending';
-  const icoMap={conge:'☀️',hsup:'➕',sortie:'🚪',document:'📄'};
+  const icoMap={conge:'âï¸',hsup:'â',sortie:'ðª',document:'ð'};
   let detHtml='';
   if(r.type==='conge'){
     detHtml=`<div class="det-field"><div class="df-lbl">Periode</div><div class="df-val">${d.debut} - ${d.fin} (${d.jours} jours)</div></div>
     <div class="det-field"><div class="df-lbl">Type</div><div class="df-val">${d.typeConge||'annuel'}</div></div>
     <div class="det-field"><div class="df-lbl">Motif</div><div class="df-val">${d.motif}</div></div>`;
-    if(isPending) detHtml+=`<div class="edit-sec"><h4>✏️ Modifier</h4>
+    if(isPending) detHtml+=`<div class="edit-sec"><h4>âï¸ Modifier</h4>
       <div class="field-group"><label>Date debut</label><input type="date" id="edit-debut" value="${d.debut.split('/').reverse().join('-')}" oninput="calcEditJours()"></div>
       <div class="field-group"><label>Date fin</label><input type="date" id="edit-fin" value="${d.fin.split('/').reverse().join('-')}" oninput="calcEditJours()"></div>
       <div id="edit-jours-disp" class="dur-display">Jours: ${d.jours}</div></div>`;
@@ -2328,30 +2329,30 @@ function openMgrDetail(id){
     <div class="det-field"><div class="df-lbl">Heures</div><div class="df-val">${d.heures}h (majoration x${d.majoration})</div></div>
     <div class="det-field"><div class="df-lbl">Motif</div><div class="df-val">${d.motif}</div></div>`;
     if(d.photo) detHtml+=`<div class="det-field"><div class="df-lbl">Photo justificative</div><img src="${d.photo}" style="width:100%;border-radius:8px;margin-top:6px"></div>`;
-    if(isPending) detHtml+=`<div class="edit-sec"><h4>✏️ Modifier</h4>
+    if(isPending) detHtml+=`<div class="edit-sec"><h4>âï¸ Modifier</h4>
       <div class="field-group"><label>Date</label><input type="date" id="edit-date-hsup" value="${d.date_hsup.split('/').reverse().join('-')}"></div>
       <div class="field-group"><label>Heures</label><input type="number" id="edit-heures" value="${d.heures}" min="0.5" step="0.5"></div></div>`;
   }else if(r.type==='sortie'){
     detHtml=`<div class="det-field"><div class="df-lbl">Date</div><div class="df-val">${d.date||''}</div></div>
     <div class="det-field"><div class="df-lbl">Horaires</div><div class="df-val">${d.heure} - ${d.retour}</div></div>
     <div class="det-field"><div class="df-lbl">Motif</div><div class="df-val">${d.motif}</div></div>`;
-    if(isPending) detHtml+=`<div class="edit-sec"><h4>✏️ Modifier</h4>
+    if(isPending) detHtml+=`<div class="edit-sec"><h4>âï¸ Modifier</h4>
       <div class="field-group"><label>Heure sortie</label><input type="time" id="edit-heure" value="${d.heure}"></div>
       <div class="field-group"><label>Heure retour</label><input type="time" id="edit-retour" value="${d.retour}"></div></div>`;
   }else if(r.type==='document'){
     detHtml=`<div class="det-field"><div class="df-lbl">Type</div><div class="df-val">${d.docType}</div></div>
     <div class="det-field"><div class="df-lbl">Usage</div><div class="df-val">${d.usage||'N/A'}</div></div>
-    <div class="det-field"><div class="df-lbl">Urgent</div><div class="df-val">${d.urgent?'🔴 Oui':'Non'}</div></div>`;
+    <div class="det-field"><div class="df-lbl">Urgent</div><div class="df-val">${d.urgent?'ð´ Oui':'Non'}</div></div>`;
   }
   const sheet=document.getElementById('mgr-detail-inner');
   sheet.innerHTML=`<div class="modal-handle"></div>
     <div class="mgr-det-head">
       <div class="mgr-det-av">${r.empName.split(' ').map(w=>w[0]).join('').slice(0,2)}</div>
-      <div><div style="font-size:15px;font-weight:700">${r.empName}</div><div style="font-size:12px;color:var(--gray)">${r.poste} · ${r.date}</div></div>
+      <div><div style="font-size:15px;font-weight:700">${r.empName}</div><div style="font-size:12px;color:var(--gray)">${r.poste} Â· ${r.date}</div></div>
       <span class="status-badge ${r.status==='pending'?'sb-pending':r.status==='approved'?'sb-approved':'sb-rejected'}" style="margin-left:auto">${r.status==='pending'?'En attente':r.status==='approved'?'Approuvee':'Refusee'}</span>
     </div>
     ${detHtml}
-    ${isPending?`<div class="field-group"><label>Note RH</label><textarea class="note-input" id="mgr-note" placeholder="Note interne optionnelle..."></textarea></div><div class="action-btns"><button class="btn-reject" onclick="mgrAction('rejected')">✕ Refuser</button><button class="btn-approve" onclick="mgrAction('approved')">✓ Approuver</button></div>`
+    ${isPending?`<div class="field-group"><label>Note RH</label><textarea class="note-input" id="mgr-note" placeholder="Note interne optionnelle..."></textarea></div><div class="action-btns"><button class="btn-reject" onclick="mgrAction('rejected')">â Refuser</button><button class="btn-approve" onclick="mgrAction('approved')">â Approuver</button></div>`
     :'<div style="text-align:center;color:var(--gray);font-size:13px;padding:12px">Cette demande a deja ete traitee</div>'}
     <button class="btn btn-gray btn-full" onclick="closeMgrDetail()" style="margin-top:12px">Fermer</button>`;
   document.getElementById('mgr-detail').classList.add('open');
@@ -2404,7 +2405,7 @@ function mgrAction(status){
   const li=lv.findIndex(x=>x.id===mgrSelectedId);
   if(li>=0){lv[li]=r;sv('emp_leaves',lv);}
   closeMgrDetail();
-  showToast(status==='approved'?'✅ Demande approuvee':'❌ Demande refusee');
+  showToast(status==='approved'?'â Demande approuvee':'â Demande refusee');
   renderMgrList();renderHome();
   setTimeout(()=>{const b=document.getElementById('mgr-banner-txt');const p=getMgrRequests().filter(x=>x.status==='pending');if(b)b.textContent=p.length+' demande'+(p.length>1?'s':'')+' en attente';},100);
 }
@@ -2415,9 +2416,9 @@ function initApp(){
   renderConvs();
   // Initialiser langue
   try{ initLangBtn(); }catch(e){}
-  // Démarrer listener messages admin → employé (après login, ME est défini)
+  // DÃ©marrer listener messages admin â employÃ© (aprÃ¨s login, ME est dÃ©fini)
   startInboxListener();
-  // Démarrer surveillance périmètre GPS
+  // DÃ©marrer surveillance pÃ©rimÃ¨tre GPS
   setTimeout(()=>{ try{ startGeoWatch(); }catch(e){} }, 1500);
   initSW();
 }
@@ -2430,13 +2431,13 @@ function startInboxListener(){
     msgs = ld('emp_msgs',{});
     const cid = 'admin_direct';
     if(!msgs[cid]) msgs[cid]=[];
-    if(msgs[cid].find(x=>x.ts&&x.ts===m.ts)) return; // éviter doublons
+    if(msgs[cid].find(x=>x.ts&&x.ts===m.ts)) return; // Ã©viter doublons
     msgs[cid].push({from:m.from||1, name:m.name||'Admin', text:m.text, time:m.time, date:m.date, ts:m.ts});
     localStorage.setItem('wecan_emp_msgs', JSON.stringify(msgs));
     convs = ld('emp_convs',[]);
     let adminConv = convs.find(c=>c.id==='admin_direct');
     if(!adminConv){
-      adminConv = {id:'admin_direct',type:'direct',name:'👔 Admin RH',participants:[ME.id,1],unread:0,lastMsg:'',lastTime:'',avatar:'👔',color:'#fee2e2'};
+      adminConv = {id:'admin_direct',type:'direct',name:'ð Admin RH',participants:[ME.id,1],unread:0,lastMsg:'',lastTime:'',avatar:'ð',color:'#fee2e2'};
       convs.push(adminConv);
     }
     adminConv.unread=(adminConv.unread||0)+1;
@@ -2445,11 +2446,11 @@ function startInboxListener(){
     localStorage.setItem('wecan_emp_convs', JSON.stringify(convs));
     try{ renderConvs && renderConvs(); updBadge && updBadge(); }catch(e){}
     if(window.aCid==='admin_direct') renderMsgs('admin_direct');
-    if(document.hidden||!document.hasFocus()) pushNotif('💬 Admin RH',m.text.slice(0,80),{action:'chat',convId:'admin_direct'},{sticky:false,tag:'chat-admin'});
+    if(document.hidden||!document.hasFocus()) pushNotif('ð¬ Admin RH',m.text.slice(0,80),{action:'chat',convId:'admin_direct'},{sticky:false,tag:'chat-admin'});
   });
 }
 
-// ── SERVICE WORKER + NOTIFICATIONS LOCK SCREEN ──
+// ââ SERVICE WORKER + NOTIFICATIONS LOCK SCREEN ââ
 async function initSW(){
   if(!('serviceWorker' in navigator)) return;
   try{
@@ -2478,7 +2479,7 @@ function pushNotif(title,body,data,opts){
 if(ME) initApp();
 </script>
 
-<!-- ═══ GEO-ALERT : sortie / entree territoire ═══ -->
+<!-- âââ GEO-ALERT : sortie / entree territoire âââ -->
 <div id="geo-alert">
   <div id="geo-alert-card">
     <div class="geo-alert-icon" id="geo-alert-icon"></div>
@@ -2498,7 +2499,7 @@ if(ME) initApp();
   </div>
 </div>
 
-<!-- ═══ ALERTE PERIMETRE DEPASSE ═══ -->
+<!-- âââ ALERTE PERIMETRE DEPASSE âââ -->
 <div id="geo-blocked-alert">
   <div id="geo-blocked-card">
     <div class="gbc-title">&#9888;&#65039; Hors perimetre</div>
