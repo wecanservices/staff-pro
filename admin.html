@@ -2103,8 +2103,8 @@ let _fbReady = false;
 // Met à jour la variable en mémoire et ré-affiche si besoin
 function _applyFbData(k, val){
   try{
-    localStorage.setItem('wecan_'+k, JSON.stringify(val));
     const arr = Array.isArray(val) ? val : (val && typeof val === 'object' ? Object.values(val) : null);
+    localStorage.setItem('wecan_'+k, JSON.stringify(arr !== null ? arr : val));
     if(k==='employees'       && arr){ employees          = arr; try{renderEmployees();populateEmpAgenceSelect();populateOrgFilter();renderOrganigramme();}catch(e){} }
     if(k==='agencies'        && arr){ agencies           = arr; try{renderStats();renderAgencies();populateBranchFilter();populateStatsBranchFilter();}catch(e){} }
     if(k==='shifts'          && arr){ shifts             = arr; try{renderShifts();}catch(e){} }
