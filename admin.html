@@ -2145,7 +2145,7 @@ function fbInitSync(){
       } else if(!_fbInitDone[k]){
         // Firebase vide : pousser donnees locales une seule fois
         var local = localStorage.getItem('wecan_'+k);
-        if(local){ try{ db.ref('wecan/'+k).set(JSON.parse(local)); }catch(e){} }
+        if(!snap.val() && local){ try{ db.ref('wecan/'+k).set(JSON.parse(local)); }catch(e){} }
       }
       _fbInitDone[k] = true;
     });
@@ -2158,7 +2158,7 @@ function fbInitSync(){
       if(val !== null && val !== undefined){ _applyFbData(k, val); }
       else {
         var local = localStorage.getItem('wecan_'+k);
-        if(local){ try{ db.ref('wecan/'+k).set(JSON.parse(local)); }catch(e){} }
+        if(!snap.val() && local){ try{ db.ref('wecan/'+k).set(JSON.parse(local)); }catch(e){} }
       }
     });
   });
