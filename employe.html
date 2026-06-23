@@ -822,7 +822,6 @@ function fbEmpSync(){
     if(localStorage.getItem('wecan_employees') !== serialized){
       localStorage.setItem('wecan_employees', serialized);
       employees = arr;
-      if(!ME || !ME.id) ME = arr.find(function(e){return e&&e.role==='admin';}) || arr[0] || {};
       try{ if(window.currentEmp){ currentEmp = employees.find(e=>e.id===currentEmp.id)||currentEmp; renderHome && renderHome(); } }catch(e){}
     }
   });
