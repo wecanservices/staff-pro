@@ -1540,7 +1540,7 @@ function renderPtSummary(){
 }
 
 function renderPtHist(){
-  const pts=ld('pointages',[]).filter(p=>p.empId===ME.id);
+  const pts=ld('pointages',[]).filter(p=>p && ME && p.empId===ME.id);
   const hist=document.getElementById('pt-hist');
   if(!pts.length){hist.innerHTML='<div style="text-align:center;color:var(--gray);font-size:13px;padding:12px">Aucun historique</div>';return;}
   const byDate={};
