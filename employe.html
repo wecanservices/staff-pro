@@ -869,6 +869,7 @@ function fbEmpSync(){
   db.ref('wecan/agencies').on('value', snap=>{
     const val = snap.val();
     if(!val) return;
+    // Toujours convertir en array — Firebase peut renvoyer un objet keyed par code
     const arr = Array.isArray(val) ? val : Object.values(val);
     const serialized = JSON.stringify(arr);
     if(localStorage.getItem('wecan_agencies') !== serialized){
@@ -939,12 +940,14 @@ fbEmpSync();
 setTimeout(fbEmpSync, 500);
 
 if(!agencies.length){
+  // Fallback local uniquement — NE PAS écrire sur Firebase (seul admin écrit les agences)
   agencies=[
     {id:'161503',name:'SD Beaulieu',nom:'SD Beaulieu',code:'161503',addr:'Beaulieu, Alger',lat:36.7525,lng:3.0420,radius:300,rayon:300,wilaya:'Alger'},
     {id:'161601',name:'SD Bachdjerrah',nom:'SD Bachdjerrah',code:'161601',addr:'Bachdjerrah, Alger',lat:36.7048,lng:3.1006,radius:300,rayon:300,wilaya:'Alger'},
-    {id:'353601',name:'SD Hemmadi',nom:'SD Hemmadi',code:'353601',addr:'Hemmadi, Blida',lat:36.4720,lng:2.8190,radius:300,rayon:300,wilaya:'Blida'}
+    {id:'353601',name:'SD Hemmadi',nom:'SD Hemmadi',code:'353601',addr:'Hemmadi, Blida',lat:36.4720,lng:2.8190,radius:300,rayon:300,wilaya:'Blida'},
+    {id:'16103',name:'SD Bab Ezzouar',nom:'SD Bab Ezzouar',code:'16103',addr:'Bab Ezzouar, Alger',lat:36.7228,lng:3.1827,radius:300,rayon:300,wilaya:'Alger'}
   ];
-  sv('agencies',agencies);
+  // NE JAMAIS appeler sv('agencies') ici — employe.html ne doit pas écraser Firebase
 }
 
 // ── LOGIN ──
