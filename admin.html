@@ -1,12 +1,9 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
-  <meta charset="UTF-8">
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WeCheckin RH Admin — v2.3.0</title>
+<title>WeCheckin — Admin RH</title>
 <!-- QR via API image — no CDN needed -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -530,7 +527,6 @@ const db = firebase.database();
 </head>
 <body>
 
-
 <!-- TOPBAR -->
 <div class="topbar no-print">
   <div class="topbar-left">
@@ -538,7 +534,7 @@ const db = firebase.database();
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.9)" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </div>
     <div class="wc-brand">
-      <div class="wc-logo-circle">Wc</div>
+      <img src="data:image/png;base64,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" style="width:38px;height:38px;object-fit:contain;border-radius:8px;background:#fff;padding:2px;">
       <div class="wc-brand-name">
         <span class="wc-brand-name-main">WeCheckin RH</span>
         <span class="wc-brand-name-sub">Admin Portal</span>
@@ -2089,7 +2085,7 @@ try{db.ref('.info/connected').on('value',function(snap){var dot=document.getElem
 function saveData(k,d){
   localStorage.setItem('wecan_'+k,JSON.stringify(d));
   // Sync vers Firebase en arrière-plan
-  try{ if((k==='employees'||k==='agencies')&&Array.isArray(d)){const o={};d.forEach(e=>{if(e.id)o[e.id]=e;});db.ref('wecan/'+k).set(o);}else{db.ref('wecan/'+k).set(d);} }catch(e){}
+  try{ db.ref('wecan/'+k).set(d); }catch(e){}
 }
 
 // ── Firebase Sync ──
@@ -2105,8 +2101,8 @@ function _applyFbData(k, val){
   try{
     const arr = Array.isArray(val) ? val : (val && typeof val === 'object' ? Object.values(val) : null);
     localStorage.setItem('wecan_'+k, JSON.stringify(arr !== null ? arr : val));
-    if(k==='employees'       && arr){ employees          = arr; try{renderEmployees();populateEmpAgenceSelect();populateOrgFilter();renderOrganigramme();}catch(e){} }
-    if(k==='agencies'        && arr){ agencies           = arr; try{renderStats();renderAgencies();populateBranchFilter();populateStatsBranchFilter();}catch(e){} }
+    if(k==='employees'       && arr){ employees          = arr; try{renderEmployees();populateEmpAgenceSelect();populateOrgFilter();renderOrganigramme();}catch(e){} try{if(document.getElementById('page-dashboard').classList.contains('active')){renderPanelEmpList();renderPanelStats();renderDashStats();}}catch(e){} }
+    if(k==='agencies'        && arr){ agencies           = arr; try{renderStats();renderAgencies();populateBranchFilter();populateStatsBranchFilter();}catch(e){} try{if(document.getElementById('page-dashboard').classList.contains('active')){refreshMap();renderDashStats();}}catch(e){} }
     if(k==='shifts'          && arr){ shifts             = arr; try{renderShifts();}catch(e){} }
     if(k==='pushNotifications'&&arr){ pushNotifications  = arr; try{renderPushList();}catch(e){} }
     if(k==='feries'          && arr){ joursFeries        = arr; try{renderFeries();}catch(e){} }
@@ -2145,7 +2141,7 @@ function fbInitSync(){
       } else if(!_fbInitDone[k]){
         // Firebase vide : pousser donnees locales une seule fois
         var local = localStorage.getItem('wecan_'+k);
-        if(!snap.val() && local){ try{ db.ref('wecan/'+k).set(JSON.parse(local)); }catch(e){} }
+        if(local){ try{ db.ref('wecan/'+k).set(JSON.parse(local)); }catch(e){} }
       }
       _fbInitDone[k] = true;
     });
@@ -2158,7 +2154,7 @@ function fbInitSync(){
       if(val !== null && val !== undefined){ _applyFbData(k, val); }
       else {
         var local = localStorage.getItem('wecan_'+k);
-        if(!snap.val() && local){ try{ db.ref('wecan/'+k).set(JSON.parse(local)); }catch(e){} }
+        if(local){ try{ db.ref('wecan/'+k).set(JSON.parse(local)); }catch(e){} }
       }
     });
   });
@@ -2282,7 +2278,6 @@ function toggleSidebar(){
 
 // ── NAVIGATION ──
 function showPage(name,el){
-  try{history.replaceState(null,'','#'+name);}catch(ignore){}
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -2331,13 +2326,14 @@ function initMap(){
   if(map)return;
   try{
     map=L.map('leaflet-map',{zoomControl:true}).setView([36.68,3.05],11);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'� OpenStreetMap',maxZoom:18}).addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:18}).addTo(map);
     populateBranchFilter();
     renderMapLayers();
   }catch(e){ console.warn('Map init error:',e); }
   try{ renderPanelStats(); }catch(e){}
   try{ renderPanelEmpList(); }catch(e){}
 }
+
 function refreshMap(){
   if(!map)return;
   renderMapLayers();
@@ -7281,14 +7277,5 @@ function sortieCard(s){
   </div>
 </div>
 <!-- STAFF PRO — Wecan Services | Généré automatiquement le 19/06/2026 -->
-<script>
-(function(){
-  var h=(location.hash||"").replace("#","");
-  if(!h||h==="dashboard") return;
-  function tryRestore(){ if(typeof showPage==="function"){ showPage(h,null); } else { setTimeout(tryRestore,100); } }
-  if(document.readyState==="loading"){ document.addEventListener("DOMContentLoaded",function(){ setTimeout(tryRestore,300); }); }
-  else { setTimeout(tryRestore,300); }
-})();
-</script>
 </body>
 </html>
