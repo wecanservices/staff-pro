@@ -1294,12 +1294,14 @@ function initSwipe(track, wrap, onSuccess){
   track.replaceWith(track.cloneNode(true));
   const t = document.getElementById('geo-swipe-track');
 
-  function getEvX(e){ return e.touches?e.touches[0].clientX:e.clientX; }
-
+  function getEvX(e){
+    return e.clientX !== undefined ? e.clientX : (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
+  }
   function onStart(e){
     if(t.classList.contains('success')) return;
     e.preventDefault();
-    dragging=true; startX=getEvX(e)-4;
+    dragging=true;
+      if(e.pointerId!==undefined) try{track.setPointerCapture(e.pointerId);}catch(_){} startX=getEvX(e)-4;
     t.style.transition='none';
   }
   function onMove(e){
@@ -1329,12 +1331,12 @@ function initSwipe(track, wrap, onSuccess){
     }
   }
 
-  t.addEventListener('mousedown', onStart);
-  t.addEventListener('touchstart', onStart, {passive:false, capture:true});
-  document.addEventListener('mousemove', onMove);
-  document.addEventListener('touchmove', onMove, {passive:false});
-  document.addEventListener('mouseup', onEnd);
-  document.addEventListener('touchend', onEnd);
+  track.style.touchAction = 'none';
+  track.addEventListener('pointerdown',  onStart, {passive:false});
+  track.addEventListener('pointermove',  onMove,  {passive:false});
+  track.addEventListener('pointerup',    onEnd);
+  track.addEventListener('pointercancel',onEnd);
+  document.addEventListener('visibilitychange', function(){ if(document.hidden && dragging){ dragging=false; track.style.transition='left .2s,background .2s'; track.style.left='0px'; track.classList.remove('success'); curX=0; } });
 }
 
 // ──────────────────────────────────────────────────────────────
