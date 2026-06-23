@@ -2521,4 +2521,11 @@ if(ME) initApp();
   else { setTimeout(tryRestore,400); }
 })();
 </script>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('/staff-pro/sw.js').catch(function(){});
+  });
+}
+</script>
 </body>
