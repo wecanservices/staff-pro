@@ -986,6 +986,7 @@ let mgrTab='conge', mgrSelectedId=null;
 
 // ===== NAVIGATION =====
 function showPage(p){
+  try{history.replaceState(null,'','#'+name);}catch(ignore){}
   document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
   document.getElementById('page-'+p).classList.add('active');
@@ -2508,5 +2509,13 @@ if(ME) initApp();
   </div>
 </div>
 
+<script>
+(function(){
+  var h=(location.hash||"").replace("#","");
+  if(!h||h==="accueil") return;
+  function tryRestore(){ if(typeof showPage==="function"){ showPage(h); } else { setTimeout(tryRestore,100); } }
+  if(document.readyState==="loading"){ document.addEventListener("DOMContentLoaded",function(){ setTimeout(tryRestore,400); }); }
+  else { setTimeout(tryRestore,400); }
+})();
+</script>
 </body>
-</html>
