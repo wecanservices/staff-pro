@@ -2089,7 +2089,7 @@ try{db.ref('.info/connected').on('value',function(snap){var dot=document.getElem
 function saveData(k,d){
   localStorage.setItem('wecan_'+k,JSON.stringify(d));
   // Sync vers Firebase en arrière-plan
-  try{ db.ref('wecan/'+k).set(d); }catch(e){}
+  try{ if((k==='employees'||k==='agencies')&&Array.isArray(d)){const o={};d.forEach(e=>{if(e.id)o[e.id]=e;});db.ref('wecan/'+k).set(o);}else{db.ref('wecan/'+k).set(d);} }catch(e){}
 }
 
 // ── Firebase Sync ──
