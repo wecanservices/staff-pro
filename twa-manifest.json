@@ -1,0 +1,27 @@
+{
+  "packageId": "me.wecanservices.staffpro",
+  "host": "wecanservices.github.io",
+  "name": "STAFF PRO Employé",
+  "launcherName": "STAFF PRO",
+  "display": "standalone",
+  "themeColor": "#C0392B",
+  "navigationColor": "#C0392B",
+  "backgroundColor": "#C0392B",
+  "startUrl": "/staff-pro/employe.html",
+  "iconUrl": "https://wecanservices.github.io/staff-pro/icon-512.png",
+  "maskableIconUrl": "https://wecanservices.github.io/staff-pro/icon-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "./android.keystore",
+    "alias": "staffpro"
+  },
+  "appVersionCode": 1,
+  "appVersionName": "1.0.0",
+  "shortcuts": [],
+  "generatorApp": "bubblewrap",
+  "webManifestUrl": "https://wecanservices.github.io/staff-pro/manifest.json",
+  "orientation": "portrait",
+  "fingerprints": [],
+  "minSdkVersion": 21,
+  "targetSdkVersion": 34
+}
