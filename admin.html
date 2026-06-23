@@ -2062,6 +2062,7 @@ function loadData(k,fb){
     const d=localStorage.getItem('wecan_'+k);
     if(!d) return fb;
     const parsed=JSON.parse(d);
+    // Toujours retourner un array pour agencies et employees
     if(k==='agencies'||k==='employees'){
       if(Array.isArray(parsed)) return parsed.length===0?fb:parsed;
       if(parsed&&typeof parsed==='object'){const arr=Object.values(parsed);return arr.length===0?fb:arr;}
@@ -2088,9 +2089,13 @@ function fbRefreshAll(){
 // Indicateur connexion Firebase (pastille topbar)
 try{db.ref('.info/connected').on('value',function(snap){var dot=document.getElementById('fb-dot');if(dot){var ok=snap.val()===true;dot.style.background=ok?'#22c55e':'#ef4444';dot.title=ok?'Firebase connecté':'Firebase déconnecté';}});}catch(e){}
 function saveData(k,d){
+  // Toujours sauvegarder agencies et employees comme array — jamais comme objet
   let data=d;
-  if((k==='agencies'||k==='employees')&&!Array.isArray(data)&&data&&typeof data==='object'){data=Object.values(data);}
+  if((k==='agencies'||k==='employees')&&!Array.isArray(data)&&data&&typeof data==='object'){
+    data=Object.values(data);
+  }
   localStorage.setItem('wecan_'+k,JSON.stringify(data));
+  // Sync vers Firebase en arrière-plan
   try{ db.ref('wecan/'+k).set(data); }catch(e){}
 }
 
@@ -2234,6 +2239,7 @@ let agencies=loadData('agencies',[
   {id:'161503',name:'SD Beaulieu',code:'161503',addr:'Beaulieu, Alger',lat:36.7525,lng:3.0420,radius:300,wilaya:'Alger'},
   {id:'161601',name:'SD Bachdjerrah',code:'161601',addr:'Bachdjerrah, Alger',lat:36.7048,lng:3.1006,radius:300,wilaya:'Alger'},
   {id:'353601',name:'SD Hemmadi',code:'353601',addr:'Hemmadi, Blida',lat:36.4720,lng:2.8190,radius:300,wilaya:'Blida'},
+  {id:'16103',name:'SD Bab Ezzouar',code:'16103',addr:'Bab Ezzouar, Alger',lat:36.7228,lng:3.1827,radius:300,wilaya:'Alger'},
 ]);
 let employees=loadData('employees',[]);
 let pointages=loadData('pointages',[]);
