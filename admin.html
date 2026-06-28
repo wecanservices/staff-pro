@@ -2253,7 +2253,6 @@ setTimeout(fbInitSync, 500);
 const COLORS=['#FDEDEC:#7B241C','#E1F5EE:#085041','#FAEEDA:#633806','#EEEDFE:#3C3489','#FCEBEB:#791F1F'];
 function col(i){const p=COLORS[i%COLORS.length].split(':');return{bg:p[0],text:p[1]};}
 function ini(p,n){return((p||'?')[0]+(n||'?')[0]).toUpperCase();}
-function todayStr(){return new Date().toLocaleDateString('fr-DZ',{day:'2-digit',month:'2-digit',year:'numeric'});}
 function nowTime(){return new Date().toLocaleTimeString('fr-DZ',{hour:'2-digit',minute:'2-digit'});}
 
 
