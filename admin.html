@@ -10,6 +10,8 @@
 <script src="https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f1f5f9;color:#1e293b;height:100vh;overflow:hidden;}
@@ -579,9 +581,10 @@ const db = firebase.database();
   <!-- SIDEBAR -->
   <div class="sidebar no-print" id="sidebar">
     <div class="nav-section">
-      <div class="nav-item active" onclick="showPage('dashboard',this)" title="Dashboard">
+      <div class="nav-item active" onclick="showPage('dashboard',this)" title="Dashboard" style="position:relative;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
         <span data-t="nav_dashboard">Dashboard</span>
+        <span id="alerte-badge" style="margin-left:auto;background:#f97316;color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:20px;display:none;">!</span>
       </div>
       <div class="nav-item" onclick="showPage('profile',this)" title="Profile">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -607,9 +610,10 @@ const db = firebase.database();
       </div>
       <div class="nav-divider"></div>
 <div class="nav-divider"></div>
-      <div class="nav-item" onclick="showPage('pointage',this)" title="Pointage">
+      <div class="nav-item" onclick="showPage('pointage',this)" title="Pointage" style="position:relative;">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
         <span data-t="nav_pointage">Pointage</span>
+        <span id="retard-badge" style="margin-left:auto;background:#ef4444;color:#fff;font-size:9px;font-weight:700;padding:1px 6px;border-radius:20px;display:none;">0</span>
       </div>
       <div class="nav-item" onclick="showPage('trajet',this)" title="Trajet">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M3 12l4-4M3 12l4 4M21 12l-4-4M21 12l-4 4"/></svg>
@@ -1020,12 +1024,19 @@ const db = firebase.database();
           <div style="display:flex;gap:8px;align-items:center;">
             <input type="date" id="pt-date-filter" onchange="renderPointageDetail()" style="padding:7px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;color:#1e293b;background:#fff;">
             <select id="pt-emp-filter" onchange="renderPointageDetail()" style="padding:7px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;color:#1e293b;background:#fff;min-width:140px;"></select>
+            <div style="display:flex;gap:2px;background:#f1f5f9;border-radius:8px;padding:3px;">
+              <button id="pt-view-table-btn" class="dash-view-btn active" onclick="switchPointageView('table',this)">Liste</button>
+              <button id="pt-view-cal-btn" class="dash-view-btn" onclick="switchPointageView('calendar',this)">Calendrier</button>
+            </div>
             <button class="btn btn-outline btn-sm" onclick="exportPointage()" title="Exporter en Excel (.xlsx)">⬇ Excel</button>
           </div>
         </div>
 
         <!-- SUMMARY STATS -->
         <div id="pt-summary" style="display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px;"></div>
+
+        <!-- VUE CALENDRIER -->
+        <div id="pt-calendar-view" style="display:none;"></div>
 
         <!-- TABLE -->
         <div class="card">
@@ -2074,6 +2085,25 @@ function loadData(k,fb){
     return parsed;
   }catch(e){return fb;}
 }
+function updateSidebarAlerts(){
+  try{
+    const todayS=todayStr();
+    const todayPts=pointages.filter(p=>p.date===todayS);
+    // Compter retards (entree apres 08:05)
+    const retardsSet=new Set();
+    todayPts.filter(p=>p.type==='Entrée').forEach(p=>{
+      if(toMins(p.time)-toMins('08:00')>5) retardsSet.add(p.empId);
+    });
+    const retardCount=retardsSet.size;
+    const rb=document.getElementById('retard-badge');
+    if(rb){rb.textContent=retardCount;rb.style.display=retardCount>0?'flex':'none';}
+    // Alertes dashboard: retards + appros en attente
+    const pendingApp=approbations.filter(a=>a.status==='pending').length;
+    const totalAlertes=retardCount+pendingApp;
+    const ab=document.getElementById('alerte-badge');
+    if(ab){ab.textContent=totalAlertes>9?'9+':totalAlertes;ab.style.display=totalAlertes>0?'flex':'none';}
+  }catch(e){}
+}
 function showToast(msg,dur){
   dur=dur||2500;
   var t=document.getElementById('wc-toast');
@@ -2180,7 +2210,7 @@ function fbInitSync(){
     if(!incoming.length) return;
     incoming.forEach(a=>{ if(!approbations.find(x=>x.id===a.id)){ approbations.push(a); } else { const idx=approbations.findIndex(x=>x.id===a.id); if(approbations[idx].status==='pending'&&a.status!=='pending') approbations[idx]=a; } });
     saveData('approbations', approbations);
-    try{ renderApprobations(); updateApproBadge(); }catch(e){}
+    try{ renderApprobations(); updateApproBadge(); }catch(e){} try{updateSidebarAlerts();}catch(e){}
   });
   // Écouter les pointages créés depuis employe.html
   db.ref('wecan/pointages').on('value', snap=>{
@@ -2195,7 +2225,7 @@ function fbInitSync(){
       if(document.getElementById('page-pointage').classList.contains('active')) renderPointageDetail();
       if(document.getElementById('page-reports').classList.contains('active')) renderPointages();
       if(document.getElementById('page-dashboard').classList.contains('active')) refreshMap();
-    }catch(e){}
+    }catch(e){} try{updateSidebarAlerts();}catch(e){}
   });
   // Écouter les messages des employés depuis employe.html
   let _knownOutbox = {};
@@ -2291,6 +2321,7 @@ function toggleSidebar(){
 
 // ── NAVIGATION ──
 function showPage(name,el){
+  updateSidebarAlerts();
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
@@ -3704,6 +3735,97 @@ function buildDayRecords(){
   });
 }
 
+let _ptView='table';
+function switchPointageView(view,btn){
+  _ptView=view;
+  document.querySelectorAll('#page-pointage .dash-view-btn').forEach(b=>b.classList.remove('active'));
+  if(btn)btn.classList.add('active');
+  const calEl=document.getElementById('pt-calendar-view');
+  const tableSection=document.querySelector('#page-pointage .card');
+  const summaryEl=document.getElementById('pt-summary');
+  if(view==='calendar'){
+    if(calEl)calEl.style.display='block';
+    if(tableSection)tableSection.style.display='none';
+    renderCalendrierPointage();
+  } else {
+    if(calEl)calEl.style.display='none';
+    if(tableSection)tableSection.style.display='';
+    renderPointageDetail();
+  }
+}
+
+function renderCalendrierPointage(){
+  const calEl=document.getElementById('pt-calendar-view');
+  if(!calEl)return;
+  const now=new Date();
+  const year=now.getFullYear();
+  const month=now.getMonth();
+  const monthStr=String(month+1).padStart(2,'0');
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  const joursSem=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+  const firstDay=new Date(year,month,1).getDay();
+  const activeEmps=employees.filter(e=>e.status!=='Inactif');
+
+  let html=`<div style="background:#fff;border-radius:12px;border:1px solid #e2e8f0;overflow:hidden;margin-bottom:16px;">
+    <div style="padding:14px 18px;border-bottom:1px solid #e2e8f0;display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-size:14px;font-weight:700;color:#1e293b;">${['Janvier','Fevrier','Mars','Avril','Mai','Juin','Juillet','Aout','Septembre','Octobre','Novembre','Decembre'][month]} ${year}</div>
+      <div style="display:flex;gap:12px;font-size:11px;">
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;background:#3B6D11;border-radius:2px;display:inline-block;"></span>Tous présents</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;background:#f59e0b;border-radius:2px;display:inline-block;"></span>Partiel</span>
+        <span style="display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;background:#DC2626;border-radius:2px;display:inline-block;"></span>Absences</span>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);border-bottom:1px solid #e2e8f0;">
+      ${joursSem.map(j=>`<div style="padding:6px;text-align:center;font-size:10px;font-weight:700;color:#64748b;background:#f8fafc;">${j}</div>`).join('')}
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);">`;
+
+  for(let i=0;i<firstDay;i++){
+    html+=`<div style="min-height:64px;padding:4px;border:0.5px solid #f1f5f9;background:#fafafa;"></div>`;
+  }
+
+  for(let d=1;d<=daysInMonth;d++){
+    const dateStr=String(d).padStart(2,'0')+'/'+monthStr+'/'+year;
+    const dayPts=pointages.filter(p=>p.date===dateStr);
+    const presents=new Set(dayPts.filter(p=>p.type==='Entrée').map(p=>p.empId)).size;
+    const total=activeEmps.length;
+    const isToday=d===now.getDate()&&month===now.getMonth()&&year===now.getFullYear();
+    const dayDate=new Date(year,month,d);
+    const todayDate=new Date(year,now.getMonth(),now.getDate());
+    const isPast=dayDate<todayDate;
+    const dayOfWeek=dayDate.getDay();
+    const isWeekend=(dayOfWeek===5||dayOfWeek===6);
+    let bg='#fff',barColor='transparent';
+    if(isPast&&!isWeekend&&total>0){
+      const pct=presents/total;
+      if(pct>=1){bg='#EAF3DE';barColor='#3B6D11';}
+      else if(pct>=0.5){bg='#FEF9C3';barColor='#f59e0b';}
+      else if(pct>0){bg='#FAEEDA';barColor='#f97316';}
+      else{bg='#FCEBEB';barColor='#DC2626';}
+    }
+    if(isWeekend){bg='#f8fafc';}
+    html+=`<div onclick="goToPointageDate('${dateStr}')" style="min-height:64px;padding:5px;border:0.5px solid #e2e8f0;background:${bg};cursor:pointer;position:relative;${isToday?'outline:2px solid #C0392B;outline-offset:-2px;':''}" title="${dateStr}: ${presents}/${total} présents">
+      <div style="font-size:11px;font-weight:${isToday?'700':'500'};color:${isToday?'#C0392B':'#1e293b'};">${d}</div>
+      ${isPast&&!isWeekend&&total>0?`
+        <div style="margin-top:4px;font-size:10px;font-weight:700;color:${barColor};">${presents}/${total}</div>
+        <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:${barColor};border-radius:0 0 4px 4px;"></div>
+      `:''}
+    </div>`;
+  }
+  html+=`</div></div>`;
+  calEl.innerHTML=html;
+}
+
+function goToPointageDate(dateStr){
+  const parts=dateStr.split('/');
+  if(parts.length===3){
+    const isoDate=parts[2]+'-'+parts[1]+'-'+parts[0];
+    const dtEl=document.getElementById('pt-date-filter');
+    if(dtEl){dtEl.value=isoDate;}
+  }
+  switchPointageView('table',document.getElementById('pt-view-table-btn'));
+}
+
 function renderPointageDetail(){
   const dateFilter = document.getElementById('pt-date-filter')?.value || '';
   const empFilter  = parseInt(document.getElementById('pt-emp-filter')?.value)||0;
@@ -4677,7 +4799,8 @@ function renderPaie(){
             <div style="font-size:20px;font-weight:700;color:#fff;font-family:monospace;">${fmtDA(calc.net)}</div>
             <div style="font-size:10px;color:rgba(255,255,255,0.75);">Net ${moisLabel} ${yy}</div>
           </div>
-          <button onclick="printFiche(${emp.id},'${mois}')" style="background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);color:#fff;padding:6px 12px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;">Fiche</button>
+          <button onclick="printFiche(${emp.id},'${mois}')" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;padding:6px 12px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer;">🖨 Imprimer</button>
+          <button onclick="downloadFichePDF(${emp.id},'${mois}')" style="background:#fff;border:none;color:#C0392B;padding:6px 12px;border-radius:8px;font-size:11px;font-weight:700;cursor:pointer;">⬇ PDF</button>
         </div>
       </div>
       <div class="paie-card-body">
@@ -4748,6 +4871,101 @@ function printFiche(empId, mois){
 function printAllFiches(){
   const mois=document.getElementById('paie-mois')?.value||'06/2026';
   employees.forEach((emp,i)=>setTimeout(()=>printFiche(emp.id,mois),i*300));
+}
+
+function downloadFichePDF(empId, mois){
+  const _jsPDF = (window.jspdf&&window.jspdf.jsPDF)||window.jsPDF;
+  if(!_jsPDF){showToast('PDF lib chargement, reessayer dans 2s...');return;}
+  const emp=employees.find(e=>e.id===empId);
+  if(!emp)return;
+  const calc=calcPaieEmployee(emp,mois);
+  const ag=agencies.find(a=>a.id===emp.agenceId);
+  const [mm,yy]=mois.split('/');
+  const ML={'01':'Janvier','02':'Fevrier','03':'Mars','04':'Avril','05':'Mai','06':'Juin','07':'Juillet','08':'Aout','09':'Septembre','10':'Octobre','11':'Novembre','12':'Decembre'};
+  const ml=ML[mm]||mm;
+  const today=new Date().toLocaleDateString('fr-DZ');
+
+  const doc=new _jsPDF('p','mm','a4');
+
+  // Header rouge
+  doc.setFillColor(192,57,43);
+  doc.rect(0,0,210,30,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(20);doc.setFont('helvetica','bold');
+  doc.text('WeCheckin',14,13);
+  doc.setFontSize(9);doc.setFont('helvetica','normal');
+  doc.text('SARL - Livraison express Algerie',14,20);
+  doc.text(ag?ag.name||ag.id:'Alger',14,26);
+  doc.setFontSize(15);doc.setFont('helvetica','bold');
+  doc.text('BULLETIN DE PAIE',196,13,{align:'right'});
+  doc.setFontSize(9);doc.setFont('helvetica','normal');
+  doc.text(ml+' '+yy+' - Edite le '+today,196,20,{align:'right'});
+
+  // Bloc employe
+  doc.setTextColor(30,41,59);
+  doc.setFillColor(248,250,252);
+  doc.rect(14,34,182,22,'F');
+  doc.setDrawColor(226,232,240);
+  doc.rect(14,34,182,22,'S');
+  doc.setFontSize(8);doc.setFont('helvetica','bold');
+  doc.text('EMPLOYE',18,40);doc.setFont('helvetica','normal');
+  doc.text(emp.prenom+' '+emp.nom,18,46);doc.text(emp.poste,18,51);
+  doc.setFont('helvetica','bold');
+  doc.text('AGENCE',80,40);doc.setFont('helvetica','normal');
+  doc.text(ag?ag.name||ag.id:'—',80,46);
+  doc.setFont('helvetica','bold');
+  doc.text('JOURS TRAVAILLES',140,40);doc.setFont('helvetica','normal');
+  doc.text(calc.joursTravailles+' / 26 jours',140,46);
+  doc.text('Taux: '+fmtDA(calc.tauxH)+'/h',140,51);
+
+  // Remuneration
+  const remuRows=[['Salaire de base ('+calc.joursTravailles+' j)',fmtDA(calc.base)]];
+  if(calc.montantHSup>0)remuRows.push(['H.Sup ('+minsToStr(calc.totalHSupMins)+' x 125%)',fmtDA(calc.montantHSup)]);
+  if(calc.primePresence>0)remuRows.push(['Prime de presence',fmtDA(calc.primePresence)]);
+  remuRows.push(['Indemnite panier ('+calc.joursTravailles+' x 150 DA)',fmtDA(calc.primePanier)]);
+  remuRows.push(['Indemnite de transport (forfait)',fmtDA(calc.primTransport)]);
+
+  doc.autoTable({startY:60,head:[['+ Elements de remuneration','Montant']],body:remuRows,margin:{left:14,right:14},
+    headStyles:{fillColor:[59,109,17],textColor:[255,255,255],fontStyle:'bold'},
+    columnStyles:{1:{halign:'right',fontStyle:'bold',textColor:[59,109,17]}},styles:{fontSize:9}});
+
+  // Retenues
+  const retenRows=[];
+  if(calc.montantRetard>0)retenRows.push(['Retards ('+minsToStr(calc.totalRetardMins)+')','- '+fmtDA(calc.montantRetard)]);
+  if(calc.montantAbsence>0)retenRows.push(['Absences ('+calc.joursAbsence+' j)','- '+fmtDA(calc.montantAbsence)]);
+  if(!retenRows.length)retenRows.push(['Aucune retenue','0 DA']);
+
+  doc.autoTable({startY:doc.lastAutoTable.finalY+4,head:[[' - Retenues sur salaire','Montant']],body:retenRows,margin:{left:14,right:14},
+    headStyles:{fillColor:[163,45,45],textColor:[255,255,255],fontStyle:'bold'},
+    columnStyles:{1:{halign:'right',fontStyle:'bold',textColor:[163,45,45]}},styles:{fontSize:9}});
+
+  // Cotisations
+  doc.autoTable({startY:doc.lastAutoTable.finalY+4,head:[['Cotisations sociales','Montant']],
+    body:[['Salaire brut',fmtDA(calc.brut)],['CNAS salarie (9%)','- '+fmtDA(calc.cnasSal)],['IRG (10% apres CNAS)','- '+fmtDA(calc.irg)],['CNAS patronal (26%)',fmtDA(calc.cnasPatron)]],
+    margin:{left:14,right:14},headStyles:{fillColor:[71,85,105],textColor:[255,255,255]},
+    columnStyles:{1:{halign:'right',fontStyle:'bold'}},styles:{fontSize:9}});
+
+  // NET A PAYER
+  const ny=doc.lastAutoTable.finalY+8;
+  doc.setFillColor(234,243,222);doc.rect(14,ny,182,16,'F');
+  doc.setDrawColor(59,109,17);doc.rect(14,ny,182,16,'S');
+  doc.setTextColor(59,109,17);doc.setFontSize(12);doc.setFont('helvetica','bold');
+  doc.text('SALAIRE NET A PAYER',20,ny+7);
+  doc.setFontSize(16);
+  doc.text(fmtDA(calc.net),196,ny+11,{align:'right'});
+
+  // Signatures
+  const sy=ny+24;
+  doc.setTextColor(148,163,184);doc.setFontSize(9);doc.setFont('helvetica','normal');
+  doc.text('Signature employeur:',20,sy);doc.text('________________________________',20,sy+14);
+  doc.text('Signature employe:',120,sy);doc.text('________________________________',120,sy+14);
+
+  // Footer
+  doc.setFontSize(8);
+  doc.text('Bulletin etabli conformement a la legislation algerienne du travail - WeCheckin - '+ml+' '+yy,105,285,{align:'center'});
+
+  doc.save('fiche_'+emp.prenom+'_'+emp.nom+'_'+ml+'_'+yy+'.pdf');
+  showToast('PDF telecharge !');
 }
 
 function ficheTemplate(emp,calc,ag,moisLabel,yy){
