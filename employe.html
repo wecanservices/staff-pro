@@ -1009,6 +1009,16 @@ function doLogin(){
 }
 function doLogout(){
   if(!confirm('Se déconnecter ?'))return;
+  try{
+    db.ref('wecan/employees').off();
+    db.ref('wecan/agencies').off();
+    db.ref('wecan/approbations').off();
+    db.ref('wecan/pointages').off();
+    if(ME) db.ref('wecan/per_emp/'+ME.id+'/inbox').off();
+    Object.keys(_convListeners).forEach(cid=>{
+      db.ref('wecan/per_emp/'+(ME&&ME.id)+'/direct/'+cid).off();
+    });
+  }catch(e){}
   localStorage.removeItem('wecan_logged_id');
   document.getElementById('login-screen').classList.remove('hidden');
 }
@@ -1203,7 +1213,7 @@ function showGeoAlert(type, choices, lat, lng, ag){
         {label:'🚀 Mission',           motif:'Mission',                   color:'#7c3aed', bg:'#ede9fe', mission:true},
         {label:'📦 Livraison',         motif:'Livraison',                 color:'#0369a1', bg:'#e0f2fe', mission:false},
         {label:'🛒 Achat personnel',   motif:'Achat personnel',           color:'#854F0B', bg:'#FAEEDA', mission:false},
-        {label:'🏢 Achat entreprise',  motif:'Achat pour l entreprise',   color:'#065f46', bg:'#d1fae5', mission:false},
+        {label:"🏢 Achat entreprise",  motif:"Achat pour l'entreprise",   color:'#065f46', bg:'#d1fae5', mission:false},
         {label:'☕ Pause',             motif:'Pause',                     color:'#92400E', bg:'#FEF9C3', mission:false},
         {label:'🚻 Toilettes',         motif:'Toilettes',                 color:'#374151', bg:'#f3f4f6', mission:false},
         {label:'🏥 Sante medecin',    motif:'Sante voir medecin',        color:'#1d4ed8', bg:'#dbeafe', mission:false},
@@ -1639,6 +1649,7 @@ function renderActivity(){
 
 // ===== HOME =====
 function renderHome(){
+  if(!ME) return;
   // Toujours relire ME depuis localStorage pour capter les changements admin
   const _freshEmps=ld('employees',[]);
   const _freshMe=_freshEmps.find(e=>String(e.id)===String(ME.id));
@@ -2105,6 +2116,7 @@ function startNewConv(empId,empName){
 
 // ===== PROFIL =====
 function renderProfil(){
+  if(!ME) return;
   const _fe=ld('employees',[]);const _fm=_fe.find(e=>String(e.id)===String(ME.id));if(_fm)ME=_fm;
   const initials=ME.prenom.charAt(0)+ME.nom.charAt(0);
   document.getElementById('prof-av').textContent=initials;
