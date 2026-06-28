@@ -8,6 +8,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f1f5f9;color:#1e293b;height:100vh;overflow:hidden;}
@@ -5550,48 +5551,51 @@ function renderDashStats(){
       </table>
     </div>
 
-    <!-- 7 DAYS CHART -->
+    <!-- 7 DAYS CHART (Chart.js) -->
     <div class="card">
       <div class="card-header">
         <div class="card-title">Présences — 7 derniers jours</div>
+        <span style="font-size:11px;color:#64748b;">Entrees par jour</span>
       </div>
-      <div style="padding:16px;display:flex;align-items:flex-end;gap:8px;height:160px;">
-        ${last7.map(d=>{
-          const h = Math.round((d.cnt/maxCnt)*100);
-          const color = d.isToday ? '#C0392B' : '#F1948A';
-          return `<div style="display:flex;flex-direction:column;align-items:center;flex:1;gap:4px;">
-            <span style="font-size:11px;font-weight:700;color:${d.isToday?'#C0392B':'#64748b'};">${d.cnt}</span>
-            <div style="width:100%;background:${color};border-radius:6px 6px 0 0;height:${Math.max(h,4)}px;transition:height 0.3s;"></div>
-            <span style="font-size:9px;color:#94a3b8;white-space:nowrap;text-align:center;">${d.label}</span>
-          </div>`;
-        }).join('')}
+      <div style="padding:12px 16px 16px;height:190px;position:relative;">
+        <canvas id="chart-7days"></canvas>
       </div>
     </div>
   </div>
 
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
 
-    <!-- STATUS BREAKDOWN -->
+    <!-- PRESENCE DONUT (Chart.js) -->
     <div class="card">
-      <div class="card-header"><div class="card-title">Répartition des statuts</div></div>
-      <div style="padding:14px;">
-        ${[
-          ['Actif',           actifs,  '#3B6D11','#EAF3DE'],
-          ['Congé',           conge,   '#854F0B','#FAEEDA'],
-          ["Période d'essai", filtEmps.filter(e=>e.status==="Période d'essai").length, '#7B241C','#FDEDEC'],
-          ['Admin agence',   admins,  '#8B1A1A','#FDEDEC'],
-        ].map(([l,v,c,bg])=>{
-          const pct = totalEmp ? Math.round((v/totalEmp)*100) : 0;
-          return `<div style="margin-bottom:10px;">
-            <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-              <span style="font-size:12px;font-weight:600;color:#1e293b;">${l}</span>
-              <span style="font-size:12px;font-weight:700;color:${c};">${v} <span style="font-size:10px;color:#94a3b8;">(${pct}%)</span></span>
+      <div class="card-header"><div class="card-title">Presence aujourd'hui</div></div>
+      <div style="padding:12px 16px;display:flex;align-items:center;gap:20px;">
+        <div style="width:150px;height:150px;flex-shrink:0;position:relative;">
+          <canvas id="chart-donut"></canvas>
+          <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;">
+            <div style="font-size:24px;font-weight:700;color:#C0392B;line-height:1;">${totalEmp ? Math.round((presents/totalEmp)*100) : 0}%</div>
+            <div style="font-size:9px;color:#94a3b8;margin-top:2px;">presence</div>
+          </div>
+        </div>
+        <div style="flex:1;">
+          ${[
+            ['Presents',  presents,                       '#3B6D11','#EAF3DE'],
+            ['Absents',   Math.max(0, totalEmp-presents-conge), '#DC2626','#FCEBEB'],
+            ['Conge',     conge,                          '#854F0B','#FAEEDA'],
+            ['Admins',    admins,                         '#8B1A1A','#FDEDEC'],
+          ].map(([l,v,c,bg])=>`
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+              <div style="width:10px;height:10px;border-radius:50%;background:${c};flex-shrink:0;"></div>
+              <span style="font-size:12px;color:#64748b;flex:1;">${l}</span>
+              <span style="font-size:13px;font-weight:700;color:${c};">${v}</span>
+            </div>`).join('')}
+          <div style="border-top:1px solid #f1f5f9;margin-top:4px;padding-top:8px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div style="width:10px;height:10px;border-radius:50%;background:#E2E8F0;flex-shrink:0;"></div>
+              <span style="font-size:12px;color:#64748b;flex:1;">Total equipe</span>
+              <span style="font-size:13px;font-weight:700;color:#1e293b;">${totalEmp}</span>
             </div>
-            <div style="height:8px;background:#f1f5f9;border-radius:4px;overflow:hidden;">
-              <div style="width:${pct}%;height:100%;background:${c};border-radius:4px;"></div>
-            </div>
-          </div>`;
-        }).join('')}
+          </div>
+        </div>
       </div>
     </div>
 
@@ -5896,6 +5900,66 @@ function renderDashStats(){
       }).join('')}
     </div>
   </div>`;
+
+  setTimeout(()=>{
+    try{const ex=Chart.getChart('chart-7days');if(ex)ex.destroy();}catch(e){}
+    try{const ex=Chart.getChart('chart-donut');if(ex)ex.destroy();}catch(e){}
+    const _c7=document.getElementById('chart-7days');
+    if(_c7&&typeof Chart!=='undefined'){
+      new Chart(_c7,{
+        type:'bar',
+        data:{
+          labels:last7.map(d=>d.label),
+          datasets:[{
+            label:'Presences',
+            data:last7.map(d=>d.cnt),
+            backgroundColor:last7.map(d=>d.isToday?'rgba(192,57,43,0.9)':'rgba(192,57,43,0.22)'),
+            borderColor:last7.map(d=>d.isToday?'#C0392B':'rgba(192,57,43,0.45)'),
+            borderWidth:2,
+            borderRadius:6,
+            borderSkipped:false
+          }]
+        },
+        options:{
+          responsive:true,
+          maintainAspectRatio:false,
+          plugins:{
+            legend:{display:false},
+            tooltip:{callbacks:{label:c=>`${c.parsed.y} employe${c.parsed.y!==1?'s':''}`}}
+          },
+          scales:{
+            y:{beginAtZero:true,ticks:{stepSize:1,font:{size:10},color:'#94a3b8'},grid:{color:'rgba(0,0,0,0.05)'},border:{display:false}},
+            x:{ticks:{font:{size:9},color:'#94a3b8'},grid:{display:false},border:{display:false}}
+          }
+        }
+      });
+    }
+    const _cd=document.getElementById('chart-donut');
+    if(_cd&&typeof Chart!=='undefined'){
+      new Chart(_cd,{
+        type:'doughnut',
+        data:{
+          labels:['Presents','Absents','Conge','Admins'],
+          datasets:[{
+            data:[presents,Math.max(0,totalEmp-presents-conge),conge,admins],
+            backgroundColor:['#3B6D11','#DC2626','#854F0B','#8B1A1A'],
+            borderWidth:3,
+            borderColor:'#ffffff',
+            hoverOffset:4
+          }]
+        },
+        options:{
+          responsive:true,
+          maintainAspectRatio:true,
+          cutout:'68%',
+          plugins:{
+            legend:{display:false},
+            tooltip:{callbacks:{label:c=>`${c.label}: ${c.parsed}`}}
+          }
+        }
+      });
+    }
+  },80);
 }
 
 
