@@ -25,11 +25,54 @@ body.dark input,body.dark select,body.dark textarea{background:#334155;color:#e2
 .page.active{display:block}
 
 /* TAB BAR */
-.tab-bar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;background:#fff;border-top:1px solid var(--light);display:flex;z-index:100}
-.tab-btn{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 4px;border:none;background:none;cursor:pointer;font-size:10px;color:var(--gray);position:relative}
-.tab-btn.active{color:var(--red)}
-.tab-btn span{font-size:20px;margin-bottom:2px}
-.tab-badge{position:absolute;top:6px;right:calc(50% - 18px);background:var(--red);color:#fff;border-radius:10px;font-size:9px;padding:1px 5px;min-width:16px;text-align:center}
+.tab-bar{
+  position:fixed;bottom:0;left:50%;transform:translateX(-50%);
+  width:100%;max-width:430px;
+  background:#fff;
+  border-top:1px solid rgba(0,0,0,0.06);
+  display:flex;align-items:center;
+  z-index:100;
+  height:72px;
+  padding:0 8px;
+  box-sizing:border-box;
+  box-shadow:0 -4px 20px rgba(0,0,0,0.07);
+}
+.tab-btn{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:8px 4px;border:none;background:none;cursor:pointer;
+  font-size:10px;font-weight:600;color:#94a3b8;position:relative;
+  height:100%;gap:4px;
+}
+.tab-btn.active{color:#E84040}
+.tab-btn svg{width:22px;height:22px;}
+.tab-badge{
+  position:absolute;top:8px;right:calc(50% - 20px);
+  background:#E84040;color:#fff;border-radius:10px;
+  font-size:9px;padding:1px 5px;min-width:16px;text-align:center;
+  font-weight:700;line-height:14px;
+}
+/* Bouton central Pointage */
+.tab-btn-center{
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+  padding-bottom:8px;border:none;background:none;cursor:pointer;
+  font-size:10px;font-weight:700;color:#E84040;
+  position:relative;height:100%;gap:4px;
+}
+.tab-center-fab{
+  position:absolute;
+  top:-22px;
+  width:58px;height:58px;
+  background:linear-gradient(145deg,#f05252,#C0392B);
+  border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 20px rgba(192,57,43,0.45), 0 2px 8px rgba(0,0,0,0.15);
+  border:4px solid #fff;
+  transition:transform .15s, box-shadow .15s;
+}
+.tab-btn-center:active .tab-center-fab{
+  transform:scale(.93);
+  box-shadow:0 2px 10px rgba(192,57,43,0.35);
+}
 
 /* CARDS */
 .card{background:#fff;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
@@ -475,15 +518,15 @@ body::before {
  box-shadow: 0 2px 8px rgba(232,64,64,0.3) !important;
 }
 .btn-primary:active { transform: scale(0.97); }
-/* Tab bar */
+/* Tab bar moderne */
 .tab-bar {
- background: rgba(255,255,255,0.95) !important;
+ background: rgba(255,255,255,0.97) !important;
  backdrop-filter: blur(20px);
- border-top: 1px solid rgba(226,232,240,0.8) !important;
- box-shadow: 0 -4px 20px rgba(0,0,0,0.06);
+ border-top: 1px solid rgba(226,232,240,0.6) !important;
+ box-shadow: 0 -4px 24px rgba(0,0,0,0.08) !important;
 }
 .tab-btn.active { color: #E84040 !important; }
-.tab-btn.active span:first-child { font-size: 22px; }
+.tab-btn-center { color: #E84040 !important; }
 /* Topbar h1 */
 .topbar h1 { letter-spacing: -0.3px; font-weight: 800; }
 /* Inputs */
@@ -792,11 +835,43 @@ const db = firebase.database();
 
 <!-- ===== TAB BAR ===== -->
 <div class="tab-bar">
- <button class="tab-btn active" onclick="showPage('accueil')" id="tab-accueil"><span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></span>Accueil</button>
- <button class="tab-btn" onclick="showPage('pointage')" id="tab-pointage"><span>⏱</span>Pointage</button>
- <button class="tab-btn" onclick="showPage('conges')" id="tab-conges"><span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>Congés</button>
- <button class="tab-btn" onclick="showPage('chat')" id="tab-chat"><span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>Chat<span class="tab-badge" id="chat-badge" style="display:none">0</span></button>
- <button class="tab-btn" onclick="showPage('profil')" id="tab-profil"><span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></span>Profil</button>
+ <button class="tab-btn active" onclick="showPage('accueil')" id="tab-accueil">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+  Accueil
+ </button>
+ <button class="tab-btn" onclick="showPage('conges')" id="tab-conges">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+  Congés
+  <span class="tab-badge" id="conge-badge" style="display:none">0</span>
+ </button>
+ <button class="tab-btn-center" onclick="showPage('pointage')" id="tab-pointage">
+  <div class="tab-center-fab">
+   <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/>
+    <path d="M14 13.12c0 2.38 0 6.38-1 8.88"/>
+    <path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/>
+    <path d="M2 12a10 10 0 0 1 18-6"/>
+    <path d="M2 17c1 0 4.27-.15 5-.5"/>
+    <path d="M6 10.5c.73 0 3.15-.17 4-.33"/>
+    <path d="M8 7.5c.27-.02 1-.04 1.5-.04a4 4 0 0 1 4 4"/>
+    <path d="M9.5 9.5c.17.67.44 2.25.5 3"/>
+    <path d="M2 7c1.7 0 3.6.47 5 2"/>
+    <path d="M7.5 4.27c1.17-.54 2.43-.77 3.5-.77a9 9 0 0 1 9 9"/>
+    <path d="M21 15c-.28 3.72-3.29 7-7 7"/>
+    <path d="M19.5 11.5c-.28-2.25-1.5-4.5-3.5-6"/>
+   </svg>
+  </div>
+  Pointage
+ </button>
+ <button class="tab-btn" onclick="showPage('chat')" id="tab-chat">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+  Chat
+  <span class="tab-badge" id="chat-badge" style="display:none">0</span>
+ </button>
+ <button class="tab-btn" onclick="showPage('profil')" id="tab-profil">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+  Profil
+ </button>
 </div>
 
 <!-- ===== MODAL FORMULAIRE DEMANDE ===== -->
