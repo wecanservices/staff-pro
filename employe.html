@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>WeCheckin — Employé</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{--red:#C0392B;--dark:#8B1A1A;--bg:#f1f5f9;--white:#fff;--gray:#64748b;--light:#e2e8f0;--violet:#7C3AED;--green:#16a34a}
@@ -24,57 +25,61 @@ body.dark input,body.dark select,body.dark textarea{background:#334155;color:#e2
 .page{display:none;padding:16px;padding-bottom:110px;min-height:calc(100vh - 56px)}
 .page.active{display:block}
 
-/* TAB BAR */
+/* ── NAVBAR PREMIUM ── */
 .tab-bar{
   position:fixed;bottom:0;left:50%;transform:translateX(-50%);
-  width:100%;max-width:430px;
-  background:#fff;
-  border-radius:28px 28px 0 0;
+  width:95%;max-width:430px;height:92px;
+  background:#fff;border-radius:28px 28px 0 0;
+  box-shadow:0 -5px 25px rgba(0,0,0,.08);
   display:flex;justify-content:space-around;align-items:center;
   z-index:100;
-  height:90px;
-  box-shadow:0 -3px 20px rgba(0,0,0,.08);
 }
 .tab-btn{
-  flex:1;text-align:center;border:none;background:none;cursor:pointer;
-  color:#64748b;position:relative;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:6px;border:none;background:none;cursor:pointer;
+  font-family:inherit;color:#64748b;position:relative;padding:0;height:100%;
+  overflow:hidden;-webkit-tap-highlight-color:transparent;
+  outline:none;user-select:none;transition:color .3s;
 }
-.tab-btn svg{width:28px;height:28px;display:block;margin:0 auto;}
-.tab-btn span{display:block;margin-top:8px;font-size:13px;font-weight:500;}
+.tab-btn i{font-size:26px;transition:transform .3s,color .3s;display:block;}
+.tab-btn .nav-label{font-size:12px;font-weight:600;transition:color .3s;line-height:1;letter-spacing:.2px;}
+.tab-btn .nav-dot{width:5px;height:5px;border-radius:50%;background:#EF4444;opacity:0;transform:scale(0);transition:opacity .3s,transform .3s;}
 .tab-btn.active{color:#EF4444;}
+.tab-btn.active i{color:#EF4444;}
+.tab-btn.active .nav-label{color:#EF4444;font-weight:700;}
+.tab-btn.active .nav-dot{opacity:1;transform:scale(1);}
+.tab-btn:not(.active):hover i{transform:translateY(-4px);color:#EF4444;}
+.tab-btn:not(.active):hover .nav-label{color:#EF4444;}
 .tab-badge{
-  position:absolute;top:-6px;right:28px;
-  width:22px;height:22px;border-radius:50%;
-  background:#EF4444;color:#fff;
-  font-size:12px;font-weight:700;
+  position:absolute;top:10px;right:calc(50% - 28px);
+  min-width:20px;height:20px;border-radius:10px;padding:0 5px;
+  background:#EF4444;color:#fff;font-size:11px;font-weight:700;
   display:flex;align-items:center;justify-content:center;
-  border:3px solid #fff;
+  border:2.5px solid #fff;pointer-events:none;
 }
-/* FAB central — positionné par rapport à .tab-bar */
+.tab-center-slot{
+  flex:1;display:flex;flex-direction:column;align-items:center;
+  justify-content:flex-end;padding-bottom:12px;height:100%;
+  cursor:pointer;-webkit-tap-highlight-color:transparent;user-select:none;
+}
+.tab-center-label{font-size:12px;font-weight:700;color:#EF4444;letter-spacing:.2px;}
 .tab-center-fab{
-  position:absolute;
-  left:50%;top:-30px;
+  position:absolute;left:50%;top:calc(-86px / 2 + 4px);
   transform:translateX(-50%);
-  width:85px;height:85px;
-  border-radius:50%;
-  background:#EF4444;
+  width:86px;height:86px;border-radius:50%;
+  background:#EF4444;border:8px solid #F4F6FB;
+  box-shadow:0 12px 30px rgba(239,68,68,.35);
   display:flex;align-items:center;justify-content:center;
-  box-shadow:0 10px 25px rgba(239,68,68,.35);
-  border:8px solid #f4f6fb;
-  cursor:pointer;
-  z-index:10;
-  transition:transform .15s;
+  cursor:pointer;z-index:10;overflow:hidden;
+  -webkit-tap-highlight-color:transparent;outline:none;
+  transition:transform .3s,box-shadow .3s;
 }
-.tab-center-fab:active{transform:translateX(-50%) scale(.92);}
-.tab-center-fab svg{width:40px;height:40px;}
-/* Item label Pointage — icône vide, juste le texte en bas */
-.tab-btn-pt{
-  flex:1;text-align:center;border:none;background:none;cursor:pointer;
-  color:#EF4444;font-size:13px;font-weight:700;
-  display:flex;align-items:flex-end;justify-content:center;
-  padding-bottom:14px;height:100%;
-}
+.tab-center-fab i{color:#fff;font-size:38px;pointer-events:none;transition:transform .3s;}
+.tab-center-fab:hover{transform:translateX(-50%) scale(1.08);box-shadow:0 18px 40px rgba(239,68,68,.40);}
+.tab-center-fab:hover i{transform:scale(1.06);}
+.nav-ripple{position:absolute;border-radius:50%;background:rgba(239,68,68,.12);transform:scale(0);animation:nav-ripple .55s linear forwards;pointer-events:none;}
+.tab-center-fab .nav-ripple{background:rgba(255,255,255,.28);}
+@keyframes nav-ripple{to{transform:scale(5);opacity:0;}}
 
 /* CARDS */
 .card{background:#fff;border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(0,0,0,.08)}
@@ -520,8 +525,7 @@ body::before {
  box-shadow: 0 2px 8px rgba(232,64,64,0.3) !important;
 }
 .btn-primary:active { transform: scale(0.97); }
-/* Tab bar override */
-.tab-bar { border-top: none !important; }
+/* Tab bar override — nettoyé */
 /* Topbar h1 */
 .topbar h1 { letter-spacing: -0.3px; font-weight: 800; }
 /* Inputs */
@@ -829,45 +833,42 @@ const db = firebase.database();
 </div>
 
 <!-- ===== TAB BAR ===== -->
-<div class="tab-bar">
- <!-- FAB fingerprint — positionné absolument au centre de la barre -->
- <div class="tab-center-fab" onclick="showPage('pointage')">
-  <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-   <path d="M12 10a2 2 0 0 0-2 2c0 1.02-.1 2.51-.26 4"/>
-   <path d="M14 13.12c0 2.38 0 6.38-1 8.88"/>
-   <path d="M17.29 21.02c.12-.6.43-2.3.5-3.02"/>
-   <path d="M2 12a10 10 0 0 1 18-6"/>
-   <path d="M2 17c1 0 4.27-.15 5-.5"/>
-   <path d="M6 10.5c.73 0 3.15-.17 4-.33"/>
-   <path d="M8 7.5c.27-.02 1-.04 1.5-.04a4 4 0 0 1 4 4"/>
-   <path d="M9.5 9.5c.17.67.44 2.25.5 3"/>
-   <path d="M2 7c1.7 0 3.6.47 5 2"/>
-   <path d="M7.5 4.27c1.17-.54 2.43-.77 3.5-.77a9 9 0 0 1 9 9"/>
-   <path d="M21 15c-.28 3.72-3.29 7-7 7"/>
-   <path d="M19.5 11.5c-.28-2.25-1.5-4.5-3.5-6"/>
-  </svg>
- </div>
- <button class="tab-btn" onclick="showPage('accueil')" id="tab-accueil">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-  <span>Accueil</span>
+<nav class="tab-bar">
+ <!-- FAB Pointage -->
+ <button class="tab-center-fab" onclick="showPage('pointage')" aria-label="Pointage">
+  <i class="fa-solid fa-fingerprint"></i>
  </button>
+ <!-- Accueil -->
+ <button class="tab-btn active" onclick="showPage('accueil')" id="tab-accueil">
+  <i class="fa-solid fa-house"></i>
+  <span class="nav-label">Accueil</span>
+  <span class="nav-dot"></span>
+ </button>
+ <!-- Congés -->
  <button class="tab-btn" onclick="showPage('conges')" id="tab-conges">
   <span class="tab-badge" id="conge-badge" style="display:none">5</span>
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-  <span>Congés</span>
+  <i class="fa-regular fa-calendar-days"></i>
+  <span class="nav-label">Congés</span>
+  <span class="nav-dot"></span>
  </button>
- <!-- Item vide centré — juste le label Pointage en bas -->
- <button class="tab-btn-pt" onclick="showPage('pointage')" id="tab-pointage">Pointage</button>
+ <!-- Slot central : label Pointage -->
+ <div class="tab-center-slot" onclick="showPage('pointage')" id="tab-pointage">
+  <span class="tab-center-label">Pointage</span>
+ </div>
+ <!-- Chat -->
  <button class="tab-btn" onclick="showPage('chat')" id="tab-chat">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-  <span>Chat</span>
+  <i class="fa-regular fa-comment"></i>
+  <span class="nav-label">Chat</span>
   <span class="tab-badge" id="chat-badge" style="display:none">0</span>
+  <span class="nav-dot"></span>
  </button>
+ <!-- Profil -->
  <button class="tab-btn" onclick="showPage('profil')" id="tab-profil">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-  <span>Profil</span>
+  <i class="fa-regular fa-user"></i>
+  <span class="nav-label">Profil</span>
+  <span class="nav-dot"></span>
  </button>
-</div>
+</nav>
 
 <!-- ===== MODAL FORMULAIRE DEMANDE ===== -->
 <div class="modal" id="lf-modal">
@@ -1040,7 +1041,7 @@ const db = firebase.database();
 
 <!-- TOAST -->
 <div class="toast" id="toast"></div>
-<div style="position:fixed;bottom:72px;right:10px;background:rgba(0,0,0,.2);color:rgba(255,255,255,.7);font-size:10px;padding:3px 8px;border-radius:10px;pointer-events:none;z-index:500;">v4.0</div>
+<div style="position:fixed;bottom:72px;right:10px;background:rgba(0,0,0,.2);color:rgba(255,255,255,.7);font-size:10px;padding:3px 8px;border-radius:10px;pointer-events:none;z-index:500;">v4.5</div>
 
 <script>
 // ===== GLOBALS =====
@@ -1255,9 +1256,11 @@ let mgrTab='conge', mgrSelectedId=null;
 // ===== NAVIGATION =====
 function showPage(p){
  document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));
- document.querySelectorAll('.tab-btn').forEach(x=>x.classList.remove('active'));
+ const ICONS={accueil:['fa-solid fa-house','fa-regular fa-house'],conges:['fa-solid fa-calendar-days','fa-regular fa-calendar-days'],chat:['fa-solid fa-comment','fa-regular fa-comment'],profil:['fa-solid fa-user','fa-regular fa-user']};
+ document.querySelectorAll('.tab-btn').forEach(x=>{x.classList.remove('active');const pg=x.id.replace('tab-','');if(ICONS[pg]&&x.querySelector('i'))x.querySelector('i').className=ICONS[pg][1];});
  document.getElementById('page-'+p).classList.add('active');
- document.getElementById('tab-'+p).classList.add('active');
+ const activeTab=document.getElementById('tab-'+p);
+ if(activeTab){activeTab.classList.add('active');if(ICONS[p]&&activeTab.querySelector('i'))activeTab.querySelector('i').className=ICONS[p][0];}
  if(p==='accueil') renderHome();
  if(p==='pointage'){renderPtHist();renderPtSummary();}
  if(p==='conges') renderLeaves();
