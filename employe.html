@@ -82,16 +82,58 @@ body.dark input,body.dark select,body.dark textarea{background:#334155;color:#e2
 .pt-status-card .pt-date{font-size:13px;opacity:.8;margin-top:4px}
 .pt-status-card .pt-status{margin-top:10px;font-size:14px;font-weight:600;background:rgba(255,255,255,.2);display:inline-block;padding:4px 14px;border-radius:20px}
 
-.pt-btns{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;max-width:340px;margin-left:auto;margin-right:auto;}
-.pt-btn{border:none;border-radius:16px;padding:18px 12px;cursor:pointer;text-align:center;transition:.15s;position:relative;overflow:hidden;box-shadow:0 4px 15px rgba(0,0,0,.15);}
-.pt-btn:active{transform:scale(.97);}
-.pt-btn .pt-ico{display:flex;align-items:center;justify-content:center;width:48px;height:48px;border-radius:50%;margin:0 auto 8px;background:rgba(255,255,255,.25);}
-.pt-btn .pt-ico svg{width:24px;height:24px;}
-.pt-btn .pt-lbl{font-size:13px;font-weight:700;color:#fff;letter-spacing:.3px;}
-.pt-btn.entry{background:linear-gradient(135deg,#16a34a,#15803d);}
-.pt-btn.exit{background:linear-gradient(135deg,#C0392B,#991b1b);}
-.pt-btn.pause-s{background:linear-gradient(135deg,#d97706,#b45309);}
-.pt-btn.pause-e{background:linear-gradient(135deg,#0369a1,#075985);}
+.pt-btns{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px;max-width:360px;margin-left:auto;margin-right:auto;}
+.pt-btn{
+  border:none;border-radius:22px;padding:22px 14px 18px;
+  cursor:pointer;text-align:center;
+  transition:all .2s cubic-bezier(.4,0,.2,1);
+  position:relative;overflow:hidden;
+}
+.pt-btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(255,255,255,.18) 0%,transparent 50%);
+  border-radius:22px;
+}
+.pt-btn::after{
+  content:'';position:absolute;
+  bottom:-30px;left:50%;transform:translateX(-50%);
+  width:60%;height:40px;
+  background:inherit;filter:blur(20px);opacity:.6;
+  border-radius:50%;
+}
+.pt-btn:active{transform:scale(.95);}
+.pt-btn .pt-ico{
+  display:flex;align-items:center;justify-content:center;
+  width:52px;height:52px;border-radius:16px;
+  margin:0 auto 12px;
+  background:rgba(255,255,255,.2);
+  border:1px solid rgba(255,255,255,.3);
+  backdrop-filter:blur(4px);
+  box-shadow:0 2px 8px rgba(0,0,0,.15);
+}
+.pt-btn .pt-ico svg{width:26px;height:26px;}
+.pt-btn .pt-lbl{font-size:13px;font-weight:800;color:#fff;letter-spacing:.4px;text-shadow:0 1px 4px rgba(0,0,0,.2);}
+.pt-btn .pt-sub{font-size:10px;color:rgba(255,255,255,.65);font-weight:600;margin-top:3px;letter-spacing:.5px;}
+.pt-btn.entry{
+  background:linear-gradient(145deg,#22c55e,#15803d);
+  box-shadow:0 8px 24px rgba(34,197,94,.4), 0 2px 6px rgba(0,0,0,.15);
+}
+.pt-btn.entry:active{box-shadow:0 4px 12px rgba(34,197,94,.3);}
+.pt-btn.exit{
+  background:linear-gradient(145deg,#f87171,#b91c1c);
+  box-shadow:0 8px 24px rgba(239,68,68,.4), 0 2px 6px rgba(0,0,0,.15);
+}
+.pt-btn.exit:active{box-shadow:0 4px 12px rgba(239,68,68,.3);}
+.pt-btn.pause-s{
+  background:linear-gradient(145deg,#fbbf24,#b45309);
+  box-shadow:0 8px 24px rgba(251,191,36,.35), 0 2px 6px rgba(0,0,0,.15);
+}
+.pt-btn.pause-s:active{box-shadow:0 4px 12px rgba(251,191,36,.25);}
+.pt-btn.pause-e{
+  background:linear-gradient(145deg,#38bdf8,#0369a1);
+  box-shadow:0 8px 24px rgba(56,189,248,.35), 0 2px 6px rgba(0,0,0,.15);
+}
+.pt-btn.pause-e:active{box-shadow:0 4px 12px rgba(56,189,248,.25);}
 
 /* QR SCANNER */
 .scan-area{background:#000;border-radius:16px;overflow:hidden;min-height:250px;position:relative;margin-bottom:12px}
@@ -288,20 +330,116 @@ body.dark input,body.dark select,body.dark textarea{background:#334155;color:#e2
 .doc-item .di-date{font-size:11px;color:var(--gray)}
 .fields-hidden{display:none}
 
-/* LOGIN SCREEN */
-#login-screen{position:fixed;inset:0;background:linear-gradient(135deg,#8B1A1A,#C0392B);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;padding:32px 24px;}
+/* LOGIN SCREEN — Ultra Pro */
+#login-screen{
+  position:fixed;inset:0;z-index:9999;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  padding:32px 24px;
+  background:linear-gradient(160deg,#0f0c29 0%,#1a0a2e 30%,#24063a 60%,#6b0f1a 100%);
+  overflow:hidden;
+}
 #login-screen.hidden{display:none}
-.login-logo{font-size:52px;margin-bottom:8px}
-.login-title{color:#fff;font-size:24px;font-weight:800;margin-bottom:4px}
-.login-sub{color:rgba(255,255,255,.7);font-size:13px;margin-bottom:32px}
-.login-card{background:#fff;border-radius:20px;padding:28px 24px;width:100%;max-width:360px;box-shadow:0 20px 60px rgba(0,0,0,.3)}
-.login-field{margin-bottom:16px}
-.login-field label{display:block;font-size:12px;font-weight:600;color:#64748b;margin-bottom:6px}
-.login-field input{width:100%;padding:12px 14px;border:1.5px solid #e2e8f0;border-radius:12px;font-size:15px;outline:none;transition:border .2s}
-.login-field input:focus{border-color:#C0392B}
-.login-btn{width:100%;padding:14px;background:linear-gradient(135deg,#8B1A1A,#C0392B);color:#fff;border:none;border-radius:12px;font-size:16px;font-weight:700;cursor:pointer;margin-top:4px}
-.login-error{color:#C0392B;font-size:12px;text-align:center;margin-top:10px;min-height:18px}
-.login-spinner{display:none;margin:14px auto 0;width:30px;height:30px;border:3px solid rgba(192,57,43,.2);border-top-color:#C0392B;border-radius:50%;animation:spin-login .7s linear infinite;}
+
+/* Orbes animées en fond */
+#login-screen::before{
+  content:'';position:absolute;width:400px;height:400px;
+  background:radial-gradient(circle,rgba(192,57,43,0.35) 0%,transparent 70%);
+  top:-100px;right:-100px;border-radius:50%;
+  animation:orb-float 8s ease-in-out infinite;
+}
+#login-screen::after{
+  content:'';position:absolute;width:300px;height:300px;
+  background:radial-gradient(circle,rgba(139,26,26,0.3) 0%,transparent 70%);
+  bottom:-80px;left:-80px;border-radius:50%;
+  animation:orb-float 10s ease-in-out infinite reverse;
+}
+@keyframes orb-float{0%,100%{transform:translate(0,0) scale(1);}50%{transform:translate(20px,-30px) scale(1.1);}}
+
+/* Logo zone */
+.login-logo-wrap{
+  position:relative;z-index:1;
+  display:flex;flex-direction:column;align-items:center;
+  margin-bottom:36px;
+}
+.login-logo-ring{
+  width:80px;height:80px;
+  background:linear-gradient(135deg,rgba(255,255,255,.15),rgba(255,255,255,.05));
+  border:1px solid rgba(255,255,255,.2);
+  border-radius:24px;
+  display:flex;align-items:center;justify-content:center;
+  backdrop-filter:blur(10px);
+  box-shadow:0 8px 32px rgba(192,57,43,0.4), inset 0 1px 0 rgba(255,255,255,.2);
+  margin-bottom:16px;
+  animation:logo-pulse 3s ease-in-out infinite;
+}
+@keyframes logo-pulse{0%,100%{box-shadow:0 8px 32px rgba(192,57,43,0.4),inset 0 1px 0 rgba(255,255,255,.2);}50%{box-shadow:0 8px 48px rgba(232,64,64,0.6),inset 0 1px 0 rgba(255,255,255,.2);}}
+.login-title{color:#fff;font-size:26px;font-weight:900;margin-bottom:4px;letter-spacing:-0.5px}
+.login-sub{color:rgba(255,255,255,.55);font-size:12px;letter-spacing:2px;font-weight:600;text-transform:uppercase}
+
+/* Carte glassmorphisme */
+.login-card{
+  position:relative;z-index:1;
+  background:rgba(255,255,255,0.07);
+  backdrop-filter:blur(24px);
+  -webkit-backdrop-filter:blur(24px);
+  border:1px solid rgba(255,255,255,0.15);
+  border-radius:28px;
+  padding:32px 28px;
+  width:100%;max-width:380px;
+  box-shadow:0 24px 64px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.12);
+}
+
+/* Champs */
+.login-field{margin-bottom:20px;position:relative}
+.login-field label{
+  display:block;font-size:11px;font-weight:700;
+  color:rgba(255,255,255,.6);margin-bottom:8px;letter-spacing:1.2px;text-transform:uppercase;
+}
+.login-field .field-wrap{position:relative}
+.login-field .field-icon{
+  position:absolute;left:14px;top:50%;transform:translateY(-50%);
+  color:rgba(255,255,255,.4);pointer-events:none;
+}
+.login-field input{
+  width:100%;padding:14px 14px 14px 44px;
+  background:rgba(255,255,255,.08);
+  border:1.5px solid rgba(255,255,255,.15);
+  border-radius:14px;
+  font-size:15px;color:#fff;outline:none;
+  transition:all .25s;
+  box-sizing:border-box;
+}
+.login-field input::placeholder{color:rgba(255,255,255,.3)}
+.login-field input:focus{
+  background:rgba(255,255,255,.13);
+  border-color:rgba(232,64,64,.7);
+  box-shadow:0 0 0 3px rgba(232,64,64,.15);
+}
+
+/* Bouton connexion */
+.login-btn{
+  width:100%;padding:16px;
+  background:linear-gradient(135deg,#E84040,#C0392B);
+  color:#fff;border:none;border-radius:14px;
+  font-size:16px;font-weight:800;cursor:pointer;
+  margin-top:8px;letter-spacing:0.3px;
+  position:relative;overflow:hidden;
+  box-shadow:0 8px 24px rgba(232,64,64,0.45);
+  transition:all .2s;
+}
+.login-btn::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.15),transparent);
+}
+.login-btn:active{transform:scale(.98);box-shadow:0 4px 12px rgba(232,64,64,.3)}
+
+/* Erreur & spinner */
+.login-error{color:#ff8080;font-size:12px;text-align:center;margin-top:12px;min-height:18px;font-weight:600}
+.login-spinner{
+  display:none;margin:16px auto 0;width:28px;height:28px;
+  border:3px solid rgba(255,255,255,.15);border-top-color:#E84040;
+  border-radius:50%;animation:spin-login .7s linear infinite;
+}
 @keyframes spin-login{to{transform:rotate(360deg);}}
 
 /* ══ WECHECKIN — MODERN EMPLOYEE THEME ══ */
@@ -436,22 +574,41 @@ const db = firebase.database();
 
 <!-- ===== LOGIN SCREEN ===== -->
 <div id="login-screen">
- <div class="login-logo"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#C0392B" stroke-width="1.5"><rect x="2" y="3" width="20" height="18" rx="2"/><path d="M8 21V8h8v13M12 8V3"/></svg></div>
- <div class="login-title">WeCheckin</div>
- <div class="login-sub">Connexion Employé</div>
- <div style="color:rgba(255,255,255,.6);font-size:11px;margin-top:-20px;margin-bottom:24px;font-weight:600;letter-spacing:1px;">v4.0 • STAFF PRO</div>
+ <div class="login-logo-wrap">
+  <div class="login-logo-ring">
+   <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+    <polyline points="9 12 11 14 15 10"/>
+   </svg>
+  </div>
+  <div class="login-title">WeCheckin</div>
+  <div class="login-sub">Staff Pro · Espace Employé</div>
+ </div>
  <div class="login-card">
- <div class="login-field">
- <label>Email</label>
- <input type="email" id="login-email" placeholder="votre@email.com" autocomplete="email">
- </div>
- <div class="login-field">
- <label>Mot de passe</label>
- <input type="password" id="login-password" placeholder="••••••" autocomplete="current-password">
- </div>
- <button class="login-btn" onclick="doLogin()">Se connecter</button>
- <div class="login-spinner" id="login-spinner"></div>
- <div class="login-error" id="login-error"></div>
+  <div class="login-field">
+   <label>Adresse email</label>
+   <div class="field-wrap">
+    <span class="field-icon">
+     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+    </span>
+    <input type="email" id="login-email" placeholder="votre@email.com" autocomplete="email">
+   </div>
+  </div>
+  <div class="login-field">
+   <label>Mot de passe</label>
+   <div class="field-wrap">
+    <span class="field-icon">
+     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+    </span>
+    <input type="password" id="login-password" placeholder="••••••••" autocomplete="current-password">
+   </div>
+  </div>
+  <button class="login-btn" onclick="doLogin()">
+   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="vertical-align:middle;margin-right:8px;margin-bottom:2px"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+   Se connecter
+  </button>
+  <div class="login-spinner" id="login-spinner"></div>
+  <div class="login-error" id="login-error"></div>
  </div>
 </div>
 
@@ -520,40 +677,44 @@ const db = firebase.database();
  <div class="pt-btns">
   <button class="pt-btn entry" onclick="gps('Entree')">
     <div class="pt-ico">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
         <polyline points="10 17 15 12 10 7"/>
         <line x1="15" y1="12" x2="3" y2="12"/>
       </svg>
     </div>
-    <div class="pt-lbl">Entrée GPS</div>
+    <div class="pt-lbl">Entrée</div>
+    <div class="pt-sub">Pointer arrivée</div>
   </button>
   <button class="pt-btn exit" onclick="gps('Sortie')">
     <div class="pt-ico">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
         <polyline points="16 17 21 12 16 7"/>
         <line x1="21" y1="12" x2="9" y2="12"/>
       </svg>
     </div>
-    <div class="pt-lbl">Sortie GPS</div>
+    <div class="pt-lbl">Sortie</div>
+    <div class="pt-sub">Pointer départ</div>
   </button>
   <button class="pt-btn pause-s" onclick="gps('Debut pause')">
     <div class="pt-ico">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <rect x="6" y="4" width="4" height="16"/>
         <rect x="14" y="4" width="4" height="16"/>
       </svg>
     </div>
     <div class="pt-lbl">Début pause</div>
+    <div class="pt-sub">Quitter poste</div>
   </button>
   <button class="pt-btn pause-e" onclick="gps('Fin pause')">
     <div class="pt-ico">
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="#fff" stroke="#fff" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="#fff" stroke="#fff" stroke-width="1" stroke-linecap="round" stroke-linejoin="round">
         <polygon points="5 3 19 12 5 21 5 3"/>
       </svg>
     </div>
     <div class="pt-lbl">Fin pause</div>
+    <div class="pt-sub">Reprendre</div>
   </button>
  </div>
  <div class="card">
