@@ -9,6 +9,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;}
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f1f5f9;color:#1e293b;height:100vh;overflow:hidden;}
@@ -999,7 +1000,7 @@ const db = firebase.database();
               <option value="hsup">H.Sup seulement</option>
               <option value="sortie">Sorties seulement</option>
             </select>
-            <button class="btn btn-outline btn-sm" onclick="exportReports()">⬇ Exporter</button>
+            <button class="btn btn-outline btn-sm" onclick="exportReports()" title="Exporter en Excel (.xlsx)">⬇ Excel</button>
           </div>
         </div>
 
@@ -1019,7 +1020,7 @@ const db = firebase.database();
           <div style="display:flex;gap:8px;align-items:center;">
             <input type="date" id="pt-date-filter" onchange="renderPointageDetail()" style="padding:7px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;color:#1e293b;background:#fff;">
             <select id="pt-emp-filter" onchange="renderPointageDetail()" style="padding:7px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;color:#1e293b;background:#fff;min-width:140px;"></select>
-            <button class="btn btn-outline btn-sm" onclick="exportPointage()">⬇ Exporter</button>
+            <button class="btn btn-outline btn-sm" onclick="exportPointage()" title="Exporter en Excel (.xlsx)">⬇ Excel</button>
           </div>
         </div>
 
@@ -3211,30 +3212,56 @@ function renderPointages(){
     }).join('');
 }
 
+function _xlsxColWidths(rows){
+  const cols=[];
+  rows.forEach(r=>r.forEach((v,i)=>{const len=String(v==null?'':v).length;if(!cols[i]||cols[i].wch<len)cols[i]={wch:Math.max(len+2,10)};}));
+  return cols;
+}
+
 function exportReports(){
-  const rows=[['Date','Employé','Poste','Entrée','Sortie','Nb Pauses','Durée pause','Travail net','Retard','H.Sup','Sortie motif','Agence']];
+  if(typeof XLSX==='undefined'){showToast('Chargement en cours, reessayer dans 2s...');return;}
   const map={};
-  pointages.forEach(p=>{const k=p.empId+'_'+p.date;if(!map[k])map[k]={empId:p.empId,empName:p.empName,agenceId:p.agenceId,agenceName:p.agenceName,date:p.date,pts:[]};map[k].pts.push(p);});
-  Object.values(map).forEach(rec=>{
+  pointages.forEach(p=>{
+    const k=p.empId+'_'+p.date;
+    if(!map[k])map[k]={empId:p.empId,empName:p.empName,agenceId:p.agenceId,agenceName:p.agenceName,date:p.date,pts:[]};
+    map[k].pts.push(p);
+  });
+  const detail=[['Date','Employe','Poste','Agence','Entree','Sortie','Nb Pauses','Duree pause','Travail net','Retard','H.Sup','Motif sortie']];
+  const synthMap={};
+  Object.values(map).sort((a,b)=>a.date.localeCompare(b.date)).forEach(rec=>{
     const pts=rec.pts.sort((a,b)=>a.time.localeCompare(b.time));
     const entree=pts.find(p=>p.type==='Entrée');
     const sortie=pts.find(p=>p.type==='Sortie');
-    const pauses=[];
-    let i=0;
-    while(i<pts.length){if(pts[i].type==='Début pause'){const fin=pts.find((p,j)=>j>i&&p.type==='Fin pause');if(fin)pauses.push(fin.time+'-'+pts[i].time);}i++;}
-    const totalP=pauses.length;
+    let pauseMins=0,pauseCount=0;
+    for(let i=0;i<pts.length;i++){
+      if(pts[i].type==='Début pause'){
+        const fin=pts.find((p,j)=>j>i&&p.type==='Fin pause');
+        if(fin){pauseMins+=toMins(fin.time)-toMins(pts[i].time);pauseCount++;}
+      }
+    }
     let retardMins=0;if(entree){const d=toMins(entree.time)-toMins('08:00');if(d>5)retardMins=d;}
-    let travailBrut=null,travailNet=null,hSup=0;
-    if(entree&&sortie){travailBrut=toMins(sortie.time)-toMins(entree.time);if(travailBrut<0)travailBrut+=24*60;const pauseMins=pauses.reduce((a,p)=>{const[f,d]=p.split('-');return a+toMins(f)-toMins(d);},0);travailNet=travailBrut-pauseMins;hSup=Math.max(0,travailNet-480);}
-    const sortieMotif=approbations.filter(a=>a.type==='sortie'&&a.empId===rec.empId&&a.status==='approved'&&a.date===rec.date).map(s=>s.detail.heure+'→'+s.detail.retour+' '+s.detail.motif).join('; ');
+    let travailNet=null,hSup=0;
+    if(entree&&sortie){const brut=toMins(sortie.time)-toMins(entree.time);travailNet=brut-pauseMins;hSup=Math.max(0,travailNet-480);}
+    const motif=approbations.filter(a=>a.type==='sortie'&&a.empId===rec.empId&&a.status==='approved'&&a.date===rec.date).map(s=>(s.detail?.heure||'')+'->'+' '+(s.detail?.motif||'')).join('; ');
     const emp=employees.find(e=>e.id===rec.empId);
-    rows.push([rec.date,rec.empName,emp?.poste||'',entree?.time||'',sortie?.time||'',totalP,minsToStr(totalP),minsToStr(travailNet),minsToStr(retardMins),minsToStr(hSup),sortieMotif,rec.agenceName]);
+    detail.push([rec.date,rec.empName,emp?.poste||'',rec.agenceName,entree?.time||'',sortie?.time||'',pauseCount,minsToStr(pauseMins),minsToStr(travailNet),minsToStr(retardMins),minsToStr(hSup),motif]);
+    if(!synthMap[rec.empId])synthMap[rec.empId]={emp,name:rec.empName,agence:rec.agenceName,jours:0,retard:0,hSup:0,pause:0};
+    synthMap[rec.empId].jours++;
+    synthMap[rec.empId].retard+=retardMins;
+    synthMap[rec.empId].hSup+=hSup;
+    synthMap[rec.empId].pause+=pauseMins;
   });
-  const csv=rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
-  const a=document.createElement('a');
-  a.href='data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
-  a.download='reports_wecan_'+new Date().toISOString().slice(0,10)+'.csv';
-  a.click();
+  const synth=[['Employe','Poste','Agence','Jours presents','Total retards','Total H.Sup','Total pauses','Salaire brut (DA)']];
+  Object.values(synthMap).forEach(s=>{
+    synth.push([s.name,s.emp?.poste||'',s.agence,s.jours,minsToStr(s.retard),minsToStr(s.hSup),minsToStr(s.pause),(getSalaire(s.emp?.id||0)).toLocaleString('fr-DZ')]);
+  });
+  const wb=XLSX.utils.book_new();
+  const wsSynth=XLSX.utils.aoa_to_sheet(synth);wsSynth['!cols']=_xlsxColWidths(synth);
+  const wsDetail=XLSX.utils.aoa_to_sheet(detail);wsDetail['!cols']=_xlsxColWidths(detail);
+  XLSX.utils.book_append_sheet(wb,wsSynth,'Synthese');
+  XLSX.utils.book_append_sheet(wb,wsDetail,'Detail complet');
+  XLSX.writeFile(wb,'rapport_wecan_'+new Date().toISOString().slice(0,10)+'.xlsx');
+  showToast('Export Excel pret !');
 }
 
 // ── UTILS ──
@@ -3780,16 +3807,21 @@ function renderPointageDetail(){
 }
 
 function exportPointage(){
-  const rows = [['Employé','Branche','Entrée','Sortie','Pause début','Pause fin','Durée pause','Travail net','Retard','H.Sup','Géolocalisation','Date']];
-  buildDayRecords().forEach(r=>{
-    rows.push([r.empName, r.agenceName, r.entreeTime||'', r.sortieTime||'', r.pDebTime||'', r.pFinTime||'',
-      minsToStr(r.pauseMins), minsToStr(r.travailNet), minsToStr(r.retardMins), minsToStr(r.hSup), r.method, r.date]);
+  if(typeof XLSX==='undefined'){showToast('Chargement en cours, reessayer dans 2s...');return;}
+  const recs=buildDayRecords();
+  if(!recs.length){showToast('Aucune donnee a exporter');return;}
+  const rows=[['Employe','Agence','Date','Entree','Sortie','Pause debut','Pause fin','Duree pause','Travail net','Retard','H.Sup','Methode']];
+  recs.forEach(r=>{
+    rows.push([r.empName,r.agenceName,r.date,r.entreeTime||'',r.sortieTime||'',r.pDebTime||'',r.pFinTime||'',minsToStr(r.pauseMins),minsToStr(r.travailNet),minsToStr(r.retardMins),minsToStr(r.hSup),r.method||'']);
   });
-  const csv = rows.map(r=>r.map(v=>'"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
-  const a = document.createElement('a');
-  a.href = 'data:text/csv;charset=utf-8,\uFEFF'+encodeURIComponent(csv);
-  a.download = 'pointage_wecan_'+new Date().toISOString().slice(0,10)+'.csv';
-  a.click();
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols']=_xlsxColWidths(rows);
+  XLSX.utils.book_append_sheet(wb,ws,'Pointage');
+  const dateEl=document.getElementById('pt-date-filter');
+  const dateSuffix=dateEl&&dateEl.value?dateEl.value:new Date().toISOString().slice(0,10);
+  XLSX.writeFile(wb,'pointage_wecan_'+dateSuffix+'.xlsx');
+  showToast('Export Excel pret !');
 }
 
 
