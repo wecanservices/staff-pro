@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>WeCheckin — Staff Pro</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+
+  <style>
+    /* ═══════════════════════════════════════════
+       VARIABLES
+    ═══════════════════════════════════════════ */
+    :root {
+      --bg:           #F4F6FB;
+      --white:        #FFFFFF;
+      --red:          #EF4444;
+      --red-soft:     #FEF2F2;
+      --red-shadow:   rgba(239,68,68,.30);
+      --dark:         #0F172A;
+      --gray:         #64748B;
+      --gray-light:   #E2E8F0;
+      --green:        #22C55E;
+      --amber:        #F59E0B;
+
+      --nav-h:        92px;
+      --fab-size:     86px;
+      --fab-border:   8px;
+      --tr:           .3s cubic-bezier(.4,0,.2,1);
+      --font:         'Inter', sans-serif;
+      --radius:       20px;
+    }
+
+    /* ═══════════════════════════════════════════
+       RESET
+    ═══════════════════════════════════════════ */
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ═══════════════════════════════════════════
+       CONTENEUR PRINCIPAL
+    ═══════════════════════════════════════════ */
+    .app {
+      width: 100%;
+      max-width: 430px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* ═══════════════════════════════════════════
+       TOPBAR
+    ═══════════════════════════════════════════ */
+    .topbar {
+      background: linear-gradient(135deg, #1C2340 0%, #8B1A3A 55%, #EF4444 100%);
+      padding: 52px 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Orbe décorative */
+    .topbar::before {
+      content: '';
+      position: absolute;
+      width: 200px; height: 200px;
+      background: rgba(255,255,255,.06);
+      border-radius: 50%;
+      top: -60px; right: -40px;
+    }
+    .topbar::after {
+      content: '';
+      position: absolute;
+      width: 120px; height: 120px;
+      background: rgba(255,255,255,.04);
+      border-radius: 50%;
+      top: 20px; right: 80px;
+    }
+
+    .topbar-left { position: relative; z-index: 1; }
+
+    .topbar-greeting {
+      font-size: 13px;
+      font-weight: 500;
+      color: rgba(255,255,255,.65);
+      margin-bottom: 4px;
+      letter-spacing: .3px;
+    }
+
+    .topbar-name {
+      font-size: 20px;
+      font-weight: 800;
+      color: #fff;
+      letter-spacing: -.3px;
+    }
+
+    .topbar-avatar {
+      width: 44px; height: 44px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.18);
+      border: 2px solid rgba(255,255,255,.3);
+      display: flex; align-items: center; justify-content: center;
+      color: #fff;
+      font-size: 18px;
+      font-weight: 700;
+      position: relative; z-index: 1;
+      cursor: pointer;
+    }
+
+    /* ═══════════════════════════════════════════
+       ZONE DE CONTENU
+    ═══════════════════════════════════════════ */
+    .content {
+      flex: 1;
+      padding: 20px 16px;
+      padding-bottom: calc(var(--nav-h) + 24px);
+      overflow-y: auto;
+    }
+
+    /* Pages */
+    .page { display: none; animation: fadeUp .28s ease; }
+    .page.active { display: block; }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ─── CARDS ─── */
+    .card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 18px;
+      margin-bottom: 14px;
+      box-shadow: 0 2px 12px rgba(0,0,0,.06);
+    }
+
+    .card-title {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--gray);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 14px;
+    }
+
+    /* ─── STATUS CARD ─── */
+    .status-card {
+      background: linear-gradient(135deg, #EF4444, #B91C1C);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin-bottom: 14px;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 8px 24px rgba(239,68,68,.30);
+    }
+
+    .status-label { font-size: 13px; opacity: .8; margin-bottom: 4px; }
+    .status-time  { font-size: 32px; font-weight: 800; letter-spacing: -1px; }
+    .status-badge {
+      background: rgba(255,255,255,.2);
+      border-radius: 12px;
+      padding: 8px 14px;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    /* ─── QUICK ACTIONS ─── */
+    .quick-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .quick-btn {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 18px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 10px;
+      cursor: pointer;
+      box-shadow: 0 2px 12px rgba(0,0,0,.06);
+      transition: transform var(--tr), box-shadow var(--tr);
+      border: none;
+      font-family: var(--font);
+      text-align: left;
+    }
+
+    .quick-btn:active { transform: scale(.97); }
+
+    .quick-ico {
+      width: 42px; height: 42px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+    }
+
+    .quick-ico.green  { background: #DCFCE7; color: #16A34A; }
+    .quick-ico.red    { background: #FEF2F2; color: #EF4444; }
+    .quick-ico.amber  { background: #FEF9C3; color: #D97706; }
+    .quick-ico.blue   { background: #DBEAFE; color: #2563EB; }
+
+    .quick-lbl { font-size: 13px; font-weight: 600; color: var(--dark); }
+    .quick-sub { font-size: 11px; color: var(--gray); font-weight: 500; }
+
+    /* ─── ACTIVITÉ ─── */
+    .act-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--gray-light);
+    }
+
+    .act-item:last-child { border-bottom: none; }
+
+    .act-ico {
+      width: 38px; height: 38px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      flex-shrink: 0;
+    }
+
+    .act-info { flex: 1; }
+    .act-name { font-size: 13px; font-weight: 600; color: var(--dark); }
+    .act-date { font-size: 11px; color: var(--gray); margin-top: 2px; }
+    .act-tag  {
+      font-size: 11px; font-weight: 700;
+      padding: 3px 8px; border-radius: 8px;
+    }
+
+    .tag-green  { background: #DCFCE7; color: #16A34A; }
+    .tag-amber  { background: #FEF9C3; color: #D97706; }
+    .tag-gray   { background: var(--gray-light); color: var(--gray); }
+
+    /* ─── SECTION TITLE ─── */
+    .sec-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 14px;
+      letter-spacing: -.2px;
+    }
+
+    /* ─── PLACEHOLDER PAGE ─── */
+    .placeholder {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 60px 20px;
+      gap: 16px;
+      text-align: center;
+    }
+
+    .placeholder i {
+      font-size: 56px;
+      color: var(--gray-light);
+    }
+
+    .placeholder h3 {
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--dark);
+    }
+
+    .placeholder p {
+      font-size: 14px;
+      color: var(--gray);
+      line-height: 1.6;
+    }
+
+    /* ═══════════════════════════════════════════
+       BARRE DE NAVIGATION
+    ═══════════════════════════════════════════ */
+    .nav-bar {
+      position: fixed;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+
+      width: 95%;
+      max-width: 430px;
+      height: var(--nav-h);
+
+      background: var(--white);
+      border-radius: 28px 28px 0 0;
+      box-shadow: 0 -5px 25px rgba(0,0,0,.08);
+
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+    }
+
+    /* ─── ITEMS ─── */
+    .nav-item {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-family: var(--font);
+      color: var(--gray);
+      position: relative;
+      padding: 0;
+      height: 100%;
+      overflow: hidden;
+
+      -webkit-tap-highlight-color: transparent;
+      outline: none;
+      user-select: none;
+      transition: color var(--tr);
+    }
+
+    .nav-item i {
+      font-size: 26px;
+      transition: transform var(--tr), color var(--tr);
+      display: block;
+    }
+
+    .nav-label {
+      font-size: 12px;
+      font-weight: 600;
+      transition: color var(--tr);
+      line-height: 1;
+      letter-spacing: .2px;
+    }
+
+    /* Point indicateur sous le label */
+    .nav-dot {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: var(--red);
+      margin-top: 1px;
+      opacity: 0;
+      transform: scale(0);
+      transition: opacity var(--tr), transform var(--tr);
+    }
+
+    /* État ACTIF */
+    .nav-item.active { color: var(--red); }
+    .nav-item.active i { color: var(--red); }
+    .nav-item.active .nav-label { color: var(--red); font-weight: 700; }
+    .nav-item.active .nav-dot { opacity: 1; transform: scale(1); }
+
+    /* Survol */
+    .nav-item:not(.active):hover i { transform: translateY(-4px); color: var(--red); }
+    .nav-item:not(.active):hover .nav-label { color: var(--red); }
+
+    /* ─── BADGE ─── */
+    .badge {
+      position: absolute;
+      top: 10px;
+      right: calc(50% - 28px);
+
+      min-width: 20px; height: 20px;
+      border-radius: 10px;
+      padding: 0 5px;
+
+      background: var(--red);
+      color: var(--white);
+      font-size: 11px;
+      font-weight: 700;
+      font-family: var(--font);
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2.5px solid var(--white);
+      pointer-events: none;
+    }
+
+    /* ─── SLOT CENTRAL ─── */
+    .nav-center-slot {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
+      padding-bottom: 12px;
+      height: 100%;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    .nav-center-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--red);
+      letter-spacing: .2px;
+    }
+
+    /* ─── FAB POINTAGE ─── */
+    .nav-fab {
+      position: absolute;
+      left: 50%;
+      top: calc(-1 * var(--fab-size) / 2 + 4px);
+      transform: translateX(-50%);
+
+      width: var(--fab-size);
+      height: var(--fab-size);
+      border-radius: 50%;
+
+      background: var(--red);
+      border: var(--fab-border) solid var(--bg);
+      box-shadow: 0 12px 30px var(--red-shadow);
+
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      cursor: pointer;
+      z-index: 10;
+      overflow: hidden;
+
+      -webkit-tap-highlight-color: transparent;
+      outline: none;
+      border: var(--fab-border) solid var(--bg);
+      transition: transform var(--tr), box-shadow var(--tr);
+    }
+
+    .nav-fab i {
+      color: var(--white);
+      font-size: 38px;
+      pointer-events: none;
+      transition: transform var(--tr);
+    }
+
+    .nav-fab:hover {
+      transform: translateX(-50%) scale(1.08);
+      box-shadow: 0 18px 40px var(--red-shadow);
+    }
+
+    .nav-fab:hover i { transform: scale(1.06); }
+
+    /* ─── RIPPLE ─── */
+    .ripple {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255,255,255,.3);
+      transform: scale(0);
+      animation: ripple .55s linear forwards;
+      pointer-events: none;
+    }
+
+    .nav-item .ripple { background: rgba(239,68,68,.12); }
+
+    @keyframes ripple {
+      to { transform: scale(5); opacity: 0; }
+    }
+
+  </style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ══ TOPBAR ══ -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <div class="topbar-greeting">Bonjour 👋</div>
+      <div class="topbar-name">Karim Benali</div>
+    </div>
+    <div class="topbar-avatar">KB</div>
+  </header>
+
+  <!-- ══ CONTENU ══ -->
+  <main class="content">
+
+    <!-- PAGE : ACCUEIL -->
+    <section class="page active" id="page-accueil">
+
+      <!-- Statut du jour -->
+      <div class="status-card">
+        <div>
+          <div class="status-label">Temps de travail</div>
+          <div class="status-time">07:42</div>
+        </div>
+        <div class="status-badge">✅ Présent</div>
+      </div>
+
+      <!-- Accès rapides -->
+      <p class="sec-title">Accès rapides</p>
+      <div class="quick-grid">
+        <button class="quick-btn">
+          <div class="quick-ico green"><i class="fa-solid fa-right-to-bracket"></i></div>
+          <div>
+            <div class="quick-lbl">Entrée</div>
+            <div class="quick-sub">08:01</div>
+          </div>
+        </button>
+        <button class="quick-btn">
+          <div class="quick-ico red"><i class="fa-solid fa-right-from-bracket"></i></div>
+          <div>
+            <div class="quick-lbl">Sortie</div>
+            <div class="quick-sub">Non pointé</div>
+          </div>
+        </button>
+        <button class="quick-btn">
+          <div class="quick-ico amber"><i class="fa-solid fa-calendar-plus"></i></div>
+          <div>
+            <div class="quick-lbl">Congé</div>
+            <div class="quick-sub">Demander</div>
+          </div>
+        </button>
+        <button class="quick-btn">
+          <div class="quick-ico blue"><i class="fa-solid fa-robot"></i></div>
+          <div>
+            <div class="quick-lbl">Agent IA</div>
+            <div class="quick-sub">Assistance</div>
+          </div>
+        </button>
+      </div>
+
+      <!-- Activité récente -->
+      <p class="sec-title">Activité récente</p>
+      <div class="card">
+        <div class="act-item">
+          <div class="act-ico green" style="background:#DCFCE7;color:#16A34A"><i class="fa-solid fa-right-to-bracket"></i></div>
+          <div class="act-info">
+            <div class="act-name">Entrée pointée</div>
+            <div class="act-date">Aujourd\'hui · 08:01</div>
+          </div>
+          <span class="act-tag tag-green">OK</span>
+        </div>
+        <div class="act-item">
+          <div class="act-ico" style="background:#FEF9C3;color:#D97706"><i class="fa-solid fa-mug-hot"></i></div>
+          <div class="act-info">
+            <div class="act-name">Pause déjeuner</div>
+            <div class="act-date">Aujourd\'hui · 12:00 → 13:00</div>
+          </div>
+          <span class="act-tag tag-amber">1h</span>
+        </div>
+        <div class="act-item">
+          <div class="act-ico" style="background:#F1F5F9;color:#64748B"><i class="fa-regular fa-file-lines"></i></div>
+          <div class="act-info">
+            <div class="act-name">Fiche de paie disponible</div>
+            <div class="act-date">Juin 2026</div>
+          </div>
+          <span class="act-tag tag-gray">Voir</span>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- PAGE : CONGÉS -->
+    <section class="page" id="page-conges">
+      <div class="placeholder">
+        <i class="fa-regular fa-calendar-days"></i>
+        <h3>Mes demandes</h3>
+        <p>Aucune demande en cours.<br>Utilisez le bouton ＋ pour créer une demande.</p>
+      </div>
+    </section>
+
+    <!-- PAGE : POINTAGE -->
+    <section class="page" id="page-pointage">
+      <div class="placeholder">
+        <i class="fa-solid fa-fingerprint" style="color:#EF4444;opacity:.3"></i>
+        <h3>Pointage GPS</h3>
+        <p>Pointez votre entrée ou sortie via GPS ou scan QR.</p>
+      </div>
+    </section>
+
+    <!-- PAGE : CHAT -->
+    <section class="page" id="page-chat">
+      <div class="placeholder">
+        <i class="fa-regular fa-comment"></i>
+        <h3>Messagerie</h3>
+        <p>Aucun message pour le moment.</p>
+      </div>
+    </section>
+
+    <!-- PAGE : PROFIL -->
+    <section class="page" id="page-profil">
+      <div class="placeholder">
+        <i class="fa-regular fa-user"></i>
+        <h3>Mon profil</h3>
+        <p>Gérez vos informations personnelles et préférences.</p>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ══════════════════════════════════════
+       BARRE DE NAVIGATION
+  ══════════════════════════════════════ -->
+  <nav class="nav-bar" role="navigation" aria-label="Navigation principale">
+
+    <!-- Accueil -->
+    <button class="nav-item active" data-page="accueil" aria-label="Accueil">
+      <i class="fa-solid fa-house"></i>
+      <span class="nav-label">Accueil</span>
+      <span class="nav-dot"></span>
+    </button>
+
+    <!-- Congés + badge -->
+    <button class="nav-item" data-page="conges" aria-label="Congés">
+      <span class="badge">5</span>
+      <i class="fa-regular fa-calendar-days"></i>
+      <span class="nav-label">Congés</span>
+      <span class="nav-dot"></span>
+    </button>
+
+    <!-- FAB — absolu, centré sur la barre -->
+    <button class="nav-fab" data-page="pointage" aria-label="Pointer">
+      <i class="fa-solid fa-fingerprint"></i>
+    </button>
+
+    <!-- Slot : espace + label Pointage -->
+    <div class="nav-center-slot" data-page="pointage" role="button" tabindex="0" aria-label="Pointage">
+      <span class="nav-center-label">Pointage</span>
+    </div>
+
+    <!-- Chat -->
+    <button class="nav-item" data-page="chat" aria-label="Chat">
+      <i class="fa-regular fa-comment"></i>
+      <span class="nav-label">Chat</span>
+      <span class="nav-dot"></span>
+    </button>
+
+    <!-- Profil -->
+    <button class="nav-item" data-page="profil" aria-label="Profil">
+      <i class="fa-regular fa-user"></i>
+      <span class="nav-label">Profil</span>
+      <span class="nav-dot"></span>
+    </button>
+
+  </nav>
+
+</div><!-- .app -->
+
+<!-- ══════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════ -->
+<script>
+  /* ── Icônes filled/outline par page ── */
+  const ICONS = {
+    accueil:  ['fa-solid fa-house',             'fa-regular fa-house'],
+    conges:   ['fa-solid fa-calendar-days',     'fa-regular fa-calendar-days'],
+    chat:     ['fa-solid fa-comment',           'fa-regular fa-comment'],
+    profil:   ['fa-solid fa-user',              'fa-regular fa-user'],
+  };
+
+  const navItems = document.querySelectorAll('.nav-item');
+  const fab      = document.querySelector('.nav-fab');
+  const slot     = document.querySelector('.nav-center-slot');
+  const pages    = document.querySelectorAll('.page');
+
+  /* ── Naviguer vers une page ── */
+  function goTo(pageId) {
+    /* Désactiver tous les items */
+    navItems.forEach(it => {
+      it.classList.remove('active');
+      const pg = it.dataset.page;
+      if (ICONS[pg]) {
+        it.querySelector('i').className = ICONS[pg][1]; /* outline */
+      }
+    });
+
+    /* Activer l'item correspondant */
+    const target = [...navItems].find(it => it.dataset.page === pageId);
+    if (target) {
+      target.classList.add('active');
+      if (ICONS[pageId]) {
+        target.querySelector('i').className = ICONS[pageId][0]; /* filled */
+      }
+    }
+
+    /* Changer la page */
+    pages.forEach(p => p.classList.remove('active'));
+    const pg = document.getElementById('page-' + pageId);
+    if (pg) pg.classList.add('active');
+  }
+
+  /* ── Ripple ── */
+  function ripple(el, e) {
+    const r    = el.getBoundingClientRect();
+    const size = Math.max(r.width, r.height);
+    const sp   = document.createElement('span');
+    sp.className = 'ripple';
+    sp.style.cssText =
+      `width:${size}px;height:${size}px;` +
+      `left:${e.clientX - r.left - size/2}px;` +
+      `top:${e.clientY  - r.top  - size/2}px`;
+    el.appendChild(sp);
+    sp.addEventListener('animationend', () => sp.remove());
+  }
+
+  /* ── Binding ── */
+  navItems.forEach(it => {
+    it.addEventListener('click', e => {
+      ripple(it, e);
+      goTo(it.dataset.page);
+    });
+  });
+
+  fab.addEventListener('click', e => {
+    ripple(fab, e);
+    goTo('pointage');
+  });
+
+  slot.addEventListener('click',   () => goTo('pointage'));
+  slot.addEventListener('keydown', e => { if (e.key==='Enter'||e.key===' ') goTo('pointage'); });
+</script>
+
+</body>
+</html>
