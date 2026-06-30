@@ -7554,52 +7554,49 @@ function sortieCard(s){
 
 
 // ===== ADMIN AUTH SYSTEM =====
-let currentAdminSession = null;
-let adminAccounts = [];
+var currentAdminSession = null;
+var adminAccounts = [];
+
+// Credentials superadmin fixes — immuables
+const SA_DEFAULT = {id:'sa1', prenom:'Super', nom:'Admin', email:'admin@wecheckin.dz', password:'Admin@2024', role:'superadmin', permissions:['all']};
 
 function _ensureSuperAdmin(){
+  // Toujours forcer les credentials du superadmin — c'est la source de vérité
   const idx = adminAccounts.findIndex(a=>a.role==='superadmin');
   if(idx === -1){
-    adminAccounts.unshift({id:'sa1', prenom:'Super', nom:'Admin', email:'admin@wecheckin.dz', password:'Admin@2024', role:'superadmin', permissions:['all'], createdAt:Date.now()});
+    adminAccounts.unshift(Object.assign({}, SA_DEFAULT, {createdAt:Date.now()}));
   } else {
-    // Ne jamais écraser les credentials existants — seulement s'assurer que les champs essentiels existent
-    if(!adminAccounts[idx].email) adminAccounts[idx].email = 'admin@wecheckin.dz';
-    if(!adminAccounts[idx].password) adminAccounts[idx].password = 'Admin@2024';
-    if(!adminAccounts[idx].permissions) adminAccounts[idx].permissions = ['all'];
+    adminAccounts[idx].email      = SA_DEFAULT.email;
+    adminAccounts[idx].password   = SA_DEFAULT.password;
+    adminAccounts[idx].permissions= SA_DEFAULT.permissions;
   }
 }
 
 function initAdminSession() {
-  // 1. Lire le local d'abord
+  // 1. Lire localStorage (sous-admins uniquement — le superadmin est toujours hardcodé)
   try{
     const stored = localStorage.getItem('wecan_adminAccounts');
     if(stored) adminAccounts = JSON.parse(stored);
   }catch(e){ adminAccounts=[]; }
 
-  // 2. Toujours assurer qu'il y a un superadmin
+  // 2. Forcer le superadmin avec credentials corrects
   _ensureSuperAdmin();
   localStorage.setItem('wecan_adminAccounts', JSON.stringify(adminAccounts));
 
-  // 3. Sync Firebase — listener temps réel (multi-device, mobile inclus)
+  // 3. Sync Firebase temps réel
   if(typeof db !== 'undefined'){
     db.ref('wecan/adminAccounts').on('value', function(snap){
       const val = snap.val();
       if(val && (Array.isArray(val) ? val.length : Object.keys(val).length)){
         const fbArr = Array.isArray(val) ? val : Object.values(val);
-        // Fusionner : garder les comptes locaux absents de Firebase
         const merged = [...fbArr];
         adminAccounts.forEach(la=>{ if(!merged.find(a=>String(a.id)===String(la.id))) merged.push(la); });
         adminAccounts = merged;
-        _ensureSuperAdmin();
+        _ensureSuperAdmin(); // re-forcer les credentials superadmin après merge Firebase
         localStorage.setItem('wecan_adminAccounts', JSON.stringify(adminAccounts));
-        // Si des comptes locaux ont été ajoutés, les remonter vers Firebase
-        if(merged.length > fbArr.length){
-          db.ref('wecan/adminAccounts').set(adminAccounts).catch(()=>{});
-        }
-        // Rafraîchir l'affichage si la page admins est active
-        try{ if(document.getElementById('page-admins') && document.getElementById('page-admins').classList.contains('active')) renderAdminAccounts(); }catch(e){}
+        if(merged.length > fbArr.length) db.ref('wecan/adminAccounts').set(adminAccounts).catch(()=>{});
+        try{ if(document.getElementById('page-admins')&&document.getElementById('page-admins').classList.contains('active')) renderAdminAccounts(); }catch(e){}
       } else {
-        // Firebase vide : pousser les comptes locaux
         db.ref('wecan/adminAccounts').set(adminAccounts).catch(()=>{});
       }
     });
@@ -7643,9 +7640,6 @@ function toggleLoginPwd(){
     : '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
 }
 
-const SA_EMAIL    = 'admin@wecheckin.dz';
-const SA_PASSWORD = 'Admin@2024';
-
 function _openSession(acc) {
   const sess = {id:acc.id, email:acc.email, role:acc.role, nom:acc.nom||'', prenom:acc.prenom||'', permissions:acc.permissions||['all']};
   localStorage.setItem('wecan_admin_session', JSON.stringify(sess));
@@ -7667,33 +7661,13 @@ function loginAdmin() {
     return;
   }
 
-  // ── BYPASS SUPERADMIN : toujours fonctionnel quoi qu'il arrive ──
-  if(email === SA_EMAIL && password === SA_PASSWORD){
-    const saAcc = {id:'sa1', prenom:'Super', nom:'Admin', email:SA_EMAIL, role:'superadmin', permissions:['all']};
-    // Mettre à jour localStorage pour cohérence
-    try{
-      _ensureSuperAdmin();
-      localStorage.setItem('wecan_adminAccounts', JSON.stringify(adminAccounts));
-      if(typeof db!=='undefined') db.ref('wecan/adminAccounts').set(adminAccounts).catch(()=>{});
-    }catch(e){}
-    _openSession(saAcc);
-    return;
-  }
+  // ── SUPERADMIN : credentials fixes, toujours prioritaires ──
+  // _ensureSuperAdmin() garantit que adminAccounts contient toujours le bon superadmin
+  _ensureSuperAdmin();
+  const acc = adminAccounts.find(a => a.email && a.email.toLowerCase().trim()===email && (a.password||'').trim()===password);
+  if(acc){ _openSession(acc); return; }
 
-  // ── ETAPE 1 : chercher dans localStorage ──
-  try{
-    const stored = localStorage.getItem('wecan_adminAccounts');
-    if(stored){
-      const arr = JSON.parse(stored);
-      if(Array.isArray(arr) && arr.length){
-        adminAccounts = arr;
-        const acc = arr.find(a => a.email && a.email.toLowerCase().trim()===email && (a.password||'').trim()===password);
-        if(acc){ _openSession(acc); return; }
-      }
-    }
-  }catch(e){}
-
-  // ── ETAPE 2 : récupérer depuis Firebase directement ──
+  // ── Sous-admins : chercher dans Firebase ──
   if(typeof db !== 'undefined'){
     if(btn){ btn.disabled=true; btn.textContent='Vérification…'; }
     db.ref('wecan/adminAccounts').once('value').then(function(snap){
@@ -7702,11 +7676,13 @@ function loginAdmin() {
       if(val){
         const fbArr = Array.isArray(val) ? val : Object.values(val);
         if(fbArr.length){
-          adminAccounts = fbArr;
+          const merged = [...fbArr];
+          adminAccounts.forEach(la=>{ if(!merged.find(a=>String(a.id)===String(la.id))) merged.push(la); });
+          adminAccounts = merged;
           _ensureSuperAdmin();
           localStorage.setItem('wecan_adminAccounts', JSON.stringify(adminAccounts));
-          const acc = adminAccounts.find(a => a.email && a.email.toLowerCase().trim()===email && (a.password||'').trim()===password);
-          if(acc){ _openSession(acc); return; }
+          const fbAcc = adminAccounts.find(a => a.email && a.email.toLowerCase().trim()===email && (a.password||'').trim()===password);
+          if(fbAcc){ _openSession(fbAcc); return; }
         }
       }
       errEl.textContent = 'Email ou mot de passe incorrect.';
