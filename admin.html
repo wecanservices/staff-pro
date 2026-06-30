@@ -649,7 +649,7 @@ const db = firebase.database();
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         <span data-t="nav_help">Help</span>
       </div>
-      <div style="text-align:center;padding:8px 0 4px;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.5px;">STAFF PRO Admin<br><span id="app-version">v4.2</span></div>
+      <div style="text-align:center;padding:8px 0 4px;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.5px;">STAFF PRO Admin<br><span id="app-version">v4.3</span></div>
     </div>
     <div class="nav-globe">
       <div class="globe-btn">
@@ -793,7 +793,27 @@ const db = firebase.database();
                 <div style="height:1px;background:#e2e8f0;margin:4px 0 10px;"></div>
                 <div style="font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">Pause (optionnel)</div>
               </div>
-              <div class="form-group form-full"><label>Durée de pause</label><select id="sh-pause-duree" style="padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;width:100%;"><option value="0">Pas de pause</option><option value="15">15 min</option><option value="30">30 min</option><option value="45">45 min</option><option value="60" selected>1 heure</option><option value="90">1h 30</option><option value="120">2 heures</option></select><input type="hidden" id="sh-pause-debut" value=""><input type="hidden" id="sh-pause-fin" value=""></div>
+              <div class="form-group"><label>Durée de pause</label>
+                <select id="sh-pause-duree" onchange="onShiftPauseChange()" style="padding:8px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;width:100%;">
+                  <option value="0">Pas de pause</option>
+                  <option value="15">15 min</option>
+                  <option value="30">30 min</option>
+                  <option value="45">45 min</option>
+                  <option value="60" selected>1 heure</option>
+                  <option value="90">1h 30</option>
+                  <option value="120">2 heures</option>
+                </select>
+              </div>
+              <div class="form-group" id="sh-pause-debut-group">
+                <label style="color:#92400E;">Heure de début de pause</label>
+                <input type="time" id="sh-pause-debut" value="12:00" oninput="onShiftPauseChange()" style="padding:8px;border:1px solid #FCD34D;border-radius:8px;font-size:13px;width:100%;background:#FFFBEB;color:#92400E;font-weight:600;">
+              </div>
+              <div class="form-group form-full" id="sh-pause-fin-group" style="display:flex;align-items:center;gap:12px;padding:6px 12px;background:#FFFBEB;border:1px solid #FCD34D;border-radius:8px;">
+                <span style="font-size:12px;color:#92400E;">Fin de pause :</span>
+                <span id="sh-pause-fin-display" style="font-size:14px;font-weight:700;color:#92400E;font-family:monospace;">13:00</span>
+                <input type="hidden" id="sh-pause-fin" value="13:00">
+                <span id="sh-pause-duree-display" style="font-size:11px;color:#B45309;margin-left:auto;">⏱ 60 min</span>
+              </div>
             </div>
             <div style="margin-top:14px;">
               <div style="font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.4px;margin-bottom:8px;">Jours de travail</div>
@@ -3461,6 +3481,7 @@ function toggleShiftForm(mode){
     document.getElementById('sh-save-btn').onclick = addShift;
     document.getElementById('sh-edit-id').value = '';
     initDayChipsMutualExclusion();
+    onShiftPauseChange();
   }
 }
 
@@ -3469,8 +3490,10 @@ function resetShiftForm(){
   document.getElementById('sh-fonction').value = '';
   document.getElementById('sh-debut').value = '08:00';
   document.getElementById('sh-fin').value = '16:00';
-  document.getElementById('sh-pause-debut').value = '';
-  document.getElementById('sh-pause-fin').value = '';
+  document.getElementById('sh-pause-duree').value = '60';
+  document.getElementById('sh-pause-debut').value = '12:00';
+  document.getElementById('sh-pause-fin').value = '13:00';
+  onShiftPauseChange();
   document.querySelectorAll('#sh-work-days input').forEach(i=>{ i.checked = ['Lun','Mar','Mer','Jeu','Ven','Sam'].includes(i.value); });
   document.querySelectorAll('#sh-rest-days input').forEach(i=>{ i.checked = i.value === 'Dim'; });
   document.getElementById('sh-feedback').innerHTML = '';
@@ -3485,15 +3508,37 @@ function calcDuration(debut, fin) {
   return h + 'h' + (m ? m+'min' : '');
 }
 
+function onShiftPauseChange(){
+  const dur = parseInt(document.getElementById('sh-pause-duree')?.value||'0')||0;
+  const debutGrp = document.getElementById('sh-pause-debut-group');
+  const finGrp   = document.getElementById('sh-pause-fin-group');
+  if(!debutGrp||!finGrp) return;
+  if(dur===0){ debutGrp.style.display='none'; finGrp.style.display='none'; return; }
+  debutGrp.style.display=''; finGrp.style.display='';
+  const pdVal = document.getElementById('sh-pause-debut')?.value||'12:00';
+  const [ph,pm] = pdVal.split(':').map(Number);
+  const endM = ph*60+pm+dur;
+  const finVal = String(Math.floor(endM/60)%24).padStart(2,'0')+':'+String(endM%60).padStart(2,'0');
+  const finInput = document.getElementById('sh-pause-fin');
+  const finDisplay = document.getElementById('sh-pause-fin-display');
+  const durDisplay = document.getElementById('sh-pause-duree-display');
+  if(finInput) finInput.value = finVal;
+  if(finDisplay) finDisplay.textContent = finVal;
+  if(durDisplay) durDisplay.textContent = '⏱ '+dur+' min';
+}
+
 function getFormValues(){
+  const dur = parseInt(document.getElementById('sh-pause-duree')?.value||'0')||0;
+  const pauseDebut = dur>0 ? (document.getElementById('sh-pause-debut')?.value||'12:00') : '';
+  const pauseFin   = dur>0 ? (document.getElementById('sh-pause-fin')?.value||'') : '';
   return {
     nom: document.getElementById('sh-nom').value.trim(),
     fonction: document.getElementById('sh-fonction').value.trim(),
     debut: document.getElementById('sh-debut').value,
     fin: document.getElementById('sh-fin').value,
-    pauseDuree: parseInt(document.getElementById('sh-pause-duree')?document.getElementById('sh-pause-duree').value:'0')||0,
-    pauseDebut: (function(){ const debut=document.getElementById('sh-debut')?.value||'08:00'; const fin=document.getElementById('sh-fin')?.value||'16:00'; const [dh,dm]=debut.split(':').map(Number); const [fh,fm]=fin.split(':').map(Number); let total=(fh*60+fm)-(dh*60+dm); if(total<=0)total+=1440; const mid=dh*60+dm+Math.floor(total/2); return String(Math.floor(mid/60)%24).padStart(2,'0')+':'+String(mid%60).padStart(2,'0'); })(),
-    pauseFin: (function(){ const debut=document.getElementById('sh-debut')?.value||'08:00'; const fin=document.getElementById('sh-fin')?.value||'16:00'; const [dh,dm]=debut.split(':').map(Number); const [fh,fm]=fin.split(':').map(Number); let total=(fh*60+fm)-(dh*60+dm); if(total<=0)total+=1440; const mid=dh*60+dm+Math.floor(total/2); const dur=parseInt(document.getElementById('sh-pause-duree')?.value||'0')||0; const endM=mid+dur; return String(Math.floor(endM/60)%24).padStart(2,'0')+':'+String(endM%60).padStart(2,'0'); })(),
+    pauseDuree: dur,
+    pauseDebut,
+    pauseFin,
     workDays: [...document.querySelectorAll('#sh-work-days input:checked')].map(i=>i.value),
     restDays: [...document.querySelectorAll('#sh-rest-days input:checked')].map(i=>i.value),
   };
@@ -3526,7 +3571,16 @@ function editShift(id){
   document.getElementById('sh-fonction').value = s.fonction;
   document.getElementById('sh-debut').value = s.debut;
   document.getElementById('sh-fin').value = s.fin;
-  (function(){ const el=document.getElementById('sh-pause-duree'); if(!el) return; let dur=s.pauseDuree||0; if(!dur&&s.pauseDebut&&s.pauseFin){ const p1=s.pauseDebut.split(':').map(Number); const p2=s.pauseFin.split(':').map(Number); dur=(p2[0]*60+p2[1])-(p1[0]*60+p1[1]); } const opts=[0,15,30,45,60,90,120]; el.value=opts.reduce((a,b)=>Math.abs(b-dur)<Math.abs(a-dur)?b:a,opts[0]); })();
+  (function(){
+    const el=document.getElementById('sh-pause-duree'); if(!el) return;
+    let dur=s.pauseDuree||0;
+    if(!dur&&s.pauseDebut&&s.pauseFin){ const p1=s.pauseDebut.split(':').map(Number); const p2=s.pauseFin.split(':').map(Number); dur=(p2[0]*60+p2[1])-(p1[0]*60+p1[1]); }
+    const opts=[0,15,30,45,60,90,120]; el.value=opts.reduce((a,b)=>Math.abs(b-dur)<Math.abs(a-dur)?b:a,opts[0]);
+    // Pré-remplir heure de début de pause
+    const pdEl=document.getElementById('sh-pause-debut');
+    if(pdEl && s.pauseDebut) pdEl.value = s.pauseDebut;
+    onShiftPauseChange();
+  })();
   document.querySelectorAll('#sh-work-days input').forEach(i=>{ i.checked = s.workDays.includes(i.value); });
   document.querySelectorAll('#sh-rest-days input').forEach(i=>{ i.checked = s.restDays.includes(i.value); });
   initDayChipsMutualExclusion();
