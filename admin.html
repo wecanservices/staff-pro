@@ -687,7 +687,7 @@ const db = firebase.database();
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         <span data-t="nav_help">Help</span>
       </div>
-      <div class="nav-item" id="nav-admins" onclick="showPage('admins',this)" title="Gestion Admins" style="display:none;">
+      <div class="nav-item" id="nav-admins" onclick="showPage('admins',this)" title="Gestion Admins">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
         <span>Gestion Admins</span>
         <span style="margin-left:auto;background:#7c3aed;color:#fff;font-size:8px;padding:1px 5px;border-radius:8px;">SA</span>
@@ -1614,6 +1614,71 @@ const db = firebase.database();
         </div>
       </div>
     </div>
+
+  <div class="page" id="page-admins">
+  <div class="page-header"><h1 class="page-title">Gestion des Admins</h1></div>
+
+  <!-- Section A: Superadmin config -->
+  <div style="background:#fff;border:2px solid #C0392B;border-radius:12px;padding:20px;margin-bottom:20px;">
+    <h3 style="color:#C0392B;margin:0 0 15px;">Configuration Superadmin</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div><label style="font-size:12px;font-weight:600;color:#666;">Email Superadmin</label>
+        <input id="sa-email" type="email" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;margin-top:4px;box-sizing:border-box;"></div>
+      <div><label style="font-size:12px;font-weight:600;color:#666;">Nouveau mot de passe</label>
+        <input id="sa-password" type="password" placeholder="Laisser vide pour ne pas changer" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;margin-top:4px;box-sizing:border-box;"></div>
+    </div>
+    <button onclick="saveSuperadminConfig()" style="margin-top:12px;background:#C0392B;color:#fff;border:none;padding:8px 20px;border-radius:8px;cursor:pointer;font-weight:600;">Sauvegarder</button>
+  </div>
+
+  <!-- Section B: Liste admins -->
+  <div style="background:#fff;border-radius:12px;padding:20px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+    <h3 style="margin:0 0 15px;">Liste des Admins</h3>
+    <div id="admin-accounts-list"></div>
+  </div>
+
+  <!-- Section C: Créer admin -->
+  <div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+    <h3 style="margin:0 0 15px;">Créer un Admin</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+      <div><label style="font-size:12px;font-weight:600;color:#666;">Prénom</label>
+        <input id="new-admin-prenom" type="text" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;margin-top:4px;box-sizing:border-box;"></div>
+      <div><label style="font-size:12px;font-weight:600;color:#666;">Nom</label>
+        <input id="new-admin-nom" type="text" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;margin-top:4px;box-sizing:border-box;"></div>
+      <div><label style="font-size:12px;font-weight:600;color:#666;">Email</label>
+        <input id="new-admin-email" type="email" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;margin-top:4px;box-sizing:border-box;"></div>
+      <div><label style="font-size:12px;font-weight:600;color:#666;">Mot de passe</label>
+        <input id="new-admin-password" type="password" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;margin-top:4px;box-sizing:border-box;"></div>
+    </div>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:12px;font-weight:600;color:#666;">Rôle</label>
+      <select id="new-admin-role" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;margin-top:4px;">
+        <option value="admin">Admin</option>
+        <option value="sous-admin">Sous-Admin</option>
+      </select>
+    </div>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:12px;font-weight:600;color:#666;display:flex;align-items:center;gap:8px;">
+        Permissions
+        <label style="font-weight:normal;cursor:pointer;"><input type="checkbox" id="perm-all-toggle" onchange="toggleAllPerms(this.checked)"> Accès complet</label>
+      </label>
+      <div id="perms-checkboxes" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">
+        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="dashboard"> Dashboard</label>
+        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="employees"> Employés</label>
+        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="agencies"> Agences</label>
+        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="shifts"> Shifts</label>
+        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="pointage"> Pointage</label>
+        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="approbations"> Approbations</label>
+        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="paie"> Paie</label>
+        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="reports"> Rapports</label>
+        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="chat"> Chat</label>
+        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="adjust"> Ajustements</label>
+        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="sorties"> Sorties</label>
+        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="trajet"> Trajet</label>
+      </div>
+    </div>
+    <button onclick="createAdminAccount()" style="background:#7c3aed;color:#fff;border:none;padding:8px 20px;border-radius:8px;cursor:pointer;font-weight:600;">Créer l'admin</button>
+  </div>
+</div>
 
   </div><!-- /main -->
 </div><!-- /app-body -->
@@ -7429,17 +7494,21 @@ setInterval(()=>{
 },5000);
 
 // ── INIT ──
-// Restaurer la dernière page active
-(function restorePage(){
-  const savedPage = localStorage.getItem('wecan_active_page');
-  if(savedPage && document.getElementById('page-'+savedPage)){
-    const navItem = document.querySelector('.nav-item[onclick*="' + savedPage + '"]');
-    showPage(savedPage, navItem);
-  } else {
-    const navItem = document.querySelector('.nav-item[onclick*="dashboard"]');
-    showPage('dashboard', navItem);
-  }
-})();
+// Restaurer la dernière page active (try/catch pour éviter de bloquer la suite du script)
+try {
+  (function restorePage(){
+    var savedPage = localStorage.getItem('wecan_active_page');
+    if(savedPage && document.getElementById('page-'+savedPage)){
+      var navItem = document.querySelector('.nav-item[onclick*="' + savedPage + '"]');
+      showPage(savedPage, navItem);
+    } else {
+      var navItem2 = document.querySelector('.nav-item[onclick*="dashboard"]');
+      showPage('dashboard', navItem2);
+    }
+  })();
+} catch(e) {
+  // Si showPage échoue (ex: auth vars pas encore init), on ne bloque pas le reste du script
+}
 setTimeout(()=>{initMap();updateApproBadge(); updateChatBadge();
   if(document.getElementById('page-adjust').classList.contains('active')) updateRamadanStatus();},150);
 // ── SORTIES TERRITOIRE ──
@@ -7558,7 +7627,7 @@ var currentAdminSession = null;
 var adminAccounts = [];
 
 // Credentials superadmin fixes — immuables
-const SA_DEFAULT = {id:'sa1', prenom:'Super', nom:'Admin', email:'admin@wecheckin.dz', password:'Admin@2024', role:'superadmin', permissions:['all']};
+var SA_DEFAULT = {id:'sa1', prenom:'Super', nom:'Admin', email:'admin@wecheckin.dz', password:'Admin@2024', role:'superadmin', permissions:['all']};
 
 function _ensureSuperAdmin(){
   // Toujours forcer les credentials du superadmin — c'est la source de vérité
@@ -8071,71 +8140,6 @@ function toggleAllPerms(checked) {
       <button class="btn btn-outline" onclick="closeEditEmp()">Annuler</button>
       <button class="btn btn-primary" onclick="saveEditEmp()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Sauvegarder</button>
     </div>
-  </div>
-</div>
-
-<div class="page" id="page-admins" style="display:none;">
-  <div class="page-header"><h1 class="page-title">Gestion des Admins</h1></div>
-
-  <!-- Section A: Superadmin config -->
-  <div style="background:#fff;border:2px solid #C0392B;border-radius:12px;padding:20px;margin-bottom:20px;">
-    <h3 style="color:#C0392B;margin:0 0 15px;">Configuration Superadmin</h3>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-      <div><label style="font-size:12px;font-weight:600;color:#666;">Email Superadmin</label>
-        <input id="sa-email" type="email" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;margin-top:4px;box-sizing:border-box;"></div>
-      <div><label style="font-size:12px;font-weight:600;color:#666;">Nouveau mot de passe</label>
-        <input id="sa-password" type="password" placeholder="Laisser vide pour ne pas changer" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;margin-top:4px;box-sizing:border-box;"></div>
-    </div>
-    <button onclick="saveSuperadminConfig()" style="margin-top:12px;background:#C0392B;color:#fff;border:none;padding:8px 20px;border-radius:8px;cursor:pointer;font-weight:600;">Sauvegarder</button>
-  </div>
-
-  <!-- Section B: Liste admins -->
-  <div style="background:#fff;border-radius:12px;padding:20px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
-    <h3 style="margin:0 0 15px;">Liste des Admins</h3>
-    <div id="admin-accounts-list"></div>
-  </div>
-
-  <!-- Section C: Créer admin -->
-  <div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
-    <h3 style="margin:0 0 15px;">Créer un Admin</h3>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-      <div><label style="font-size:12px;font-weight:600;color:#666;">Prénom</label>
-        <input id="new-admin-prenom" type="text" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;margin-top:4px;box-sizing:border-box;"></div>
-      <div><label style="font-size:12px;font-weight:600;color:#666;">Nom</label>
-        <input id="new-admin-nom" type="text" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;margin-top:4px;box-sizing:border-box;"></div>
-      <div><label style="font-size:12px;font-weight:600;color:#666;">Email</label>
-        <input id="new-admin-email" type="email" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;margin-top:4px;box-sizing:border-box;"></div>
-      <div><label style="font-size:12px;font-weight:600;color:#666;">Mot de passe</label>
-        <input id="new-admin-password" type="password" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;margin-top:4px;box-sizing:border-box;"></div>
-    </div>
-    <div style="margin-bottom:12px;">
-      <label style="font-size:12px;font-weight:600;color:#666;">Rôle</label>
-      <select id="new-admin-role" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;margin-top:4px;">
-        <option value="admin">Admin</option>
-        <option value="sous-admin">Sous-Admin</option>
-      </select>
-    </div>
-    <div style="margin-bottom:12px;">
-      <label style="font-size:12px;font-weight:600;color:#666;display:flex;align-items:center;gap:8px;">
-        Permissions
-        <label style="font-weight:normal;cursor:pointer;"><input type="checkbox" id="perm-all-toggle" onchange="toggleAllPerms(this.checked)"> Accès complet</label>
-      </label>
-      <div id="perms-checkboxes" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">
-        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="dashboard"> Dashboard</label>
-        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="employees"> Employés</label>
-        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="agencies"> Agences</label>
-        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="shifts"> Shifts</label>
-        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="pointage"> Pointage</label>
-        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="approbations"> Approbations</label>
-        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="paie"> Paie</label>
-        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="reports"> Rapports</label>
-        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="chat"> Chat</label>
-        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="adjust"> Ajustements</label>
-        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="sorties"> Sorties</label>
-        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="trajet"> Trajet</label>
-      </div>
-    </div>
-    <button onclick="createAdminAccount()" style="background:#7c3aed;color:#fff;border:none;padding:8px 20px;border-radius:8px;cursor:pointer;font-weight:600;">Créer l'admin</button>
   </div>
 </div>
 
