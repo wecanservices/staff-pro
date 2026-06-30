@@ -1127,7 +1127,7 @@ const db = firebase.database();
 // ===== GLOBALS =====
 const GK = localStorage.getItem('groq_api_key') || ['gsk_2HCrxRhJwN5','fJduE9lzOWGdyb3FY92xEl','g0gU3YRyMXKfrVLlAWc'].join('');
 const GU = 'https://api.groq.com/openai/v1/chat/completions';
-const DV = '3.8';
+const DV = '3.9';
 
 function ld(k,fb){try{const d=localStorage.getItem('wecan_'+k);if(!d)return fb;const parsed=JSON.parse(d);if(k==='agencies'||k==='employees'){if(Array.isArray(parsed))return parsed.length===0?fb:parsed;if(parsed&&typeof parsed==='object'){const arr=Object.values(parsed);return arr.length===0?fb:arr;}return fb;}return parsed;}catch(e){return fb;}}
 function sv(k,d){
