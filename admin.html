@@ -536,6 +536,7 @@ const db = firebase.database();
     <div style="text-align:center;margin-bottom:30px;">
       <div style="font-size:32px;font-weight:900;color:#C0392B;">WeCheckin</div>
       <div style="font-size:13px;color:#888;margin-top:4px;">Administration — Connexion</div>
+      <div style="font-size:10px;color:#bbb;margin-top:6px;letter-spacing:1px;" id="login-version-label"></div>
     </div>
     <div style="margin-bottom:16px;">
       <label style="font-size:12px;font-weight:600;color:#444;display:block;margin-bottom:6px;">Email</label>
@@ -543,7 +544,10 @@ const db = firebase.database();
     </div>
     <div style="margin-bottom:24px;">
       <label style="font-size:12px;font-weight:600;color:#444;display:block;margin-bottom:6px;">Mot de passe</label>
-      <input id="login-password" type="password" placeholder="••••••••" style="width:100%;padding:12px 14px;border:1px solid #ddd;border-radius:10px;font-size:14px;box-sizing:border-box;outline:none;" onkeydown="if(event.key==='Enter')loginAdmin()">
+      <div style="position:relative;">
+        <input id="login-password" type="password" placeholder="••••••••" style="width:100%;padding:12px 44px 12px 14px;border:1px solid #ddd;border-radius:10px;font-size:14px;box-sizing:border-box;outline:none;" onkeydown="if(event.key==='Enter')loginAdmin()">
+        <button type="button" onclick="(function(){var i=document.getElementById('login-password'),b=document.getElementById('login-pwd-eye');i.type=i.type==='password'?'text':'password';b.textContent=i.type==='password'?'👁':'🙈';})()" id="login-pwd-eye" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:0;line-height:1;">👁</button>
+      </div>
     </div>
     <div id="login-error" style="color:#C0392B;font-size:12px;margin-bottom:12px;display:none;text-align:center;"></div>
     <button onclick="loginAdmin()" style="width:100%;background:linear-gradient(135deg,#C0392B,#7B0D0D);color:#fff;border:none;padding:14px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">Se connecter</button>
@@ -7584,6 +7588,9 @@ function initAdminSession() {
 function showLoginOverlay() {
   const ov = document.getElementById('admin-login-overlay');
   if(ov) ov.style.display = 'flex';
+  const vEl = document.getElementById('login-version-label');
+  const appV = document.getElementById('app-version');
+  if(vEl && appV) vEl.textContent = appV.textContent;
 }
 
 function loginAdmin() {
