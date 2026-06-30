@@ -7532,23 +7532,50 @@ function sortieCard(s){
 let currentAdminSession = null;
 let adminAccounts = [];
 
-function initAdminSession() {
-  const stored = localStorage.getItem('wecan_adminAccounts');
-  adminAccounts = stored ? JSON.parse(stored) : [];
-  if (!adminAccounts.length) {
-    adminAccounts = [{id:1, prenom:'Super', nom:'Admin', email:'admin@wecheckin.dz', password:'Admin@2024', role:'superadmin', permissions:['all'], createdAt: Date.now()}];
-    localStorage.setItem('wecan_adminAccounts', JSON.stringify(adminAccounts));
-    if(typeof db !== 'undefined') db.ref('wecan/adminAccounts').set(adminAccounts).catch(()=>{});
+function _ensureSuperAdmin(){
+  if(!adminAccounts.find(a=>a.role==='superadmin')){
+    adminAccounts.unshift({id:'sa1', prenom:'Super', nom:'Admin', email:'admin@wecheckin.dz', password:'Admin@2024', role:'superadmin', permissions:['all'], createdAt:Date.now()});
   }
+}
+
+function initAdminSession() {
+  // 1. Lire le local d'abord
+  try{
+    const stored = localStorage.getItem('wecan_adminAccounts');
+    if(stored) adminAccounts = JSON.parse(stored);
+  }catch(e){ adminAccounts=[]; }
+
+  // 2. Toujours assurer qu'il y a un superadmin
+  _ensureSuperAdmin();
+  localStorage.setItem('wecan_adminAccounts', JSON.stringify(adminAccounts));
+
+  // 3. Sync Firebase (lecture unique au démarrage)
+  if(typeof db !== 'undefined'){
+    db.ref('wecan/adminAccounts').once('value', function(snap){
+      const val = snap.val();
+      if(val && (Array.isArray(val) ? val.length : Object.keys(val).length)){
+        const fbArr = Array.isArray(val) ? val : Object.values(val);
+        // Garder les comptes locaux absents de Firebase
+        const merged = [...fbArr];
+        adminAccounts.forEach(la=>{ if(!merged.find(a=>String(a.id)===String(la.id))) merged.push(la); });
+        adminAccounts = merged;
+        _ensureSuperAdmin();
+        localStorage.setItem('wecan_adminAccounts', JSON.stringify(adminAccounts));
+      } else {
+        // Firebase vide : pousser les comptes locaux
+        db.ref('wecan/adminAccounts').set(adminAccounts).catch(()=>{});
+      }
+    });
+  }
+
+  // 4. Vérifier session existante
   const sess = localStorage.getItem('wecan_admin_session');
-  if (sess) {
-    try {
+  if(sess){
+    try{
       currentAdminSession = JSON.parse(sess);
       document.getElementById('admin-login-overlay').style.display = 'none';
       applyAdminPermissions();
-    } catch(e) {
-      showLoginOverlay();
-    }
+    }catch(e){ showLoginOverlay(); }
   } else {
     showLoginOverlay();
   }
