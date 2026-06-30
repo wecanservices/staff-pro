@@ -531,26 +531,39 @@ const db = firebase.database();
 </head>
 <body>
 
+<style>
+#admin-login-overlay .lf-input{width:100%;padding:12px 14px;border:1.5px solid #e5e7eb;border-radius:10px;font-size:14px;box-sizing:border-box;outline:none;transition:border-color .2s;}
+#admin-login-overlay .lf-input:focus{border-color:#C0392B;}
+#admin-login-overlay .lf-pwd-wrap{position:relative;}
+#admin-login-overlay .lf-pwd-wrap .lf-input{padding-right:46px;}
+#admin-login-overlay .lf-eye{position:absolute;right:0;top:0;height:100%;width:44px;display:flex;align-items:center;justify-content:center;background:none;border:none;cursor:pointer;color:#94a3b8;border-radius:0 10px 10px 0;transition:color .2s;}
+#admin-login-overlay .lf-eye:hover{color:#C0392B;}
+#admin-login-overlay .lf-btn{width:100%;background:linear-gradient(135deg,#C0392B,#7B0D0D);color:#fff;border:none;padding:14px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;transition:opacity .15s;letter-spacing:.3px;}
+#admin-login-overlay .lf-btn:hover{opacity:.9;}
+#admin-login-overlay .lf-btn:active{opacity:.8;}
+</style>
 <div id="admin-login-overlay" style="position:fixed;inset:0;background:linear-gradient(135deg,#1a1a1a 0%,#7B0D0D 50%,#C0392B 100%);display:flex;align-items:center;justify-content:center;z-index:99999;">
-  <div style="background:#fff;border-radius:20px;padding:40px;width:380px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
-    <div style="text-align:center;margin-bottom:30px;">
-      <div style="font-size:32px;font-weight:900;color:#C0392B;">WeCheckin</div>
-      <div style="font-size:13px;color:#888;margin-top:4px;">Administration — Connexion</div>
-      <div style="font-size:10px;color:#bbb;margin-top:6px;letter-spacing:1px;" id="login-version-label"></div>
+  <div style="background:#fff;border-radius:20px;padding:40px;width:380px;max-width:90vw;box-shadow:0 24px 64px rgba(0,0,0,0.5);">
+    <div style="text-align:center;margin-bottom:28px;">
+      <div style="font-size:30px;font-weight:900;color:#C0392B;letter-spacing:-0.5px;">WeCheckin</div>
+      <div style="font-size:12px;color:#94a3b8;margin-top:5px;font-weight:500;">Portail d'administration</div>
+      <div style="font-size:10px;color:#cbd5e1;margin-top:6px;letter-spacing:1.5px;text-transform:uppercase;" id="login-version-label">—</div>
     </div>
-    <div style="margin-bottom:16px;">
-      <label style="font-size:12px;font-weight:600;color:#444;display:block;margin-bottom:6px;">Email</label>
-      <input id="login-email" type="email" placeholder="admin@wecheckin.dz" style="width:100%;padding:12px 14px;border:1px solid #ddd;border-radius:10px;font-size:14px;box-sizing:border-box;outline:none;" onkeydown="if(event.key==='Enter')loginAdmin()">
+    <div style="margin-bottom:14px;">
+      <label style="font-size:11px;font-weight:700;color:#374151;display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">Email</label>
+      <input id="login-email" class="lf-input" type="email" placeholder="admin@wecheckin.dz" onkeydown="if(event.key==='Enter')document.getElementById('login-password').focus()">
     </div>
-    <div style="margin-bottom:24px;">
-      <label style="font-size:12px;font-weight:600;color:#444;display:block;margin-bottom:6px;">Mot de passe</label>
-      <div style="position:relative;">
-        <input id="login-password" type="password" placeholder="••••••••" style="width:100%;padding:12px 44px 12px 14px;border:1px solid #ddd;border-radius:10px;font-size:14px;box-sizing:border-box;outline:none;" onkeydown="if(event.key==='Enter')loginAdmin()">
-        <button type="button" onclick="(function(){var i=document.getElementById('login-password'),b=document.getElementById('login-pwd-eye');i.type=i.type==='password'?'text':'password';b.textContent=i.type==='password'?'👁':'🙈';})()" id="login-pwd-eye" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;padding:0;line-height:1;">👁</button>
+    <div style="margin-bottom:22px;">
+      <label style="font-size:11px;font-weight:700;color:#374151;display:block;margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px;">Mot de passe</label>
+      <div class="lf-pwd-wrap">
+        <input id="login-password" class="lf-input" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')loginAdmin()">
+        <button type="button" class="lf-eye" id="login-pwd-eye" onclick="toggleLoginPwd()" title="Afficher / masquer">
+          <svg id="login-eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+        </button>
       </div>
     </div>
-    <div id="login-error" style="color:#C0392B;font-size:12px;margin-bottom:12px;display:none;text-align:center;"></div>
-    <button onclick="loginAdmin()" style="width:100%;background:linear-gradient(135deg,#C0392B,#7B0D0D);color:#fff;border:none;padding:14px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">Se connecter</button>
+    <div id="login-error" style="color:#C0392B;font-size:12px;margin-bottom:14px;display:none;text-align:center;background:#FEF2F2;padding:8px 12px;border-radius:8px;border:1px solid #FECACA;"></div>
+    <button class="lf-btn" onclick="loginAdmin()">Se connecter</button>
   </div>
 </div>
 
@@ -2374,6 +2387,14 @@ let nextEmpId=employees.length?Math.max(...employees.map(e=>e.id))+1:1;
 // Démarrer la synchronisation Firebase en temps réel
 setTimeout(fbInitSync, 500);
 setTimeout(initAdminSession, 600);
+// Afficher la version sur l'écran de login dès que le DOM est prêt
+document.addEventListener('DOMContentLoaded', function(){
+  setTimeout(function(){
+    var vEl = document.getElementById('login-version-label');
+    var appV = document.getElementById('app-version');
+    if(vEl && appV) vEl.textContent = appV.textContent;
+  }, 100);
+});
 
 const COLORS=['#FDEDEC:#7B241C','#E1F5EE:#085041','#FAEEDA:#633806','#EEEDFE:#3C3489','#FCEBEB:#791F1F'];
 function col(i){const p=COLORS[i%COLORS.length].split(':');return{bg:p[0],text:p[1]};}
@@ -7588,23 +7609,55 @@ function initAdminSession() {
 function showLoginOverlay() {
   const ov = document.getElementById('admin-login-overlay');
   if(ov) ov.style.display = 'flex';
+  _setLoginVersion();
+}
+
+function _setLoginVersion(){
   const vEl = document.getElementById('login-version-label');
+  if(!vEl) return;
   const appV = document.getElementById('app-version');
-  if(vEl && appV) vEl.textContent = appV.textContent;
+  vEl.textContent = appV ? appV.textContent : '';
+}
+
+function toggleLoginPwd(){
+  const inp = document.getElementById('login-password');
+  const icon = document.getElementById('login-eye-icon');
+  if(!inp) return;
+  const showing = inp.type === 'text';
+  inp.type = showing ? 'password' : 'text';
+  // Swap SVG: eye-off when showing, eye when hidden
+  icon.innerHTML = showing
+    ? '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>'
+    : '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
 }
 
 function loginAdmin() {
   const email = (document.getElementById('login-email').value||'').trim().toLowerCase();
   const password = document.getElementById('login-password').value||'';
-  const err = document.getElementById('login-error');
-  err.style.display='none';
-  const acc = adminAccounts.find(a => a.email.toLowerCase()===email && a.password===password);
-  if (!acc) {
-    err.textContent = 'Email ou mot de passe incorrect.';
-    err.style.display = 'block';
+  const errEl = document.getElementById('login-error');
+  errEl.style.display = 'none';
+
+  if(!email || !password){
+    errEl.textContent = 'Veuillez remplir tous les champs.';
+    errEl.style.display = 'block';
     return;
   }
-  const sess = {id:acc.id, email:acc.email, role:acc.role, nom:acc.nom, prenom:acc.prenom, permissions:acc.permissions};
+
+  // Reload accounts from localStorage in case they were updated by Firebase after init
+  try{
+    const stored = localStorage.getItem('wecan_adminAccounts');
+    if(stored){ const arr = JSON.parse(stored); if(Array.isArray(arr) && arr.length) adminAccounts = arr; }
+  }catch(e){}
+  _ensureSuperAdmin();
+
+  const acc = adminAccounts.find(a => a.email && a.email.toLowerCase().trim() === email && a.password === password);
+  if(!acc){
+    errEl.textContent = 'Email ou mot de passe incorrect.';
+    errEl.style.display = 'block';
+    document.getElementById('login-password').value = '';
+    return;
+  }
+  const sess = {id:acc.id, email:acc.email, role:acc.role, nom:acc.nom||'', prenom:acc.prenom||'', permissions:acc.permissions||['all']};
   localStorage.setItem('wecan_admin_session', JSON.stringify(sess));
   currentAdminSession = sess;
   document.getElementById('admin-login-overlay').style.display = 'none';
