@@ -894,6 +894,19 @@ const db = firebase.database();
                   <input type="text" id="emp-poste-custom" placeholder="Saisir le poste" style="display:none;margin-top:6px;">
                 </div>
               </div></div>
+              <!-- Section 2b : Shift -->
+              <div style="background:#f8fafc;border:1px solid #e9eef5;border-radius:12px;padding:14px 16px;margin-bottom:10px;">
+                <div class="form-group" style="width:100%;">
+                  <label style="display:flex;align-items:center;gap:6px;">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C0392B" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Shift de travail
+                  </label>
+                  <select id="emp-shift" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;background:#fff;">
+                    <option value="">-- Aucun shift assigné --</option>
+                  </select>
+                  <div id="emp-shift-preview" style="margin-top:6px;display:none;padding:7px 10px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;font-size:11px;color:#64748b;"></div>
+                </div>
+              </div>
               <!-- Section 3 : Agence(s) -->
               <div style="background:#f8fafc;border:1px solid #e9eef5;border-radius:12px;padding:14px 16px;margin-bottom:10px;">
                 <div class="form-group" style="width:100%;"><label>Agence(s)</label>
@@ -2167,9 +2180,20 @@ function fbInitSync(){
   });
   db.ref('wecan/agencies').on('value', snap=>{
     const val = snap.val();
-    // Firebase est toujours la source de verite pour les agences
     if(val !== null && val !== undefined){
-      _applyFbData('agencies', val);
+      // Fusionner Firebase + localStorage : garder les bureaux locaux non encore synchronisés
+      const fbArr = Array.isArray(val) ? val : Object.values(val);
+      let localArr = [];
+      try{ const s=localStorage.getItem('wecan_agencies'); if(s) localArr=JSON.parse(s); if(!Array.isArray(localArr)) localArr=[]; }catch(e){}
+      // Ajouter à Firebase les bureaux locaux absents (écriture Firebase incomplète)
+      const toAdd = localArr.filter(la=>!fbArr.find(a=>String(a.id)===String(la.id)));
+      const merged = toAdd.length ? [...fbArr,...toAdd] : fbArr;
+      if(toAdd.length){ try{ db.ref('wecan/agencies').set(merged); }catch(e){} }
+      _applyFbData('agencies', merged);
+    } else {
+      // Firebase vide : pousser les données locales
+      const local = localStorage.getItem('wecan_agencies');
+      if(local){ try{ db.ref('wecan/agencies').set(JSON.parse(local)); }catch(e){} }
     }
   });
   // Shifts, feries, ramadan, pushNotifications : listener temps reel
@@ -2895,10 +2919,50 @@ function getResponsableIds(prefix){
 
 // ── FIN TAG SYSTEM ──────────────────────────────────────────────────
 
+function populateShiftSelects(){
+  const DAYS = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+  ['emp-shift','edit-emp-shift'].forEach(function(selId){
+    const sel = document.getElementById(selId);
+    if(!sel) return;
+    const cur = sel.value;
+    sel.innerHTML = '<option value="">-- Aucun shift assigné --</option>';
+    shifts.forEach(function(s){
+      const days = (s.jours||[]).map(function(d){ return DAYS[d]||d; }).join(', ');
+      const opt = document.createElement('option');
+      opt.value = String(s.id);
+      opt.textContent = s.nom + (s.debut?' · '+s.debut+' → '+s.fin:'') + (days?' ('+days+')':'');
+      opt.dataset.color = s.color||'#047857';
+      sel.appendChild(opt);
+    });
+    if(cur) sel.value = cur;
+    sel.onchange = function(){ showShiftPreview(this); };
+  });
+}
+
+function showShiftPreview(sel){
+  const previewId = sel.id.replace('-shift','-shift-preview');
+  const preview = document.getElementById(previewId);
+  if(!preview) return;
+  if(!sel.value){ preview.style.display='none'; return; }
+  const s = shifts.find(function(x){ return String(x.id)===String(sel.value); });
+  if(!s){ preview.style.display='none'; return; }
+  const DAYS = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+  const days = (s.jours||[]).map(function(d){ return DAYS[d]||d; }).join(' · ');
+  const color = s.color||'#047857';
+  preview.style.display='block';
+  preview.innerHTML = '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+color+';margin-right:5px;"></span>'
+    +'<b style="color:'+color+';">'+s.nom+'</b>'
+    +(s.debut?' &nbsp;|&nbsp; <b>'+s.debut+'</b> → <b>'+s.fin+'</b>':'')
+    +(days?' &nbsp;|&nbsp; '+days:'')
+    +(s.pauseDebut?' &nbsp;|&nbsp; Pause: '+s.pauseDebut+'-'+s.pauseFin:'');
+}
+
 function populateEmpAgenceSelect(){
   // Reset tag selects
   _respSelected['emp']=[]; _renderResponsableTags('emp', null);
   _agSelected['emp']=[]; _renderAgenceTags('emp');
+  // Populate shift selects
+  populateShiftSelects();
   // Add custom postes to selects
   const customPostes=JSON.parse(localStorage.getItem('wecan_custom_postes')||'[]');
   ['emp-poste','edit-emp-poste'].forEach(sid=>{
@@ -2917,14 +2981,15 @@ function addEmployee(){
   if(password.length<6){showFeedback('emp-feedback','Mot de passe minimum 6 caractères.','err');return;}
   if(employees.find(e=>e.email===email)){showFeedback('emp-feedback','Cet email est déjà utilisé.','err');return;}
   const salaire = parseInt(document.getElementById('emp-salaire').value)||45000;
-  employees.push({id:nextEmpId++,prenom:p,nom:n,poste:(()=>{const ps=document.getElementById('emp-poste');const pc=document.getElementById('emp-poste-custom');const v=ps.value==='__autre__'?pc.value.trim():ps.value;if(v&&v!=='__autre__'){const cp=JSON.parse(localStorage.getItem('wecan_custom_postes')||'[]');if(!cp.includes(v)){cp.push(v);localStorage.setItem('wecan_custom_postes',JSON.stringify(cp));}}return v||'Employé';})(),agenceId:(getAgenceIds('emp')[0]||''),
+  const empShiftId = document.getElementById('emp-shift')?.value||'';
+  employees.push({id:nextEmpId++,prenom:p,nom:n,poste:(()=>{const ps=document.getElementById('emp-poste');const pc=document.getElementById('emp-poste-custom');const v=ps.value==='__autre__'?pc.value.trim():ps.value;if(v&&v!=='__autre__'){const cp=JSON.parse(localStorage.getItem('wecan_custom_postes')||'[]');if(!cp.includes(v)){cp.push(v);localStorage.setItem('wecan_custom_postes',JSON.stringify(cp));}}return v||'Employé';})(),shiftId:empShiftId,agenceId:(getAgenceIds('emp')[0]||''),
     agenceIds:getAgenceIds('emp'),tel:document.getElementById('emp-tel').value||'—',status:document.getElementById('emp-status').value,contrat:document.getElementById('emp-contrat').value||'CDI',salaire,email,password,note:document.getElementById('emp-note').value.trim(),externe:!!(document.getElementById('emp-is-externe')&&document.getElementById('emp-is-externe').checked),responsableIds:getResponsableIds('emp'),permissions:document.getElementById('emp-is-subadmin')&&document.getElementById('emp-is-subadmin').checked?Array.from(document.querySelectorAll('#emp-perms-grid input[type=checkbox]:checked')).map(cb=>cb.value):[]});
   saveData('employees',employees);
   showToast('Synchronisé Firebase');
   // Message bienvenu + reset form + aller liste
   const newEmp = employees[employees.length-1];
   const empNom = newEmp.prenom + ' ' + newEmp.nom;
-  ['emp-prenom','emp-nom','emp-tel','emp-salaire','emp-photo-data','emp-email','emp-password'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); document.getElementById('emp-poste').value=''; document.getElementById('emp-poste-custom').style.display='none'; document.querySelectorAll('#emp-agence input[type=checkbox]').forEach(cb=>cb.checked=false);
+  ['emp-prenom','emp-nom','emp-tel','emp-salaire','emp-photo-data','emp-email','emp-password'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); document.getElementById('emp-poste').value=''; document.getElementById('emp-poste-custom').style.display='none'; document.querySelectorAll('#emp-agence input[type=checkbox]').forEach(cb=>cb.checked=false); const _shiftSel=document.getElementById('emp-shift');if(_shiftSel)_shiftSel.value=''; const _shiftPrev=document.getElementById('emp-shift-preview');if(_shiftPrev)_shiftPrev.style.display='none';
   _respSelected['emp']=[]; _renderResponsableTags('emp',null); _agSelected['emp']=[]; _renderAgenceTags('emp'); if(document.getElementById('emp-is-subadmin')){document.getElementById('emp-is-subadmin').checked=false; document.getElementById('emp-perms-grid').style.display='none'; document.querySelectorAll('#emp-perms-grid input[type=checkbox]').forEach(cb=>cb.checked=false);}
   const _prev=document.getElementById('emp-photo-preview');
   if(_prev){_prev.innerHTML='&#128100;';_prev.style.backgroundImage='';}
@@ -2963,11 +3028,12 @@ function renderEmployees(){
     const salaire = e.salaire || SALAIRES_BASE[e.id] || 45000;
     const poste = e.poste || '—';
     const agName = ag ? ag.name||ag.nom||ag.id : '—';
+    const empShift = e.shiftId ? shifts.find(s=>String(s.id)===String(e.shiftId)) : null;
     return`<div class="emp-row" style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid #f1f5f9;transition:background .15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background=''">
       ${e.photo?`<div style="width:38px;height:38px;border-radius:50%;background-image:url(${e.photo});background-size:cover;background-position:center;flex-shrink:0;border:2px solid ${c.border};"></div>`:`<div class="empAvatar" style="background:${c.bg};color:${c.text};border:2px solid ${c.border}20;width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;">${ini(e.prenom,e.nom)}</div>`}
       <div style="flex:1;min-width:0;">
         <div style="font-size:13px;font-weight:700;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${e.prenom} ${e.nom}</div>
-        <div style="font-size:11px;color:#64748b;">${poste} · ${agName}</div>
+        <div style="font-size:11px;color:#64748b;">${poste} · ${agName}${empShift?` · <span style="color:${empShift.color||'#047857'};font-weight:600;">⏱ ${empShift.nom}</span>`:''}</div>
         ${e.note?`<div style="font-size:10px;color:#7C3AED;font-style:italic;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:200px;">${e.note}</div>`:''}
       </div>
       <div style="font-size:12px;font-weight:600;color:#C0392B;white-space:nowrap;margin-right:4px;">${salaire.toLocaleString('fr-DZ')} DA</div>
@@ -3588,6 +3654,10 @@ function editEmp(id){
     if(matchOpt){editPosteEl.value=matchOpt.value;}
     else if(e.poste){editPosteEl.value='__autre__';const c=document.getElementById('edit-emp-poste-custom');if(c){c.style.display='block';c.value=e.poste;}}
   }
+  // Fill shift select
+  populateShiftSelects();
+  const editShiftSel = document.getElementById('edit-emp-shift');
+  if(editShiftSel && e.shiftId){ editShiftSel.value = String(e.shiftId); showShiftPreview(editShiftSel); }
   const empResp = e.responsableIds || (e.responsableId ? [String(e.responsableId)] : []);
   initResponsable('edit-emp', empResp, e.id);
   // Pre-fill sub-admin permissions
@@ -3631,6 +3701,7 @@ function saveEditEmp(){
       ['pointage','employees','reports','approbations','paie','branches'].filter(a=>document.getElementById('acces-'+a)?.checked) : [],
     pin: document.getElementById('edit-admin-pin')?.value || employees[idx].pin || '',
     contrat: document.getElementById('edit-emp-contrat').value || employees[idx].contrat || 'CDI',
+    shiftId: document.getElementById('edit-emp-shift')?.value || employees[idx].shiftId || '',
     note: document.getElementById('edit-emp-note')?.value.trim() ?? employees[idx].note ?? '',
     responsableIds: getResponsableIds('edit-emp'),
     permissions: document.getElementById('edit-emp-is-subadmin')&&document.getElementById('edit-emp-is-subadmin').checked ? Array.from(document.querySelectorAll('#edit-emp-perms-grid input[type=checkbox]:checked')).map(cb=>cb.value) : [],
@@ -7466,6 +7537,19 @@ function sortieCard(s){
           <input type="text" id="edit-emp-poste-custom" placeholder="Saisir le poste" style="display:none;margin-top:6px;">
         </div>
         </div></div>
+        <!-- Section 2b : Shift -->
+        <div style="background:#f8fafc;border:1px solid #e9eef5;border-radius:12px;padding:14px 16px;margin-bottom:10px;">
+          <div class="form-group" style="width:100%;">
+            <label style="display:flex;align-items:center;gap:6px;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#C0392B" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Shift de travail
+            </label>
+            <select id="edit-emp-shift" style="width:100%;padding:8px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;background:#fff;">
+              <option value="">-- Aucun shift assigné --</option>
+            </select>
+            <div id="edit-emp-shift-preview" style="margin-top:6px;display:none;padding:7px 10px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;font-size:11px;color:#64748b;"></div>
+          </div>
+        </div>
         <!-- Section 3 : Agence(s) -->
         <div style="background:#f8fafc;border:1px solid #e9eef5;border-radius:12px;padding:14px 16px;margin-bottom:10px;">
         <div class="form-group" style="width:100%;"><label>Agence(s)</label>
