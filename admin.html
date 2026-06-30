@@ -531,6 +531,25 @@ const db = firebase.database();
 </head>
 <body>
 
+<div id="admin-login-overlay" style="position:fixed;inset:0;background:linear-gradient(135deg,#1a1a1a 0%,#7B0D0D 50%,#C0392B 100%);display:flex;align-items:center;justify-content:center;z-index:99999;">
+  <div style="background:#fff;border-radius:20px;padding:40px;width:380px;max-width:90vw;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+    <div style="text-align:center;margin-bottom:30px;">
+      <div style="font-size:32px;font-weight:900;color:#C0392B;">WeCheckin</div>
+      <div style="font-size:13px;color:#888;margin-top:4px;">Administration — Connexion</div>
+    </div>
+    <div style="margin-bottom:16px;">
+      <label style="font-size:12px;font-weight:600;color:#444;display:block;margin-bottom:6px;">Email</label>
+      <input id="login-email" type="email" placeholder="admin@wecheckin.dz" style="width:100%;padding:12px 14px;border:1px solid #ddd;border-radius:10px;font-size:14px;box-sizing:border-box;outline:none;" onkeydown="if(event.key==='Enter')loginAdmin()">
+    </div>
+    <div style="margin-bottom:24px;">
+      <label style="font-size:12px;font-weight:600;color:#444;display:block;margin-bottom:6px;">Mot de passe</label>
+      <input id="login-password" type="password" placeholder="••••••••" style="width:100%;padding:12px 14px;border:1px solid #ddd;border-radius:10px;font-size:14px;box-sizing:border-box;outline:none;" onkeydown="if(event.key==='Enter')loginAdmin()">
+    </div>
+    <div id="login-error" style="color:#C0392B;font-size:12px;margin-bottom:12px;display:none;text-align:center;"></div>
+    <button onclick="loginAdmin()" style="width:100%;background:linear-gradient(135deg,#C0392B,#7B0D0D);color:#fff;border:none;padding:14px;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;">Se connecter</button>
+  </div>
+</div>
+
 <!-- TOPBAR -->
 <div class="topbar no-print">
   <div class="topbar-left">
@@ -546,6 +565,8 @@ const db = firebase.database();
     </div>
   </div>
   <div class="topbar-right">
+    <span id="admin-logged-name" style="font-size:11px;color:rgba(255,255,255,0.8);font-weight:600;margin-right:8px;"></span>
+    <button onclick="logoutAdmin()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:11px;padding:4px 10px;border-radius:8px;cursor:pointer;margin-right:8px;">⏻ Déconnexion</button>
     <span id="fb-dot" title="Firebase déconnecté" style="width:10px;height:10px;border-radius:50%;background:#ef4444;display:inline-block;flex-shrink:0;box-shadow:0 0 4px rgba(0,0,0,.3);"></span>
     <span class="topbar-clock" id="clock"></span>
     <!-- LANGUAGE SWITCHER -->
@@ -654,7 +675,12 @@ const db = firebase.database();
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
         <span data-t="nav_help">Help</span>
       </div>
-      <div style="text-align:center;padding:8px 0 4px;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.5px;">STAFF PRO Admin<br><span id="app-version">v4.4</span></div>
+      <div class="nav-item" id="nav-admins" onclick="showPage('admins',this)" title="Gestion Admins" style="display:none;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        <span>Gestion Admins</span>
+        <span style="margin-left:auto;background:#7c3aed;color:#fff;font-size:8px;padding:1px 5px;border-radius:8px;">SA</span>
+      </div>
+      <div style="text-align:center;padding:8px 0 4px;font-size:10px;color:rgba(255,255,255,.35);letter-spacing:.5px;">STAFF PRO Admin<br><span id="app-version">v4.5</span></div>
     </div>
     <div class="nav-globe">
       <div class="globe-btn">
@@ -2348,6 +2374,7 @@ let nextEmpId=employees.length?Math.max(...employees.map(e=>e.id))+1:1;
 
 // Démarrer la synchronisation Firebase en temps réel
 setTimeout(fbInitSync, 500);
+setTimeout(initAdminSession, 600);
 
 const COLORS=['#FDEDEC:#7B241C','#E1F5EE:#085041','#FAEEDA:#633806','#EEEDFE:#3C3489','#FCEBEB:#791F1F'];
 function col(i){const p=COLORS[i%COLORS.length].split(':');return{bg:p[0],text:p[1]};}
@@ -2388,6 +2415,14 @@ function toggleSidebar(){
 
 // ── NAVIGATION ──
 function showPage(name,el){
+  // Permission check
+  if(currentAdminSession && currentAdminSession.role !== 'superadmin' && !(currentAdminSession.permissions||[]).includes('all') && name !== 'dashboard' && name !== 'profile' && name !== 'admins') {
+    if(!(currentAdminSession.permissions||[]).includes(name)){
+      showPage('dashboard', document.getElementById('nav-dashboard'));
+      if(typeof showToast==='function') showToast('Accès refusé','error');
+      return;
+    }
+  }
   updateSidebarAlerts();
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+name).classList.add('active');
@@ -2407,6 +2442,7 @@ function showPage(name,el){
   if(name==='paie'){renderPaie();}
   if(name==='profile'){renderProfilePage();}
   if(name==='sorties'){ initSortiesPage(); }
+  if(name==='admins'){ renderAdminAccounts(); const sa=adminAccounts.find(a=>a.role==='superadmin'); if(sa){const el=document.getElementById('sa-email');if(el)el.value=sa.email||'';} }
 
   // Keep language after page switch
   setTimeout(()=>{ applyTranslations(); }, 50);
@@ -7497,6 +7533,138 @@ function sortieCard(s){
 }
 
 
+// ===== ADMIN AUTH SYSTEM =====
+let currentAdminSession = null;
+let adminAccounts = [];
+
+function initAdminSession() {
+  const stored = localStorage.getItem('wecan_adminAccounts');
+  adminAccounts = stored ? JSON.parse(stored) : [];
+  if (!adminAccounts.length) {
+    adminAccounts = [{id:1, prenom:'Super', nom:'Admin', email:'admin@wecheckin.dz', password:'Admin@2024', role:'superadmin', permissions:['all'], createdAt: Date.now()}];
+    localStorage.setItem('wecan_adminAccounts', JSON.stringify(adminAccounts));
+    if(typeof db !== 'undefined') db.ref('wecan/adminAccounts').set(adminAccounts).catch(()=>{});
+  }
+  const sess = localStorage.getItem('wecan_admin_session');
+  if (sess) {
+    try {
+      currentAdminSession = JSON.parse(sess);
+      document.getElementById('admin-login-overlay').style.display = 'none';
+      applyAdminPermissions();
+    } catch(e) {
+      showLoginOverlay();
+    }
+  } else {
+    showLoginOverlay();
+  }
+}
+
+function showLoginOverlay() {
+  const ov = document.getElementById('admin-login-overlay');
+  if(ov) ov.style.display = 'flex';
+}
+
+function loginAdmin() {
+  const email = (document.getElementById('login-email').value||'').trim().toLowerCase();
+  const password = document.getElementById('login-password').value||'';
+  const err = document.getElementById('login-error');
+  err.style.display='none';
+  const acc = adminAccounts.find(a => a.email.toLowerCase()===email && a.password===password);
+  if (!acc) {
+    err.textContent = 'Email ou mot de passe incorrect.';
+    err.style.display = 'block';
+    return;
+  }
+  const sess = {id:acc.id, email:acc.email, role:acc.role, nom:acc.nom, prenom:acc.prenom, permissions:acc.permissions};
+  localStorage.setItem('wecan_admin_session', JSON.stringify(sess));
+  currentAdminSession = sess;
+  document.getElementById('admin-login-overlay').style.display = 'none';
+  applyAdminPermissions();
+}
+
+function logoutAdmin() {
+  localStorage.removeItem('wecan_admin_session');
+  location.reload();
+}
+
+function applyAdminPermissions() {
+  if (!currentAdminSession) return;
+  const nameEl = document.getElementById('admin-logged-name');
+  if(nameEl) nameEl.textContent = (currentAdminSession.prenom||'') + ' ' + (currentAdminSession.nom||'');
+  const navAdmins = document.getElementById('nav-admins');
+  if(navAdmins) navAdmins.style.display = currentAdminSession.role === 'superadmin' ? 'flex' : 'none';
+  if (currentAdminSession.role !== 'superadmin' && !currentAdminSession.permissions.includes('all')) {
+    const permMap = {
+      'nav-employees':'employees','nav-agencies':'agencies','nav-shifts':'shifts',
+      'nav-pointage':'pointage','nav-approbations':'approbations','nav-paie':'paie',
+      'nav-reports':'reports','nav-chat':'chat','nav-adjust':'adjust',
+      'nav-sorties':'sorties','nav-trajet':'trajet'
+    };
+    Object.entries(permMap).forEach(([navId, perm]) => {
+      const el = document.getElementById(navId);
+      if(el && !currentAdminSession.permissions.includes(perm)) el.style.display='none';
+    });
+  }
+}
+
+function renderAdminAccounts() {
+  const container = document.getElementById('admin-accounts-list');
+  if (!container) return;
+  const nonSA = adminAccounts.filter(a => a.role !== 'superadmin');
+  if (!nonSA.length) {
+    container.innerHTML = '<p style="color:#888;text-align:center;">Aucun admin créé.</p>';
+    return;
+  }
+  container.innerHTML = '<table style="width:100%;border-collapse:collapse;font-size:13px;"><thead><tr style="border-bottom:2px solid #eee;"><th style="text-align:left;padding:8px;">Nom</th><th style="text-align:left;padding:8px;">Email</th><th style="text-align:left;padding:8px;">Rôle</th><th style="text-align:left;padding:8px;">Permissions</th><th style="text-align:left;padding:8px;">Actions</th></tr></thead><tbody>' +
+    nonSA.map(a=>'<tr style="border-bottom:1px solid #f5f5f5;"><td style="padding:8px;">'+a.prenom+' '+a.nom+'</td><td style="padding:8px;">'+a.email+'</td><td style="padding:8px;"><span style="background:#e0e7ff;color:#3730a3;padding:2px 8px;border-radius:6px;font-size:11px;">'+a.role+'</span></td><td style="padding:8px;font-size:11px;">'+((a.permissions||[]).join(', '))+'</td><td style="padding:8px;"><button onclick="deleteAdminAccount('+a.id+')" style="background:#fee2e2;color:#991b1b;border:none;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:11px;">Supprimer</button></td></tr>').join('') +
+    '</tbody></table>';
+}
+
+function createAdminAccount() {
+  const prenom = document.getElementById('new-admin-prenom').value.trim();
+  const nom = document.getElementById('new-admin-nom').value.trim();
+  const email = document.getElementById('new-admin-email').value.trim().toLowerCase();
+  const password = document.getElementById('new-admin-password').value;
+  const role = document.getElementById('new-admin-role').value;
+  if (!prenom||!nom||!email||!password) { showToast('Remplissez tous les champs','warning'); return; }
+  if (adminAccounts.find(a=>a.email.toLowerCase()===email)) { showToast('Email déjà utilisé','error'); return; }
+  const perms = Array.from(document.querySelectorAll('#perms-checkboxes input[name="perm"]:checked')).map(c=>c.value);
+  const newAcc = {id: Date.now(), prenom, nom, email, password, role, permissions: perms, createdAt: Date.now()};
+  adminAccounts.push(newAcc);
+  localStorage.setItem('wecan_adminAccounts', JSON.stringify(adminAccounts));
+  if(typeof db !== 'undefined') db.ref('wecan/adminAccounts').set(adminAccounts).catch(()=>{});
+  renderAdminAccounts();
+  showToast('Admin créé avec succès','success');
+  ['new-admin-prenom','new-admin-nom','new-admin-email','new-admin-password'].forEach(id=>document.getElementById(id).value='');
+  document.querySelectorAll('#perms-checkboxes input[name="perm"]').forEach(c=>c.checked=false);
+}
+
+function deleteAdminAccount(id) {
+  if (!confirm('Supprimer cet admin ?')) return;
+  adminAccounts = adminAccounts.filter(a=>a.id!==id);
+  localStorage.setItem('wecan_adminAccounts', JSON.stringify(adminAccounts));
+  if(typeof db !== 'undefined') db.ref('wecan/adminAccounts').set(adminAccounts).catch(()=>{});
+  renderAdminAccounts();
+  showToast('Admin supprimé','success');
+}
+
+function saveSuperadminConfig() {
+  const email = document.getElementById('sa-email').value.trim().toLowerCase();
+  const pwd = document.getElementById('sa-password').value;
+  const idx = adminAccounts.findIndex(a=>a.role==='superadmin');
+  if (idx===-1) return;
+  if (email) adminAccounts[idx].email = email;
+  if (pwd) adminAccounts[idx].password = pwd;
+  localStorage.setItem('wecan_adminAccounts', JSON.stringify(adminAccounts));
+  if(typeof db !== 'undefined') db.ref('wecan/adminAccounts').set(adminAccounts).catch(()=>{});
+  showToast('Configuration sauvegardée','success');
+}
+
+function toggleAllPerms(checked) {
+  document.querySelectorAll('#perms-checkboxes input[name="perm"]').forEach(c=>c.checked=checked);
+}
+// ===== END ADMIN AUTH SYSTEM =====
+
 </script>
 
 <!-- EDIT APPROBATION MODAL -->
@@ -7785,6 +7953,71 @@ function sortieCard(s){
       <button class="btn btn-outline" onclick="closeEditEmp()">Annuler</button>
       <button class="btn btn-primary" onclick="saveEditEmp()"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Sauvegarder</button>
     </div>
+  </div>
+</div>
+
+<div class="page" id="page-admins" style="display:none;">
+  <div class="page-header"><h1 class="page-title">Gestion des Admins</h1></div>
+
+  <!-- Section A: Superadmin config -->
+  <div style="background:#fff;border:2px solid #C0392B;border-radius:12px;padding:20px;margin-bottom:20px;">
+    <h3 style="color:#C0392B;margin:0 0 15px;">Configuration Superadmin</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div><label style="font-size:12px;font-weight:600;color:#666;">Email Superadmin</label>
+        <input id="sa-email" type="email" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;margin-top:4px;box-sizing:border-box;"></div>
+      <div><label style="font-size:12px;font-weight:600;color:#666;">Nouveau mot de passe</label>
+        <input id="sa-password" type="password" placeholder="Laisser vide pour ne pas changer" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;margin-top:4px;box-sizing:border-box;"></div>
+    </div>
+    <button onclick="saveSuperadminConfig()" style="margin-top:12px;background:#C0392B;color:#fff;border:none;padding:8px 20px;border-radius:8px;cursor:pointer;font-weight:600;">Sauvegarder</button>
+  </div>
+
+  <!-- Section B: Liste admins -->
+  <div style="background:#fff;border-radius:12px;padding:20px;margin-bottom:20px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+    <h3 style="margin:0 0 15px;">Liste des Admins</h3>
+    <div id="admin-accounts-list"></div>
+  </div>
+
+  <!-- Section C: Créer admin -->
+  <div style="background:#fff;border-radius:12px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,0.06);">
+    <h3 style="margin:0 0 15px;">Créer un Admin</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+      <div><label style="font-size:12px;font-weight:600;color:#666;">Prénom</label>
+        <input id="new-admin-prenom" type="text" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;margin-top:4px;box-sizing:border-box;"></div>
+      <div><label style="font-size:12px;font-weight:600;color:#666;">Nom</label>
+        <input id="new-admin-nom" type="text" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;margin-top:4px;box-sizing:border-box;"></div>
+      <div><label style="font-size:12px;font-weight:600;color:#666;">Email</label>
+        <input id="new-admin-email" type="email" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;margin-top:4px;box-sizing:border-box;"></div>
+      <div><label style="font-size:12px;font-weight:600;color:#666;">Mot de passe</label>
+        <input id="new-admin-password" type="password" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;margin-top:4px;box-sizing:border-box;"></div>
+    </div>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:12px;font-weight:600;color:#666;">Rôle</label>
+      <select id="new-admin-role" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:8px;margin-top:4px;">
+        <option value="admin">Admin</option>
+        <option value="sous-admin">Sous-Admin</option>
+      </select>
+    </div>
+    <div style="margin-bottom:12px;">
+      <label style="font-size:12px;font-weight:600;color:#666;display:flex;align-items:center;gap:8px;">
+        Permissions
+        <label style="font-weight:normal;cursor:pointer;"><input type="checkbox" id="perm-all-toggle" onchange="toggleAllPerms(this.checked)"> Accès complet</label>
+      </label>
+      <div id="perms-checkboxes" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">
+        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="dashboard"> Dashboard</label>
+        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="employees"> Employés</label>
+        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="agencies"> Agences</label>
+        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="shifts"> Shifts</label>
+        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="pointage"> Pointage</label>
+        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="approbations"> Approbations</label>
+        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="paie"> Paie</label>
+        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="reports"> Rapports</label>
+        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="chat"> Chat</label>
+        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="adjust"> Ajustements</label>
+        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="sorties"> Sorties</label>
+        <label style="cursor:pointer;"><input type="checkbox" name="perm" value="trajet"> Trajet</label>
+      </div>
+    </div>
+    <button onclick="createAdminAccount()" style="background:#7c3aed;color:#fff;border:none;padding:8px 20px;border-radius:8px;cursor:pointer;font-weight:600;">Créer l'admin</button>
   </div>
 </div>
 
