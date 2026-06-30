@@ -906,6 +906,24 @@ const db = firebase.database();
                   </select>
                   <div id="emp-shift-preview" style="margin-top:6px;display:none;padding:7px 10px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;font-size:11px;color:#64748b;"></div>
                 </div>
+                <div id="emp-pause-row" style="display:none;margin-top:10px;padding-top:10px;border-top:1px dashed #e2e8f0;">
+                  <label style="font-size:12px;font-weight:600;color:#92400E;display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#92400E" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    Heure de pause (personnalisée pour cet employé)
+                  </label>
+                  <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+                    <div style="display:flex;align-items:center;gap:6px;">
+                      <label style="font-size:11px;color:#64748b;white-space:nowrap;">Début pause</label>
+                      <input type="time" id="emp-pause-debut" style="padding:6px 8px;border:1px solid #FCD34D;border-radius:8px;font-size:13px;background:#FFFBEB;color:#92400E;font-weight:600;">
+                    </div>
+                    <div style="display:flex;align-items:center;gap:6px;">
+                      <label style="font-size:11px;color:#64748b;white-space:nowrap;">Fin pause</label>
+                      <input type="time" id="emp-pause-fin" style="padding:6px 8px;border:1px solid #FCD34D;border-radius:8px;font-size:13px;background:#FFFBEB;color:#92400E;font-weight:600;">
+                    </div>
+                    <span id="emp-pause-duree-label" style="font-size:11px;color:#B45309;font-weight:600;"></span>
+                  </div>
+                  <div style="font-size:10px;color:#94a3b8;margin-top:4px;">Pré-rempli depuis le shift — modifiez si l'employé prend sa pause à une heure différente</div>
+                </div>
               </div>
               <!-- Section 3 : Agence(s) -->
               <div style="background:#f8fafc;border:1px solid #e9eef5;border-radius:12px;padding:14px 16px;margin-bottom:10px;">
@@ -2935,17 +2953,22 @@ function populateShiftSelects(){
       sel.appendChild(opt);
     });
     if(cur) sel.value = cur;
-    sel.onchange = function(){ showShiftPreview(this); };
+    sel.onchange = function(){ showShiftPreview(this, '', ''); };
   });
 }
 
-function showShiftPreview(sel){
-  const previewId = sel.id.replace('-shift','-shift-preview');
-  const preview = document.getElementById(previewId);
+function showShiftPreview(sel, empPauseDebut, empPauseFin){
+  const prefix = sel.id.replace('-shift','');
+  const preview = document.getElementById(prefix+'-shift-preview');
+  const pauseRow = document.getElementById(prefix+'-pause-row');
   if(!preview) return;
-  if(!sel.value){ preview.style.display='none'; return; }
+  if(!sel.value){
+    preview.style.display='none';
+    if(pauseRow) pauseRow.style.display='none';
+    return;
+  }
   const s = shifts.find(function(x){ return String(x.id)===String(sel.value); });
-  if(!s){ preview.style.display='none'; return; }
+  if(!s){ preview.style.display='none'; if(pauseRow) pauseRow.style.display='none'; return; }
   const DAYS = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
   const days = (s.jours||[]).map(function(d){ return DAYS[d]||d; }).join(' · ');
   const color = s.color||'#047857';
@@ -2953,8 +2976,33 @@ function showShiftPreview(sel){
   preview.innerHTML = '<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:'+color+';margin-right:5px;"></span>'
     +'<b style="color:'+color+';">'+s.nom+'</b>'
     +(s.debut?' &nbsp;|&nbsp; <b>'+s.debut+'</b> → <b>'+s.fin+'</b>':'')
-    +(days?' &nbsp;|&nbsp; '+days:'')
-    +(s.pauseDebut?' &nbsp;|&nbsp; Pause: '+s.pauseDebut+'-'+s.pauseFin:'');
+    +(days?' &nbsp;|&nbsp; '+days:'');
+  // Pause personnalisée
+  const hasPause = s.pauseDuree > 0 || s.pauseDebut;
+  if(pauseRow){
+    pauseRow.style.display = hasPause ? 'block' : 'none';
+    if(hasPause){
+      const pdEl = document.getElementById(prefix+'-pause-debut');
+      const pfEl = document.getElementById(prefix+'-pause-fin');
+      const durLbl = document.getElementById(prefix+'-pause-duree-label');
+      // Pré-remplir avec valeur employé si fournie, sinon valeur du shift
+      if(pdEl) pdEl.value = empPauseDebut || s.pauseDebut || '';
+      if(pfEl) pfEl.value = empPauseFin   || s.pauseFin   || '';
+      // Calculer et afficher durée
+      function updatePauseDur(){
+        if(!pdEl||!pfEl||!durLbl) return;
+        const p1=pdEl.value.split(':').map(Number); const p2=pfEl.value.split(':').map(Number);
+        if(p1.length===2&&p2.length===2){
+          let dur=(p2[0]*60+p2[1])-(p1[0]*60+p1[1]);
+          if(dur<0) dur+=1440;
+          durLbl.textContent = dur>0 ? '⏱ '+dur+' min' : '';
+        }
+      }
+      updatePauseDur();
+      pdEl.oninput = updatePauseDur;
+      pfEl.oninput = updatePauseDur;
+    }
+  }
 }
 
 function populateEmpAgenceSelect(){
@@ -2982,14 +3030,16 @@ function addEmployee(){
   if(employees.find(e=>e.email===email)){showFeedback('emp-feedback','Cet email est déjà utilisé.','err');return;}
   const salaire = parseInt(document.getElementById('emp-salaire').value)||45000;
   const empShiftId = document.getElementById('emp-shift')?.value||'';
-  employees.push({id:nextEmpId++,prenom:p,nom:n,poste:(()=>{const ps=document.getElementById('emp-poste');const pc=document.getElementById('emp-poste-custom');const v=ps.value==='__autre__'?pc.value.trim():ps.value;if(v&&v!=='__autre__'){const cp=JSON.parse(localStorage.getItem('wecan_custom_postes')||'[]');if(!cp.includes(v)){cp.push(v);localStorage.setItem('wecan_custom_postes',JSON.stringify(cp));}}return v||'Employé';})(),shiftId:empShiftId,agenceId:(getAgenceIds('emp')[0]||''),
+  const empPauseDebut = document.getElementById('emp-pause-debut')?.value||'';
+  const empPauseFin   = document.getElementById('emp-pause-fin')?.value||'';
+  employees.push({id:nextEmpId++,prenom:p,nom:n,poste:(()=>{const ps=document.getElementById('emp-poste');const pc=document.getElementById('emp-poste-custom');const v=ps.value==='__autre__'?pc.value.trim():ps.value;if(v&&v!=='__autre__'){const cp=JSON.parse(localStorage.getItem('wecan_custom_postes')||'[]');if(!cp.includes(v)){cp.push(v);localStorage.setItem('wecan_custom_postes',JSON.stringify(cp));}}return v||'Employé';})(),shiftId:empShiftId,pauseDebutPerso:empPauseDebut,pauseFinPerso:empPauseFin,agenceId:(getAgenceIds('emp')[0]||''),
     agenceIds:getAgenceIds('emp'),tel:document.getElementById('emp-tel').value||'—',status:document.getElementById('emp-status').value,contrat:document.getElementById('emp-contrat').value||'CDI',salaire,email,password,note:document.getElementById('emp-note').value.trim(),externe:!!(document.getElementById('emp-is-externe')&&document.getElementById('emp-is-externe').checked),responsableIds:getResponsableIds('emp'),permissions:document.getElementById('emp-is-subadmin')&&document.getElementById('emp-is-subadmin').checked?Array.from(document.querySelectorAll('#emp-perms-grid input[type=checkbox]:checked')).map(cb=>cb.value):[]});
   saveData('employees',employees);
   showToast('Synchronisé Firebase');
   // Message bienvenu + reset form + aller liste
   const newEmp = employees[employees.length-1];
   const empNom = newEmp.prenom + ' ' + newEmp.nom;
-  ['emp-prenom','emp-nom','emp-tel','emp-salaire','emp-photo-data','emp-email','emp-password'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); document.getElementById('emp-poste').value=''; document.getElementById('emp-poste-custom').style.display='none'; document.querySelectorAll('#emp-agence input[type=checkbox]').forEach(cb=>cb.checked=false); const _shiftSel=document.getElementById('emp-shift');if(_shiftSel)_shiftSel.value=''; const _shiftPrev=document.getElementById('emp-shift-preview');if(_shiftPrev)_shiftPrev.style.display='none';
+  ['emp-prenom','emp-nom','emp-tel','emp-salaire','emp-photo-data','emp-email','emp-password'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';}); document.getElementById('emp-poste').value=''; document.getElementById('emp-poste-custom').style.display='none'; document.querySelectorAll('#emp-agence input[type=checkbox]').forEach(cb=>cb.checked=false); const _shiftSel=document.getElementById('emp-shift');if(_shiftSel)_shiftSel.value=''; const _shiftPrev=document.getElementById('emp-shift-preview');if(_shiftPrev)_shiftPrev.style.display='none'; const _pauseRow=document.getElementById('emp-pause-row');if(_pauseRow)_pauseRow.style.display='none'; const _pd=document.getElementById('emp-pause-debut');if(_pd)_pd.value=''; const _pf=document.getElementById('emp-pause-fin');if(_pf)_pf.value=''; const _pl=document.getElementById('emp-pause-duree-label');if(_pl)_pl.textContent='';
   _respSelected['emp']=[]; _renderResponsableTags('emp',null); _agSelected['emp']=[]; _renderAgenceTags('emp'); if(document.getElementById('emp-is-subadmin')){document.getElementById('emp-is-subadmin').checked=false; document.getElementById('emp-perms-grid').style.display='none'; document.querySelectorAll('#emp-perms-grid input[type=checkbox]').forEach(cb=>cb.checked=false);}
   const _prev=document.getElementById('emp-photo-preview');
   if(_prev){_prev.innerHTML='&#128100;';_prev.style.backgroundImage='';}
@@ -3657,7 +3707,7 @@ function editEmp(id){
   // Fill shift select
   populateShiftSelects();
   const editShiftSel = document.getElementById('edit-emp-shift');
-  if(editShiftSel && e.shiftId){ editShiftSel.value = String(e.shiftId); showShiftPreview(editShiftSel); }
+  if(editShiftSel && e.shiftId){ editShiftSel.value = String(e.shiftId); showShiftPreview(editShiftSel, e.pauseDebutPerso||'', e.pauseFinPerso||''); }
   const empResp = e.responsableIds || (e.responsableId ? [String(e.responsableId)] : []);
   initResponsable('edit-emp', empResp, e.id);
   // Pre-fill sub-admin permissions
@@ -3702,6 +3752,8 @@ function saveEditEmp(){
     pin: document.getElementById('edit-admin-pin')?.value || employees[idx].pin || '',
     contrat: document.getElementById('edit-emp-contrat').value || employees[idx].contrat || 'CDI',
     shiftId: document.getElementById('edit-emp-shift')?.value || employees[idx].shiftId || '',
+    pauseDebutPerso: document.getElementById('edit-emp-pause-debut')?.value || employees[idx].pauseDebutPerso || '',
+    pauseFinPerso:   document.getElementById('edit-emp-pause-fin')?.value   || employees[idx].pauseFinPerso   || '',
     note: document.getElementById('edit-emp-note')?.value.trim() ?? employees[idx].note ?? '',
     responsableIds: getResponsableIds('edit-emp'),
     permissions: document.getElementById('edit-emp-is-subadmin')&&document.getElementById('edit-emp-is-subadmin').checked ? Array.from(document.querySelectorAll('#edit-emp-perms-grid input[type=checkbox]:checked')).map(cb=>cb.value) : [],
@@ -7548,6 +7600,24 @@ function sortieCard(s){
               <option value="">-- Aucun shift assigné --</option>
             </select>
             <div id="edit-emp-shift-preview" style="margin-top:6px;display:none;padding:7px 10px;background:#fff;border:1px solid #e2e8f0;border-radius:8px;font-size:11px;color:#64748b;"></div>
+          </div>
+          <div id="edit-emp-pause-row" style="display:none;margin-top:10px;padding-top:10px;border-top:1px dashed #e2e8f0;">
+            <label style="font-size:12px;font-weight:600;color:#92400E;display:flex;align-items:center;gap:6px;margin-bottom:6px;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#92400E" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Heure de pause (personnalisée pour cet employé)
+            </label>
+            <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+              <div style="display:flex;align-items:center;gap:6px;">
+                <label style="font-size:11px;color:#64748b;white-space:nowrap;">Début pause</label>
+                <input type="time" id="edit-emp-pause-debut" style="padding:6px 8px;border:1px solid #FCD34D;border-radius:8px;font-size:13px;background:#FFFBEB;color:#92400E;font-weight:600;">
+              </div>
+              <div style="display:flex;align-items:center;gap:6px;">
+                <label style="font-size:11px;color:#64748b;white-space:nowrap;">Fin pause</label>
+                <input type="time" id="edit-emp-pause-fin" style="padding:6px 8px;border:1px solid #FCD34D;border-radius:8px;font-size:13px;background:#FFFBEB;color:#92400E;font-weight:600;">
+              </div>
+              <span id="edit-emp-pause-duree-label" style="font-size:11px;color:#B45309;font-weight:600;"></span>
+            </div>
+            <div style="font-size:10px;color:#94a3b8;margin-top:4px;">Pré-rempli depuis le shift — modifiez si l'employé prend sa pause à une heure différente</div>
           </div>
         </div>
         <!-- Section 3 : Agence(s) -->
