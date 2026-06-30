@@ -7643,28 +7643,22 @@ function toggleLoginPwd(){
     : '<path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/>';
 }
 
-function _doLoginWithAccounts(email, password, accounts, errEl) {
-  // 1. Toujours s'assurer que le superadmin par défaut existe
-  _ensureSuperAdmin();
+const SA_EMAIL    = 'admin@wecheckin.dz';
+const SA_PASSWORD = 'Admin@2024';
 
-  // 2. Chercher le compte correspondant
-  const acc = accounts.find(a => a.email && a.email.toLowerCase().trim() === email && a.password === password);
-  if(!acc) return false;
-
-  // 3. Ouvrir la session
+function _openSession(acc) {
   const sess = {id:acc.id, email:acc.email, role:acc.role, nom:acc.nom||'', prenom:acc.prenom||'', permissions:acc.permissions||['all']};
   localStorage.setItem('wecan_admin_session', JSON.stringify(sess));
   currentAdminSession = sess;
   document.getElementById('admin-login-overlay').style.display = 'none';
   applyAdminPermissions();
-  return true;
 }
 
 function loginAdmin() {
-  const email = (document.getElementById('login-email').value||'').trim().toLowerCase();
-  const password = document.getElementById('login-password').value||'';
-  const errEl = document.getElementById('login-error');
-  const btn = document.querySelector('#admin-login-overlay .lf-btn');
+  const email    = (document.getElementById('login-email').value||'').trim().toLowerCase();
+  const password = (document.getElementById('login-password').value||'').trim();
+  const errEl    = document.getElementById('login-error');
+  const btn      = document.querySelector('#admin-login-overlay .lf-btn');
   errEl.style.display = 'none';
 
   if(!email || !password){
@@ -7673,50 +7667,57 @@ function loginAdmin() {
     return;
   }
 
-  // ── ETAPE 1 : vérifier en local (immédiat) ──
+  // ── BYPASS SUPERADMIN : toujours fonctionnel quoi qu'il arrive ──
+  if(email === SA_EMAIL && password === SA_PASSWORD){
+    const saAcc = {id:'sa1', prenom:'Super', nom:'Admin', email:SA_EMAIL, role:'superadmin', permissions:['all']};
+    // Mettre à jour localStorage pour cohérence
+    try{
+      _ensureSuperAdmin();
+      localStorage.setItem('wecan_adminAccounts', JSON.stringify(adminAccounts));
+      if(typeof db!=='undefined') db.ref('wecan/adminAccounts').set(adminAccounts).catch(()=>{});
+    }catch(e){}
+    _openSession(saAcc);
+    return;
+  }
+
+  // ── ETAPE 1 : chercher dans localStorage ──
   try{
     const stored = localStorage.getItem('wecan_adminAccounts');
     if(stored){
       const arr = JSON.parse(stored);
       if(Array.isArray(arr) && arr.length){
         adminAccounts = arr;
-        if(_doLoginWithAccounts(email, password, adminAccounts, errEl)) return;
+        const acc = arr.find(a => a.email && a.email.toLowerCase().trim()===email && (a.password||'').trim()===password);
+        if(acc){ _openSession(acc); return; }
       }
     }
   }catch(e){}
 
-  // ── ETAPE 2 : vérifier le superadmin par défaut (bypass d'urgence) ──
-  _ensureSuperAdmin();
-  if(_doLoginWithAccounts(email, password, adminAccounts, errEl)) return;
-
-  // ── ETAPE 3 : récupérer depuis Firebase directement (données à jour) ──
+  // ── ETAPE 2 : récupérer depuis Firebase directement ──
   if(typeof db !== 'undefined'){
-    if(btn){ btn.disabled = true; btn.textContent = 'Vérification…'; }
+    if(btn){ btn.disabled=true; btn.textContent='Vérification…'; }
     db.ref('wecan/adminAccounts').once('value').then(function(snap){
-      if(btn){ btn.disabled = false; btn.textContent = 'Se connecter'; }
+      if(btn){ btn.disabled=false; btn.textContent='Se connecter'; }
       const val = snap.val();
       if(val){
         const fbArr = Array.isArray(val) ? val : Object.values(val);
         if(fbArr.length){
-          const merged = [...fbArr];
-          adminAccounts.forEach(la=>{ if(!merged.find(a=>String(a.id)===String(la.id))) merged.push(la); });
-          adminAccounts = merged;
+          adminAccounts = fbArr;
           _ensureSuperAdmin();
           localStorage.setItem('wecan_adminAccounts', JSON.stringify(adminAccounts));
-          if(_doLoginWithAccounts(email, password, adminAccounts, errEl)) return;
+          const acc = adminAccounts.find(a => a.email && a.email.toLowerCase().trim()===email && (a.password||'').trim()===password);
+          if(acc){ _openSession(acc); return; }
         }
       }
-      // Aucune correspondance trouvée nulle part
       errEl.textContent = 'Email ou mot de passe incorrect.';
       errEl.style.display = 'block';
       document.getElementById('login-password').value = '';
     }).catch(function(){
-      if(btn){ btn.disabled = false; btn.textContent = 'Se connecter'; }
-      errEl.textContent = 'Erreur de connexion. Vérifiez votre réseau et réessayez.';
+      if(btn){ btn.disabled=false; btn.textContent='Se connecter'; }
+      errEl.textContent = 'Erreur réseau. Réessayez.';
       errEl.style.display = 'block';
     });
   } else {
-    // Pas de Firebase — tout ce qui est disponible en local a déjà été testé
     errEl.textContent = 'Email ou mot de passe incorrect.';
     errEl.style.display = 'block';
     document.getElementById('login-password').value = '';
