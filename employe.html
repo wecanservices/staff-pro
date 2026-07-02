@@ -1427,17 +1427,7 @@ function handleGeoPosition(lat, lng, accuracy){
     const hasEntree = todayPts.some(p=>p.type==='Entree');
     const hasSortie = todayPts.some(p=>p.type==='Sortie');
     if(hasEntree && !hasSortie){
-      // Ecran verrouille / app en arriere-plan : on ne peut PAS afficher la
-      // bottom sheet → on envoie une notification native. Au tap, l'app s'ouvre
-      // et la carte (deja ouverte dans le DOM) devient visible.
-      if(IS_NATIVE && document.hidden){
-        pushNotif(
-          '🚶 Vous quittez la zone de travail',
-          'Ouvrez STAFF PRO pour indiquer votre motif de sortie',
-          {action:'geo_exit'},
-          {sticky:true, tag:'geo-exit'}
-        );
-      }
+      // La notification (ecran verrouille) est geree dans showGeoAlert.
       showGeoAlert('exit', null, lat, lng, ag);
     }
   }
@@ -1447,6 +1437,7 @@ function handleGeoPosition(lat, lng, accuracy){
     showBlockedAlert(Math.round(dist), rayon);
   } else if(inside){
     hideBlockedAlert();
+    window._blockedDone = false;   // re-arme la banniere pour la prochaine sortie
   }
 
   _geoWasInside = inside;
@@ -1481,16 +1472,16 @@ function startNativeGeoWatch(){
     LN.requestPermissions && LN.requestPermissions();
     LN.createChannel && LN.createChannel({
       id:'staffpro-geo', name:'Zone de travail',
-      description:'Alertes de sortie de zone', importance:5, visibility:1
+      description:'Alertes de sortie de zone', importance:3, visibility:1
     });
   }catch(e){}
 
   BG.addWatcher({
-    backgroundMessage: 'Surveillance de votre zone de travail active.',
-    backgroundTitle: 'STAFF PRO',
+    backgroundMessage: 'Pointage en cours',
+    backgroundTitle: 'Wecheckin',
     requestPermissions: true,
     stale: false,
-    distanceFilter: 15   // ne remonte une position que tous les ~15 m (economie batterie)
+    distanceFilter: 10   // ~10 m : rapide mais econome
   }, (location, error)=>{
     if(error){
       if(error.code === 'NOT_AUTHORIZED'){
@@ -1539,13 +1530,13 @@ function showGeoAlert(type, choices, lat, lng, ag){
   // Vibration (si supportée)
   try{ navigator.vibrate && navigator.vibrate([300,100,300]); }catch(e){}
 
-  // ── Notification lock screen ──
-  if(type==='exit'){
+  // ── Notification : uniquement si l'app n'est PAS au premier plan (discret) ──
+  if(type==='exit' && document.hidden){
     pushNotif(
-      '🚶 Vous quittez la zone de travail',
-      'Glissez pour indiquer votre motif de sortie',
+      '🚶 Vous quittez la zone',
+      'Ouvrez Wecheckin pour indiquer votre motif',
       {action:'geo_exit'},
-      {sticky:true, tag:'geo-exit', actions:[{action:'open', title:'Ouvrir STAFF PRO'}]}
+      {sticky:false, tag:'geo-exit', actions:[{action:'open', title:'Ouvrir Wecheckin'}]}
     );
   } else if(type==='entry'){
     pushNotif(
@@ -1800,8 +1791,9 @@ function initSwipe(track, wrap, onSuccess){
 // ──────────────────────────────────────────────────────────────
 let _blockedVisible = false;
 function showBlockedAlert(dist, rayon){
-  if(_blockedVisible) return;
+  if(_blockedVisible || window._blockedDone) return;
   _blockedVisible = true;
+  window._blockedDone = true;   // discret : une seule banniere par sortie
   const el = document.getElementById('geo-blocked-alert');
   document.getElementById('gbc-dist').textContent = dist+' m';
   // Barre: pleine quand très loin, vide quand proche
