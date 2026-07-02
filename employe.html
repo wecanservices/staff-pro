@@ -654,9 +654,9 @@ input:focus, select:focus, textarea:focus {
 }
 
 /* ── GEOFENCE ALERTS ── */
-#geo-alert{position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0);display:flex;align-items:flex-end;justify-content:center;padding-bottom:0;pointer-events:none;transition:background .3s ease;}
-#geo-alert.show{background:rgba(0,0,0,0.55);pointer-events:auto;}
-#geo-alert-card{width:100%;max-width:430px;background:#1e293b;border-radius:28px 28px 0 0;padding:24px 20px 40px;color:#fff;box-shadow:0 -8px 40px rgba(0,0,0,.4);transform:translateY(100%);transition:transform .38s cubic-bezier(.32,1,.32,1);}
+#geo-alert{position:fixed;inset:0;z-index:10000;background:rgba(0,0,0,0);display:flex;align-items:flex-end;justify-content:center;padding-bottom:0;pointer-events:none;transition:background .3s ease,backdrop-filter .3s ease;}
+#geo-alert.show{background:rgba(0,0,0,0.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);pointer-events:auto;}
+#geo-alert-card{width:100%;max-width:430px;background:#0b0b0f;border-radius:28px 28px 0 0;padding:24px 20px 40px;color:#fff;box-shadow:0 -12px 48px rgba(0,0,0,.55);border-top:1px solid #ffffff14;transform:translateY(100%);transition:transform .38s cubic-bezier(.32,1,.32,1);}
 #geo-alert.show #geo-alert-card{transform:translateY(0);}
 #geo-alert.closing #geo-alert-card{transform:translateY(100%);}
 .geo-alert-icon{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;margin:0 auto 12px;animation:geoPulse 1.5s infinite;}
@@ -670,8 +670,8 @@ input:focus, select:focus, textarea:focus {
 #geo-swipe-label{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:#ffffffaa;pointer-events:none;letter-spacing:.5px;}
 #geo-swipe-arrow{font-size:22px;color:#fff;}
 /* Choices panel */
-#geo-choices{display:none;flex-direction:column;gap:8px;margin-top:4px;opacity:0;transform:translateY(18px);transition:opacity .3s ease,transform .3s ease;}
-#geo-choices.show{display:flex;}
+#geo-choices{display:none;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;max-height:52vh;overflow-y:auto;opacity:0;transform:translateY(18px);transition:opacity .3s ease,transform .3s ease;}
+#geo-choices.show{display:grid;}
 #geo-choices.show.visible{opacity:1;transform:translateY(0);}
 .geo-choice-btn{padding:14px;border-radius:14px;border:none;font-size:14px;font-weight:600;cursor:pointer;text-align:center;transition:transform .1s;}
 .geo-choice-btn:active{transform:scale(.97);}
@@ -1463,6 +1463,11 @@ function showGeoAlert(type, choices, lat, lng, ag){
   const title = document.getElementById('geo-alert-title');
   const sub   = document.getElementById('geo-alert-sub');
   const choicesEl = document.getElementById('geo-choices');
+  const swipeLabel = document.getElementById('geo-swipe-label');
+
+  // Coordonnees GPS du fix courant (enregistrees avec la sortie)
+  window._geoExitLat = lat;
+  window._geoExitLng = lng;
 
   // Vibration (si supportée)
   try{ navigator.vibrate && navigator.vibrate([300,100,300]); }catch(e){}
@@ -1489,6 +1494,7 @@ function showGeoAlert(type, choices, lat, lng, ag){
     icon.style.background = '#16a34a33';
     title.textContent = 'Vous êtes arrivé !';
     sub.textContent = 'Glissez pour enregistrer votre entrée';
+    swipeLabel.textContent = 'Glissez pour enregistrer votre entrée';
     choicesEl.classList.remove('show');
     choicesEl.innerHTML = '';
     _geoChoiceCb = ()=>{
@@ -1498,26 +1504,35 @@ function showGeoAlert(type, choices, lat, lng, ag){
   } else if(type==='exit'){
     icon.textContent = '🚶';
     icon.style.background = '#C0392B33';
-    title.textContent = 'Vous quittez la zone';
-    sub.textContent = 'Glissez pour choisir votre statut';
+    title.textContent = 'Vous quittez la zone de travail';
+    sub.textContent = 'Confirmez votre sortie pour continuer';
+    swipeLabel.textContent = 'Glissez pour confirmer votre sortie de zone';
     choicesEl.classList.remove('show');
     choicesEl.innerHTML = '';
     _geoChoiceCb = ()=>{
       // Après swipe → afficher les choix
-      sub.textContent = 'Que se passe-t-il ?';
+      sub.textContent = 'Quel est le motif de votre sortie ?';
       document.getElementById('geo-swipe-wrap').style.display='none';
       document.getElementById('geo-dismiss').style.display='none';
+      // Liste fusionnee : anciens motifs + nouveaux (spec sortie de zone).
+      // mission:true => suivi GPS continu (startMissionTracking).
       const exitChoices = [
-        {label:'🚀 Mission',           motif:'Mission',                   color:'#7c3aed', bg:'#ede9fe', mission:true},
-        {label:'📦 Livraison',         motif:'Livraison',                 color:'#0369a1', bg:'#e0f2fe', mission:false},
-        {label:'🛒 Achat personnel',   motif:'Achat personnel',           color:'#854F0B', bg:'#FAEEDA', mission:false},
-        {label:"🏢 Achat entreprise",  motif:"Achat pour l'entreprise",   color:'#065f46', bg:'#d1fae5', mission:false},
-        {label:'☕ Pause',             motif:'Pause',                     color:'#92400E', bg:'#FEF9C3', mission:false},
-        {label:'🚻 Toilettes',         motif:'Toilettes',                 color:'#374151', bg:'#f3f4f6', mission:false},
-        {label:'🏥 Sante medecin',    motif:'Sante voir medecin',        color:'#1d4ed8', bg:'#dbeafe', mission:false},
+        {label:'🚀 Mission',                 motif:'Mission',                   color:'#7c3aed', bg:'#ede9fe', mission:true},
+        {label:'🧭 Mission extérieure',      motif:'Mission extérieure',        color:'#0e7490', bg:'#cffafe', mission:false},
+        {label:'🚗 Déplacement pro',         motif:'Déplacement professionnel', color:'#1e40af', bg:'#dbeafe', mission:true},
+        {label:'🤝 Rendez-vous client',      motif:'Rendez-vous client',        color:'#6d28d9', bg:'#f3e8ff', mission:false},
+        {label:'📦 Livraison',               motif:'Livraison',                 color:'#0369a1', bg:'#e0f2fe', mission:false},
+        {label:'🛒 Achat personnel',         motif:'Achat personnel',           color:'#854F0B', bg:'#FAEEDA', mission:false},
+        {label:"🏢 Achat entreprise",        motif:"Achat pour l'entreprise",   color:'#065f46', bg:'#d1fae5', mission:false},
+        {label:'☕ Pause',                   motif:'Pause',                     color:'#92400E', bg:'#FEF9C3', mission:false},
+        {label:'🚻 Toilettes',               motif:'Toilettes',                 color:'#374151', bg:'#f3f4f6', mission:false},
+        {label:'🏥 Sante medecin',           motif:'Sante voir medecin',        color:'#1d4ed8', bg:'#dbeafe', mission:false},
+        {label:'⏹️ Fin de service',          motif:'Fin de service',            color:'#b91c1c', bg:'#fee2e2', mission:false},
+        {label:'📡 Erreur GPS',              motif:'Erreur GPS',                color:'#475569', bg:'#f1f5f9', mission:false},
+        {label:'✏️ Autre',                   motif:'Autre',                     color:'#334155', bg:'#e2e8f0', mission:false},
       ];
       choicesEl.innerHTML = exitChoices.map(ch=>
-        `<button class="geo-choice-btn" style="background:${ch.bg};color:${ch.color};" onclick="onGeoExitChoice('${ch.motif}',${ch.mission})">${ch.label}</button>`
+        `<button class="geo-choice-btn" style="background:${ch.bg};color:${ch.color};" onclick="onGeoExitChoice('${ch.motif.replace(/'/g,"\\'")}',${ch.mission})">${ch.label}</button>`
       ).join('');
       choicesEl.classList.add('show');
       requestAnimationFrame(()=>requestAnimationFrame(()=>choicesEl.classList.add('visible')));
@@ -1566,6 +1581,8 @@ function onGeoExitChoice(motif, isMission){
     dateStr: dateStr,
     heureDepart: timeStr,
     heureRetour: null,
+    lat: (typeof window._geoExitLat === 'number' ? window._geoExitLat : null),
+    lng: (typeof window._geoExitLng === 'number' ? window._geoExitLng : null),
     isMission: isMission,
     missionPositions: [],
     timestamp: Date.now()
@@ -1693,6 +1710,7 @@ function initSwipe(track, wrap, onSuccess){
       t.classList.add('success');
       document.getElementById('geo-swipe-arrow').textContent='✓';
       t.style.background='#16a34a';
+      try{ navigator.vibrate && navigator.vibrate(60); }catch(e){} // legere vibration a la validation
       setTimeout(()=>onSuccess(), 300);
     } else {
       t.style.left='4px';
