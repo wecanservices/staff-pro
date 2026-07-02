@@ -1387,55 +1387,78 @@ function getMyAgency(){
   return agencies.find(a=>String(a.id)===agId) || agencies[0];
 }
 
+// Detection : tourne-t-on dans l'APK natif (Capacitor) ou dans un navigateur ?
+const IS_NATIVE = !!(window.Capacitor && typeof window.Capacitor.isNativePlatform === 'function' && window.Capacitor.isNativePlatform());
+
+// ──────────────────────────────────────────────────────────────
+// Traite UNE position GPS. Source = watchPosition (web) OU service
+// natif d'arriere-plan (APK, fonctionne meme ecran verrouille).
+// ──────────────────────────────────────────────────────────────
+function handleGeoPosition(lat, lng, accuracy){
+  const ag = getMyAgency();
+  if(!ag) return;
+  const agLat = parseFloat(ag.lat||0);
+  const agLng = parseFloat(ag.lng||0);
+  const rayon = parseInt(ag.rayon||ag.radius||300);
+  if(!agLat||!agLng) return;
+
+  const dist = geoDist(lat,lng,agLat,agLng);
+  const inside = dist <= rayon * 1.1; // 1.1x tolerance GPS mobile
+
+  // ── Passage DEHORS → DEDANS : alerte Entree ──
+  if(inside && _geoWasInside===false && !_geoAlertOpen){
+    if(window._activeSortieId && !window._activeSortieMission){
+      const now = new Date();
+      const timeStr = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
+      recordRetour(window._activeSortieId, timeStr);
+      showToast('Retour en zone enregistre');
+    }
+    const todayPts = ld('pointages',[]).filter(p=>p.empId===ME.id&&p.date===tday());
+    const hasEntree = todayPts.some(p=>p.type==='Entree');
+    if(!hasEntree){
+      hideBlockedAlert();
+      showGeoAlert('entry', null, lat, lng, ag);
+    }
+  }
+
+  // ── Passage DEDANS → DEHORS : alerte Sortie ──
+  if(!inside && (_geoWasInside===true||(_geoWasInside===null&&ld('pointages',[]).some(p=>p.empId===ME?.id&&p.date===tday()&&p.type==='Entree'))) && !_geoAlertOpen){
+    const todayPts = ld('pointages',[]).filter(p=>p.empId===ME.id&&p.date===tday());
+    const hasEntree = todayPts.some(p=>p.type==='Entree');
+    const hasSortie = todayPts.some(p=>p.type==='Sortie');
+    if(hasEntree && !hasSortie){
+      // Ecran verrouille / app en arriere-plan : on ne peut PAS afficher la
+      // bottom sheet → on envoie une notification native. Au tap, l'app s'ouvre
+      // et la carte (deja ouverte dans le DOM) devient visible.
+      if(IS_NATIVE && document.hidden){
+        pushNotif(
+          '🚶 Vous quittez la zone de travail',
+          'Ouvrez STAFF PRO pour indiquer votre motif de sortie',
+          {action:'geo_exit'},
+          {sticky:true, tag:'geo-exit'}
+        );
+      }
+      showGeoAlert('exit', null, lat, lng, ag);
+    }
+  }
+
+  // ── Alerte perimetre depasse (si hors zone, app visible) ──
+  if(!inside && !_geoAlertOpen){
+    showBlockedAlert(Math.round(dist), rayon);
+  } else if(inside){
+    hideBlockedAlert();
+  }
+
+  _geoWasInside = inside;
+}
+
 function startGeoWatch(){
+  // APK natif → service GPS d'arriere-plan (ecran verrouille OK)
+  if(IS_NATIVE){ startNativeGeoWatch(); return; }
+  // Navigateur → watchPosition standard (app ouverte uniquement)
   if(!navigator.geolocation||_geoWatchId!==null) return;
   _geoWatchId = navigator.geolocation.watchPosition(pos=>{
-    const {latitude:lat, longitude:lng, accuracy} = pos.coords;
-    const ag = getMyAgency();
-    if(!ag) return;
-    const agLat = parseFloat(ag.lat||0);
-    const agLng = parseFloat(ag.lng||0);
-    const rayon = parseInt(ag.rayon||ag.radius||300);
-    if(!agLat||!agLng) return;
-
-    const dist = geoDist(lat,lng,agLat,agLng);
-    const inside = dist <= rayon * 1.1; // 1.1× tolérance GPS mobile stricte
-
-    // ── Passage DEHORS → DEDANS : alerte Entrée ──
-    if(inside && _geoWasInside===false && !_geoAlertOpen){
-      if(window._activeSortieId && !window._activeSortieMission){
-        const now = new Date();
-        const timeStr = String(now.getHours()).padStart(2,'0')+':'+String(now.getMinutes()).padStart(2,'0');
-        recordRetour(window._activeSortieId, timeStr);
-        showToast('Retour en zone enregistre');
-      }
-      const todayPts = ld('pointages',[]).filter(p=>p.empId===ME.id&&p.date===tday());
-      const hasEntree = todayPts.some(p=>p.type==='Entree');
-      if(!hasEntree){
-        hideBlockedAlert();
-        showGeoAlert('entry', null, lat, lng, ag);
-      }
-    }
-
-    // ── Passage DEDANS → DEHORS : alerte Sortie ──
-    if(!inside && (_geoWasInside===true||(_geoWasInside===null&&ld('pointages',[]).some(p=>p.empId===ME?.id&&p.date===tday()&&p.type==='Entree'))) && !_geoAlertOpen){
-      const todayPts = ld('pointages',[]).filter(p=>p.empId===ME.id&&p.date===tday());
-      const hasEntree = todayPts.some(p=>p.type==='Entree');
-      const hasSortie = todayPts.some(p=>p.type==='Sortie');
-      const inPause   = todayPts.filter(p=>p.type==='Debut pause').length > todayPts.filter(p=>p.type==='Fin pause').length;
-      if(hasEntree && !hasSortie){
-        showGeoAlert('exit', null, lat, lng, ag);
-      }
-    }
-
-    // ── Mise à jour alerte périmètre dépassé (si hors zone) ──
-    if(!inside && !_geoAlertOpen){
-      showBlockedAlert(Math.round(dist), rayon);
-    } else if(inside){
-      hideBlockedAlert();
-    }
-
-    _geoWasInside = inside;
+    handleGeoPosition(pos.coords.latitude, pos.coords.longitude, pos.coords.accuracy);
   }, err=>{
     console.warn('GeoWatch error', err.code);
   }, {
@@ -1445,7 +1468,51 @@ function startGeoWatch(){
   });
 }
 
+// ── GPS arriere-plan natif (APK Android) — @capacitor-community/background-geolocation ──
+function startNativeGeoWatch(){
+  if(window._bgWatcherId) return;
+  let BG;
+  try{ BG = window.Capacitor.registerPlugin('BackgroundGeolocation'); }
+  catch(e){ console.warn('BackgroundGeolocation indisponible', e); return; }
+
+  // Prepare le canal + la permission des notifications natives
+  try{
+    const LN = window.Capacitor.registerPlugin('LocalNotifications');
+    LN.requestPermissions && LN.requestPermissions();
+    LN.createChannel && LN.createChannel({
+      id:'staffpro-geo', name:'Zone de travail',
+      description:'Alertes de sortie de zone', importance:5, visibility:1
+    });
+  }catch(e){}
+
+  BG.addWatcher({
+    backgroundMessage: 'Surveillance de votre zone de travail active.',
+    backgroundTitle: 'STAFF PRO',
+    requestPermissions: true,
+    stale: false,
+    distanceFilter: 15   // ne remonte une position que tous les ~15 m (economie batterie)
+  }, (location, error)=>{
+    if(error){
+      if(error.code === 'NOT_AUTHORIZED'){
+        console.warn('Localisation "Toujours" non autorisee par l\'utilisateur');
+      }
+      return;
+    }
+    if(location){
+      handleGeoPosition(location.latitude, location.longitude, location.accuracy);
+    }
+  }).then(id=>{ window._bgWatcherId = id; })
+    .catch(e=>console.warn('addWatcher failed', e));
+}
+
 function stopGeoWatch(){
+  if(IS_NATIVE){
+    if(window._bgWatcherId){
+      try{ window.Capacitor.registerPlugin('BackgroundGeolocation').removeWatcher({id: window._bgWatcherId}); }catch(e){}
+      window._bgWatcherId = null;
+    }
+    return;
+  }
   if(_geoWatchId!==null){
     navigator.geolocation.clearWatch(_geoWatchId);
     _geoWatchId = null;
@@ -3092,6 +3159,20 @@ async function initSW(){
 
 // Envoyer notification vers l'écran verrouillé via Service Worker
 function pushNotif(title, body, data={}, options={}){
+  // App native (APK) : LocalNotifications = fiable meme ecran verrouille
+  if(typeof IS_NATIVE !== 'undefined' && IS_NATIVE){
+    try{
+      const LN = window.Capacitor.registerPlugin('LocalNotifications');
+      LN.schedule({ notifications: [{
+        id: Math.floor(Date.now() % 2000000000),
+        title, body,
+        channelId: 'staffpro-geo',
+        smallIcon: 'ic_stat_icon',
+        ongoing: options.sticky === true
+      }]});
+    }catch(e){ console.warn('LocalNotifications error', e); }
+    return;
+  }
   // Via Service Worker (lock screen, app en arrière-plan)
   const sw = window._swReg && (window._swReg.active || window._swReg.waiting || window._swReg.installing);
   if(sw && Notification.permission === 'granted'){
