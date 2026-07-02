@@ -1374,6 +1374,17 @@ let _geoAlertOpen = false;
 let _geoAlertType = null;    // 'entry' | 'exit'
 let _geoChoiceCb  = null;    // callback après swipe
 let _blockedTimer = null;
+let _geoExitPrompted = false; // carte sortie deja proposee pour cette excursion
+
+// Restaurer une sortie en cours (heureRetour null) apres redemarrage de l app,
+// sinon le retour en zone n est jamais enregistre et la carte re-pop pendant la sortie.
+(function restoreActiveSortie(){
+  try{
+    const s=(JSON.parse(localStorage.getItem('wecan_sorties')||'[]'))
+      .find(x=>ME&&String(x.empId)===String(ME.id)&&x.dateStr===tday()&&!x.heureRetour);
+    if(s){ window._activeSortieId=s.id; window._activeSortieMission=!!s.isMission; }
+  }catch(e){}
+})();
 
 function geoDist(lat,lng,agLat,agLng){
   return Math.sqrt(
@@ -1406,12 +1417,16 @@ function handleGeoPosition(lat, lng, accuracy){
   const inside = dist <= rayon * 1.1; // 1.1x tolerance GPS mobile
 
   // ── Mode test GPS (cache) : affiche la distance en direct ──
+  const _tp = ld('pointages',[]).filter(p=>String(p.empId)===String(ME&&ME.id)&&p.date===tday());
+  const hasEntree = _tp.some(p=>p.type==='Entree');
+  const hasSortie = _tp.some(p=>p.type==='Sortie');
   try{
-    const _tp = ld('pointages',[]).filter(p=>p.empId===ME?.id&&p.date===tday());
-    _dbgUpdate({lat, lng, accuracy, dist, rayon, inside,
-      hasEntree:_tp.some(p=>p.type==='Entree'),
-      hasSortie:_tp.some(p=>p.type==='Sortie')});
+    _dbgUpdate({lat, lng, accuracy, dist, rayon, inside, hasEntree, hasSortie});
   }catch(e){}
+
+  // Fix GPS trop imprecis (>300 m) : affiche en debug mais n alimente pas
+  // la machine a etats — evite les fausses transitions dues au jitter.
+  if(accuracy && accuracy > 300) return;
 
   // ── Passage DEHORS → DEDANS : alerte Entree ──
   if(inside && _geoWasInside===false && !_geoAlertOpen){
@@ -1421,24 +1436,25 @@ function handleGeoPosition(lat, lng, accuracy){
       recordRetour(window._activeSortieId, timeStr);
       showToast('Retour en zone enregistre');
     }
-    const todayPts = ld('pointages',[]).filter(p=>p.empId===ME.id&&p.date===tday());
-    const hasEntree = todayPts.some(p=>p.type==='Entree');
     if(!hasEntree){
       hideBlockedAlert();
       showGeoAlert('entry', null, lat, lng, ag);
     }
   }
 
-  // ── Passage DEDANS → DEHORS : alerte Sortie ──
-  if(!inside && (_geoWasInside===true||(_geoWasInside===null&&ld('pointages',[]).some(p=>p.empId===ME?.id&&p.date===tday()&&p.type==='Entree'))) && !_geoAlertOpen){
-    const todayPts = ld('pointages',[]).filter(p=>p.empId===ME.id&&p.date===tday());
-    const hasEntree = todayPts.some(p=>p.type==='Entree');
-    const hasSortie = todayPts.some(p=>p.type==='Sortie');
-    if(hasEntree && !hasSortie){
+  // ── Sortie de zone : alerte Sortie ──
+  // Declenche si : transition dedans→dehors (meme sans pointage Entree),
+  // OU dehors avec une Entree pointee aujourd hui (couvre le redemarrage de
+  // l app et les transitions manquees). Jamais si une Sortie est deja pointee
+  // ou si une sortie de zone est deja en cours.
+  if(!inside && !_geoAlertOpen && !_geoExitPrompted && !window._activeSortieId){
+    if(!hasSortie && (_geoWasInside===true || hasEntree)){
+      _geoExitPrompted = true;
       // La notification (ecran verrouille) est geree dans showGeoAlert.
       showGeoAlert('exit', null, lat, lng, ag);
     }
   }
+  if(inside) _geoExitPrompted = false; // re-arme pour la prochaine excursion
 
   // ── Alerte perimetre depasse (si hors zone, app visible) ──
   if(!inside && !_geoAlertOpen){
@@ -1460,7 +1476,7 @@ function _dbgEnsurePanel(){
   if(p) return p;
   p=document.createElement('div');
   p.id='gps-debug';
-  p.style.cssText='position:fixed;left:8px;right:8px;bottom:8px;z-index:99999;background:rgba(2,6,23,.95);color:#e2e8f0;font:12px/1.6 ui-monospace,Menlo,monospace;padding:12px 14px;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.55);border:1px solid #1e293b;';
+  p.style.cssText='position:fixed;left:8px;right:8px;bottom:8px;z-index:9999;background:rgba(2,6,23,.95);color:#e2e8f0;font:12px/1.6 ui-monospace,Menlo,monospace;padding:12px 14px;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.55);border:1px solid #1e293b;';
   p.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b style="color:#38bdf8">🛰️ MODE TEST GPS</b><span onclick="_dbgHide()" style="cursor:pointer;color:#f87171;font-weight:700">✕</span></div><div id="gps-debug-body">En attente du GPS…</div>';
   document.body.appendChild(p);
   return p;
@@ -1481,19 +1497,24 @@ function _dbgUpdate(o){
     'Distance agence : <b style="color:'+col+'">'+Math.round(o.dist)+' m</b> (rayon '+o.rayon+' m)<br>'+
     'Seuil de sortie : '+Math.round(o.rayon*1.1)+' m<br>'+
     'Etat : <b style="color:'+col+'">'+(o.inside?'✅ DANS la zone':'❌ HORS zone')+'</b><br>'+
-    'Entree pointee auj. : '+(o.hasEntree?'✅ oui':'❌ NON (bloque l alerte)')+'<br>'+
-    'Sortie deja pointee : '+(o.hasSortie?'oui':'non')+'<br>'+
+    'Entree pointee auj. : '+(o.hasEntree?'✅ oui':'non (transition dedans→dehors requise)')+'<br>'+
+    'Sortie deja pointee : '+(o.hasSortie?'⛔ oui (bloque l alerte)':'non')+'<br>'+
+    'Sortie en cours : '+(window._activeSortieId?'oui (bloque l alerte)':'non')+'<br>'+
+    'Carte deja proposee : '+(_geoExitPrompted?'oui':'non')+'<br>'+
     'Carte sortie ouverte : '+(typeof _geoAlertOpen!=='undefined'&&_geoAlertOpen?'oui':'non')+'<br>'+
     'Derniere maj : '+hh;
 }
 function _dbgInit(){
   try{ if(new URLSearchParams(location.search).get('debug')==='1') _dbgShow(); }catch(e){}
-  const t=document.querySelector('.topbar h1')||document.querySelector('.topbar');
+  // Zone de tap = TOUTE la topbar (logo + titre) — le h1 seul etait trop petit
+  // sur mobile. Fenetre entre taps elargie a 2 s.
+  const t=document.querySelector('.topbar');
   if(t && !t._dbgBound){
     t._dbgBound=true;
-    t.addEventListener('click',()=>{
+    t.addEventListener('click',(e)=>{
+      if(e.target && e.target.closest && e.target.closest('.topbar-right')) return; // avatar → profil
       const now=Date.now();
-      if(now-_dbgTapT>1200) _dbgTaps=0;
+      if(now-_dbgTapT>2000) _dbgTaps=0;
       _dbgTapT=now; _dbgTaps++;
       if(_dbgTaps>=5){ _dbgTaps=0; _dbgOn?_dbgHide():_dbgShow(); }
     });
@@ -1544,6 +1565,7 @@ function startNativeGeoWatch(){
       if(error.code === 'NOT_AUTHORIZED'){
         console.warn('Localisation "Toujours" non autorisee par l\'utilisateur');
       }
+      try{ _dbgUpdate({err:'GPS natif : '+(error.code||error.message||error)}); }catch(e){}
       return;
     }
     if(location){
@@ -1588,21 +1610,25 @@ function showGeoAlert(type, choices, lat, lng, ag){
   try{ navigator.vibrate && navigator.vibrate([300,100,300]); }catch(e){}
 
   // ── Notification : uniquement si l'app n'est PAS au premier plan (discret) ──
-  if(type==='exit' && document.hidden){
-    pushNotif(
-      '🚶 Vous quittez la zone',
-      'Ouvrez Wecheckin pour indiquer votre motif',
-      {action:'geo_exit'},
-      {sticky:false, tag:'geo-exit', actions:[{action:'open', title:'Ouvrir Wecheckin'}]}
-    );
-  } else if(type==='entry'){
-    pushNotif(
-      '🏢 Vous êtes arrivé !',
-      'Glissez pour enregistrer votre entrée',
-      {action:'geo_entry'},
-      {sticky:false, tag:'geo-entry'}
-    );
-  }
+  // try/catch : une erreur de notification ne doit JAMAIS empecher la carte
+  // de s afficher (sinon _geoAlertOpen reste bloque a true).
+  try{
+    if(type==='exit' && document.hidden){
+      pushNotif(
+        '🚶 Vous quittez la zone',
+        'Ouvrez Wecheckin pour indiquer votre motif',
+        {action:'geo_exit'},
+        {sticky:false, tag:'geo-exit', actions:[{action:'open', title:'Ouvrir Wecheckin'}]}
+      );
+    } else if(type==='entry'){
+      pushNotif(
+        '🏢 Vous êtes arrivé !',
+        'Glissez pour enregistrer votre entrée',
+        {action:'geo_entry'},
+        {sticky:false, tag:'geo-entry'}
+      );
+    }
+  }catch(e){ console.warn('pushNotif error', e); }
 
   if(type==='entry'){
     icon.textContent = '🏢';
@@ -3245,18 +3271,20 @@ function pushNotif(title, body, data={}, options={}){
 }
 
 function initApp(){
-  rHome();
-  renderConvs();
+  // Chaque etape est isolee : une erreur ne doit pas empecher les suivantes
+  // (bug historique : rHome() n existait pas → startGeoWatch/_dbgInit jamais lances)
+  try{ renderHome(); }catch(e){ console.warn('initApp renderHome:', e); }
+  try{ renderConvs(); }catch(e){ console.warn('initApp renderConvs:', e); }
   // Initialiser langue
   try{ initLangBtn(); }catch(e){}
   // Démarrer listener messages admin → employé (après login, ME est défini)
-  startInboxListener();
+  try{ startInboxListener(); }catch(e){ console.warn('initApp inbox:', e); }
   // Démarrer surveillance périmètre GPS
   setTimeout(()=>{ try{ startGeoWatch(); }catch(e){} }, 1500);
-  // Mode test GPS caché (?debug=1 ou 5 taps sur le titre)
+  // Mode test GPS caché (?debug=1 ou 5 taps sur la topbar)
   try{ _dbgInit(); }catch(e){}
   // Initialiser Service Worker + permissions notifications
-  initSW();
+  try{ initSW(); }catch(e){ console.warn('initApp initSW:', e); }
 }
 
 function startInboxListener(){
