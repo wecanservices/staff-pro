@@ -1396,14 +1396,22 @@ const IS_NATIVE = !!(window.Capacitor && typeof window.Capacitor.isNativePlatfor
 // ──────────────────────────────────────────────────────────────
 function handleGeoPosition(lat, lng, accuracy){
   const ag = getMyAgency();
-  if(!ag) return;
+  if(!ag){ _dbgUpdate({err:'Aucune agence trouvee pour cet employe'}); return; }
   const agLat = parseFloat(ag.lat||0);
   const agLng = parseFloat(ag.lng||0);
   const rayon = parseInt(ag.rayon||ag.radius||300);
-  if(!agLat||!agLng) return;
+  if(!agLat||!agLng){ _dbgUpdate({err:'Coordonnees GPS de l agence non definies'}); return; }
 
   const dist = geoDist(lat,lng,agLat,agLng);
   const inside = dist <= rayon * 1.1; // 1.1x tolerance GPS mobile
+
+  // ── Mode test GPS (cache) : affiche la distance en direct ──
+  try{
+    const _tp = ld('pointages',[]).filter(p=>p.empId===ME?.id&&p.date===tday());
+    _dbgUpdate({lat, lng, accuracy, dist, rayon, inside,
+      hasEntree:_tp.some(p=>p.type==='Entree'),
+      hasSortie:_tp.some(p=>p.type==='Sortie')});
+  }catch(e){}
 
   // ── Passage DEHORS → DEDANS : alerte Entree ──
   if(inside && _geoWasInside===false && !_geoAlertOpen){
@@ -1441,6 +1449,55 @@ function handleGeoPosition(lat, lng, accuracy){
   }
 
   _geoWasInside = inside;
+}
+
+// ──────────────────────────────────────────────────────────────
+// MODE TEST GPS (cache) — active par ?debug=1 ou 5 taps sur le titre
+// ──────────────────────────────────────────────────────────────
+let _dbgOn=false, _dbgTaps=0, _dbgTapT=0;
+function _dbgEnsurePanel(){
+  let p=document.getElementById('gps-debug');
+  if(p) return p;
+  p=document.createElement('div');
+  p.id='gps-debug';
+  p.style.cssText='position:fixed;left:8px;right:8px;bottom:8px;z-index:99999;background:rgba(2,6,23,.95);color:#e2e8f0;font:12px/1.6 ui-monospace,Menlo,monospace;padding:12px 14px;border-radius:14px;box-shadow:0 8px 30px rgba(0,0,0,.55);border:1px solid #1e293b;';
+  p.innerHTML='<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><b style="color:#38bdf8">🛰️ MODE TEST GPS</b><span onclick="_dbgHide()" style="cursor:pointer;color:#f87171;font-weight:700">✕</span></div><div id="gps-debug-body">En attente du GPS…</div>';
+  document.body.appendChild(p);
+  return p;
+}
+function _dbgShow(){ _dbgOn=true; _dbgEnsurePanel().style.display='block'; showToast&&showToast('Mode test GPS activé'); }
+function _dbgHide(){ _dbgOn=false; const p=document.getElementById('gps-debug'); if(p) p.style.display='none'; }
+function _dbgUpdate(o){
+  if(!_dbgOn) return;
+  const b=document.getElementById('gps-debug-body'); if(!b) return;
+  if(o&&o.err){ b.innerHTML='<span style="color:#f87171">⚠️ '+o.err+'</span>'; return; }
+  const n=new Date();
+  const hh=String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0')+':'+String(n.getSeconds()).padStart(2,'0');
+  const col=o.inside?'#4ade80':'#f87171';
+  b.innerHTML=
+    'Source : '+(IS_NATIVE?'APK natif (arriere-plan)':'Navigateur')+'<br>'+
+    'Position : '+o.lat.toFixed(5)+', '+o.lng.toFixed(5)+'<br>'+
+    'Precision GPS : ±'+Math.round(o.accuracy||0)+' m<br>'+
+    'Distance agence : <b style="color:'+col+'">'+Math.round(o.dist)+' m</b> (rayon '+o.rayon+' m)<br>'+
+    'Seuil de sortie : '+Math.round(o.rayon*1.1)+' m<br>'+
+    'Etat : <b style="color:'+col+'">'+(o.inside?'✅ DANS la zone':'❌ HORS zone')+'</b><br>'+
+    'Entree pointee auj. : '+(o.hasEntree?'✅ oui':'❌ NON (bloque l alerte)')+'<br>'+
+    'Sortie deja pointee : '+(o.hasSortie?'oui':'non')+'<br>'+
+    'Carte sortie ouverte : '+(typeof _geoAlertOpen!=='undefined'&&_geoAlertOpen?'oui':'non')+'<br>'+
+    'Derniere maj : '+hh;
+}
+function _dbgInit(){
+  try{ if(new URLSearchParams(location.search).get('debug')==='1') _dbgShow(); }catch(e){}
+  const t=document.querySelector('.topbar h1')||document.querySelector('.topbar');
+  if(t && !t._dbgBound){
+    t._dbgBound=true;
+    t.addEventListener('click',()=>{
+      const now=Date.now();
+      if(now-_dbgTapT>1200) _dbgTaps=0;
+      _dbgTapT=now; _dbgTaps++;
+      if(_dbgTaps>=5){ _dbgTaps=0; _dbgOn?_dbgHide():_dbgShow(); }
+    });
+  }
 }
 
 function startGeoWatch(){
@@ -3196,6 +3253,8 @@ function initApp(){
   startInboxListener();
   // Démarrer surveillance périmètre GPS
   setTimeout(()=>{ try{ startGeoWatch(); }catch(e){} }, 1500);
+  // Mode test GPS caché (?debug=1 ou 5 taps sur le titre)
+  try{ _dbgInit(); }catch(e){}
   // Initialiser Service Worker + permissions notifications
   initSW();
 }
