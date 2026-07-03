@@ -284,6 +284,31 @@ body::before{
 .quick-grid .quick-card:nth-child(4) .ico{background:linear-gradient(140deg,#8B5CF6,#4C1D95)!important;box-shadow:0 8px 18px -5px rgba(76,29,149,.55)}
 .quick-card .lbl{font-size:14px;font-weight:800;color:var(--ink);line-height:1.25;letter-spacing:-.3px}
 .quick-card .lbl-sub{font-size:10.5px;color:var(--sub);margin-top:3px;font-weight:600}
+/* ═══ ACTIONS RAPIDES (Conge / Doc / Sortie / WhatsApp) ═══ */
+.quick-actions{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px}
+.qa-btn{background:var(--surface);border:none;border-radius:18px;padding:14px 6px 12px;cursor:pointer;box-shadow:0 3px 10px -3px rgba(0,0,0,.10);display:flex;flex-direction:column;align-items:center;gap:8px;transition:transform .15s,box-shadow .15s;position:relative;overflow:hidden}
+.qa-btn::before{content:'';position:absolute;inset:0;opacity:0;transition:.2s;background:linear-gradient(180deg,rgba(255,255,255,.4),transparent)}
+.qa-btn:hover{transform:translateY(-3px);box-shadow:0 8px 22px -6px rgba(0,0,0,.18)}
+.qa-btn:hover::before{opacity:1}
+.qa-btn:active{transform:scale(.94)}
+.qa-ico{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;color:#fff;position:relative;z-index:1}
+.qa-ico svg{width:22px;height:22px;stroke-width:2.2}
+.qa-lbl{font-size:12px;font-weight:800;color:var(--ink);letter-spacing:-.2px;position:relative;z-index:1}
+.qa-conge .qa-ico{background:linear-gradient(140deg,#3BA55C,#166534);box-shadow:0 6px 16px -5px rgba(22,101,52,.55)}
+.qa-doc   .qa-ico{background:linear-gradient(140deg,#3B96F2,#125BA8);box-shadow:0 6px 16px -5px rgba(18,91,168,.55)}
+.qa-sortie .qa-ico{background:linear-gradient(140deg,#F2564A,#9E2318);box-shadow:0 6px 16px -5px rgba(158,35,24,.55)}
+.qa-wa    .qa-ico{background:linear-gradient(140deg,#25D366,#128C7E);box-shadow:0 6px 16px -5px rgba(18,140,126,.55)}
+/* FAB WhatsApp global — visible sur toutes les pages */
+#wa-fab{position:fixed;bottom:92px;left:14px;width:54px;height:54px;border-radius:50%;background:linear-gradient(140deg,#25D366,#128C7E);color:#fff;border:none;box-shadow:0 8px 22px -4px rgba(18,140,126,.55),0 3px 8px rgba(0,0,0,.15);z-index:140;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .18s,box-shadow .18s;padding:0;animation:wa-pulse 2.4s ease-in-out infinite}
+#wa-fab:hover{transform:scale(1.08);box-shadow:0 12px 28px -4px rgba(18,140,126,.6),0 3px 8px rgba(0,0,0,.2)}
+#wa-fab:active{transform:scale(.92)}
+#wa-fab svg{width:26px;height:26px}
+@keyframes wa-pulse{0%,100%{box-shadow:0 8px 22px -4px rgba(18,140,126,.55),0 3px 8px rgba(0,0,0,.15),0 0 0 0 rgba(37,211,102,.35)}50%{box-shadow:0 8px 22px -4px rgba(18,140,126,.55),0 3px 8px rgba(0,0,0,.15),0 0 0 10px rgba(37,211,102,0)}}
+/* Cacher le FAB quand chat plein écran ouvert ou scanner actif */
+body.hide-wa-fab #wa-fab{display:none}
+body.dark .qa-btn{background:#0F172A}
+body.dark .qa-lbl{color:#E7EBF4}
+@media (max-width:340px){ .quick-actions{grid-template-columns:repeat(2,1fr)} }
 
 /* ── BANNIÈRES ───────────────────────────────────────────────── */
 .mgr-banner{
@@ -468,6 +493,163 @@ body.dark .ep-modal-close{background:rgba(255,255,255,.08);color:#E7EBF4}
 .ep-soon-ico{font-size:60px;margin-bottom:12px}
 .ep-soon-msg{font-size:14px;font-weight:600;color:var(--ink)}
 .ep-soon-sub{font-size:12px;margin-top:6px}
+/* ═══════════ WECAN CONNECT (Community Hub) ═══════════ */
+.wc-connect{margin-top:20px}
+.wcc-cover{position:relative;border-radius:26px 26px 0 0;background:linear-gradient(135deg,#8B1A1A 0%,#C0392B 55%,#E0443A 100%);padding:26px 20px 22px;overflow:hidden;color:#fff}
+.wcc-cover-deco{position:absolute;border-radius:50%;background:rgba(255,255,255,.09)}
+.wcc-cover-deco.d1{width:150px;height:150px;top:-50px;right:-30px}
+.wcc-cover-deco.d2{width:90px;height:90px;bottom:-35px;left:18%}
+.wcc-cover-body{position:relative;z-index:1}
+.wcc-cover-badge{display:inline-block;font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:1.6px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.25);padding:4px 12px;border-radius:20px;margin-bottom:10px}
+.wcc-title{font-size:24px;font-weight:800;letter-spacing:-.6px}
+.wcc-sub{font-size:12.5px;opacity:.85;margin-top:6px;line-height:1.55;max-width:320px;font-weight:500}
+.wcc-stories-wrap{background:var(--surface);padding:14px 4px 10px 14px;border-bottom:1px solid var(--line)}
+.wcc-stories{display:flex;gap:12px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.wcc-stories::-webkit-scrollbar{display:none}
+.wcc-story{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer;flex-shrink:0;width:64px}
+.wcc-story-ring{width:58px;height:58px;border-radius:50%;padding:3px;background:linear-gradient(45deg,#C0392B,#F2994A,#E0443A);display:flex;align-items:center;justify-content:center;overflow:hidden}
+.wcc-story-ring img,.wcc-story-ring video{width:100%;height:100%;object-fit:cover;border-radius:50%;border:2px solid var(--surface)}
+.wcc-story-ring.add{background:var(--line)}
+.wcc-story-plus{width:100%;height:100%;border-radius:50%;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:26px;font-weight:700;color:var(--brand)}
+.wcc-story-name{font-size:10px;font-weight:700;color:var(--sub);max-width:64px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wcc-toolbar{display:flex;gap:8px;background:var(--surface);padding:12px 14px;border-bottom:1px solid var(--line)}
+.wcc-search-box{flex:1;display:flex;align-items:center;gap:8px;background:var(--bg);border-radius:14px;padding:9px 12px;color:var(--sub)}
+.wcc-search-box input{flex:1;border:none;background:transparent;font-size:12.5px;color:var(--ink);outline:none;font-weight:600;min-width:0}
+.wcc-new-btn{display:flex;align-items:center;gap:6px;background:linear-gradient(135deg,#C0392B,#8B1A1A);color:#fff;border:none;border-radius:14px;padding:9px 15px;font-size:12.5px;font-weight:800;cursor:pointer;box-shadow:0 6px 16px -5px rgba(192,57,43,.5);transition:.15s;flex-shrink:0}
+.wcc-new-btn:hover{transform:translateY(-1px)}
+.wcc-new-btn:active{transform:scale(.95)}
+.wcc-chips{display:flex;gap:6px;overflow-x:auto;background:var(--surface);padding:10px 14px;border-bottom:1px solid var(--line);scrollbar-width:none}
+.wcc-chips::-webkit-scrollbar{display:none}
+.wcc-chip{flex-shrink:0;background:var(--bg);border:1px solid var(--line);border-radius:20px;padding:6px 13px;font-size:11.5px;font-weight:700;color:var(--sub);cursor:pointer;transition:.15s;white-space:nowrap}
+.wcc-chip.on{background:#FBE9E7;border-color:#F5B7B1;color:var(--brand)}
+.wcc-tabs{display:flex;background:var(--surface);border-radius:0 0 26px 26px;padding:8px 14px 12px;gap:8px;margin-bottom:12px;box-shadow:var(--sh-card)}
+.wcc-tab{flex:1;background:var(--bg);border:none;border-radius:12px;padding:9px 4px;font-size:12px;font-weight:800;color:var(--sub);cursor:pointer;transition:.15s}
+.wcc-tab.on{background:linear-gradient(135deg,#C0392B,#8B1A1A);color:#fff;box-shadow:0 5px 14px -4px rgba(192,57,43,.45)}
+.wcc-empty{text-align:center;color:var(--sub);font-size:13px;padding:34px 16px;background:var(--surface);border-radius:20px;box-shadow:var(--sh-card);line-height:1.7}
+.wcc-post{background:var(--surface);border-radius:20px;padding:15px;margin-bottom:12px;box-shadow:var(--sh-card);animation:wcc-up .3s ease;position:relative}
+@keyframes wcc-up{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.wcc-post.pinned{border:1.5px solid #F5B7B1;box-shadow:0 6px 20px -6px rgba(192,57,43,.25)}
+.wcc-pin-badge{display:inline-block;font-size:10px;font-weight:800;color:var(--brand);background:#FBE9E7;padding:3px 10px;border-radius:10px;margin-bottom:8px}
+.wcc-post-head{display:flex;align-items:center;gap:10px;position:relative}
+.wcc-av{width:40px;height:40px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex-shrink:0}
+.wcc-post-who{flex:1;min-width:0}
+.wcc-post-name{font-size:13.5px;font-weight:800;color:var(--ink);letter-spacing:-.2px}
+.wcc-post-meta{font-size:10.5px;color:var(--sub);font-weight:600;margin-top:1px}
+.wcc-cat-chip{font-size:10px;font-weight:800;background:var(--bg);color:var(--sub);padding:4px 9px;border-radius:10px;white-space:nowrap;flex-shrink:0}
+.wcc-menu-btn{background:transparent;border:none;font-size:18px;color:var(--sub);cursor:pointer;padding:2px 6px;border-radius:8px}
+.wcc-menu-btn:hover{background:var(--bg)}
+.wcc-menu{display:none;position:absolute;top:32px;right:0;background:var(--surface);border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.18);z-index:20;overflow:hidden;min-width:150px;border:1px solid var(--line)}
+.wcc-menu.show{display:block}
+.wcc-menu div{padding:10px 14px;font-size:12px;font-weight:700;color:var(--ink);cursor:pointer}
+.wcc-menu div:hover{background:var(--bg)}
+.wcc-menu div.danger{color:var(--brand)}
+.wcc-post-text{font-size:13.5px;color:var(--ink);line-height:1.6;margin-top:10px;word-break:break-word}
+.wcc-tag{color:#1D4ED8;font-weight:700;cursor:pointer}
+.wcc-link{color:#1D4ED8;text-decoration:underline;word-break:break-all}
+.wcc-media{display:grid;gap:4px;margin-top:10px;border-radius:16px;overflow:hidden}
+.wcc-media.m1{grid-template-columns:1fr}
+.wcc-media.m2,.wcc-media.m4{grid-template-columns:1fr 1fr}
+.wcc-media.m3{grid-template-columns:1fr 1fr}
+.wcc-media.m3 .wcc-media-item:first-child{grid-column:1/-1}
+.wcc-media-item{position:relative;cursor:pointer;aspect-ratio:4/3;overflow:hidden}
+.wcc-media.m1 .wcc-media-item{aspect-ratio:auto;max-height:380px}
+.wcc-media-item img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .2s}
+.wcc-media-item:hover img{transform:scale(1.03)}
+.wcc-media-more{position:absolute;inset:0;background:rgba(0,0,0,.5);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:800}
+.wcc-video{width:100%;border-radius:16px;margin-top:10px;max-height:380px;background:#000}
+.wcc-doc{display:flex;align-items:center;gap:10px;background:var(--bg);border-radius:14px;padding:12px 14px;margin-top:10px;text-decoration:none;color:var(--ink);font-size:12.5px;font-weight:700}
+.wcc-doc small{margin-left:auto;color:var(--brand);font-weight:800}
+.wcc-linkcard{display:flex;align-items:center;gap:8px;background:#EFF6FF;border:1px solid #BFDBFE;border-radius:14px;padding:11px 14px;margin-top:10px;text-decoration:none;color:#1D4ED8;font-size:12px;font-weight:700;word-break:break-all}
+.wcc-poll{background:var(--bg);border-radius:16px;padding:14px;margin-top:10px}
+.wcc-poll-q{font-size:13px;font-weight:800;color:var(--ink);margin-bottom:10px}
+.wcc-poll-opt{position:relative;border:1.5px solid var(--line);border-radius:12px;padding:9px 12px;margin-bottom:6px;cursor:pointer;overflow:hidden;display:flex;align-items:center;font-size:12.5px;font-weight:700;color:var(--ink);transition:.15s}
+.wcc-poll-opt:hover{border-color:#F5B7B1}
+.wcc-poll-opt.sel{border-color:var(--brand)}
+.wcc-poll-bar{position:absolute;inset:0;background:rgba(192,57,43,.10);transition:width .4s ease;border-radius:10px}
+.wcc-poll-opt span{position:relative;z-index:1;flex:1}
+.wcc-poll-opt b{position:relative;z-index:1;color:var(--brand);font-size:11.5px}
+.wcc-poll-tot{font-size:10.5px;color:var(--sub);font-weight:700;text-align:right}
+.wcc-counts{font-size:11.5px;color:var(--sub);font-weight:600;margin-top:10px;padding-bottom:8px;border-bottom:1px solid var(--line)}
+.wcc-actions{display:flex;gap:4px;margin-top:8px}
+.wcc-actions button{flex:1;background:transparent;border:none;border-radius:10px;padding:8px 2px;font-size:11.5px;font-weight:800;color:var(--sub);cursor:pointer;transition:.12s;white-space:nowrap}
+.wcc-actions button:hover{background:var(--bg)}
+.wcc-actions button.on{color:var(--brand);background:#FBE9E7}
+.wcc-palette{display:none;position:absolute;bottom:52px;left:12px;background:var(--surface);border-radius:26px;box-shadow:0 10px 30px rgba(0,0,0,.2);padding:7px 10px;gap:4px;z-index:15;border:1px solid var(--line)}
+.wcc-palette.show{display:flex}
+.wcc-palette span{font-size:24px;cursor:pointer;transition:transform .12s;padding:2px}
+.wcc-palette span:hover{transform:scale(1.35) translateY(-4px)}
+.wcc-comments{margin-top:10px;padding-top:4px}
+.wcc-comment{display:flex;gap:8px;margin-bottom:8px}
+.wcc-comment .wcc-av{width:30px;height:30px;font-size:10px}
+.wcc-comment-b{background:var(--bg);border-radius:4px 14px 14px 14px;padding:8px 12px;font-size:12px;color:var(--ink);line-height:1.5;flex:1}
+.wcc-comment-b b{display:block;font-size:11.5px;margin-bottom:1px}
+.wcc-comment-b small{display:block;color:var(--sub);font-size:9.5px;margin-top:3px;font-weight:600}
+.wcc-comment-row{display:flex;gap:6px;margin-top:6px}
+.wcc-comment-row input{flex:1;border:1px solid var(--line);border-radius:20px;padding:9px 14px;font-size:12px;background:var(--bg);color:var(--ink);outline:none}
+.wcc-comment-row button{background:var(--brand);color:#fff;border:none;border-radius:50%;width:36px;height:36px;cursor:pointer;font-size:14px;flex-shrink:0}
+.wcc-gal-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;background:var(--surface);border-radius:20px;padding:10px;box-shadow:var(--sh-card)}
+.wcc-gal-item{aspect-ratio:1;border-radius:10px;overflow:hidden;cursor:pointer}
+.wcc-gal-item img{width:100%;height:100%;object-fit:cover;transition:transform .2s}
+.wcc-gal-item:hover img{transform:scale(1.06)}
+.wcc-rank-row{display:flex;align-items:center;gap:11px;background:var(--surface);border-radius:16px;padding:11px 14px;margin-bottom:8px;box-shadow:var(--sh-card)}
+.wcc-rank-row.top{border:1.5px solid #FCD34D;background:linear-gradient(135deg,var(--surface),#FFFBEB)}
+.wcc-rank-pos{font-size:20px;width:32px;text-align:center;font-weight:800;color:var(--sub)}
+.wcc-rank-name{flex:1;font-size:13px;font-weight:800;color:var(--ink)}
+.wcc-rank-pts{font-size:12px;font-weight:800;color:var(--brand)}
+/* Composer */
+#wcc-composer{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9999;align-items:flex-end;justify-content:center}
+#wcc-composer.show{display:flex}
+.wcc-comp-card{background:var(--surface);border-radius:26px 26px 0 0;width:100%;max-width:430px;max-height:88vh;overflow-y:auto;padding:18px 18px 26px;animation:wcc-slide .3s cubic-bezier(.32,1,.32,1)}
+@keyframes wcc-slide{from{transform:translateY(60%)}to{transform:translateY(0)}}
+.wcc-comp-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.wcc-comp-head span{font-size:16px;font-weight:800;color:var(--ink);letter-spacing:-.3px}
+.wcc-comp-head button{background:var(--bg);border:none;width:32px;height:32px;border-radius:50%;font-size:14px;cursor:pointer;color:var(--sub)}
+.wcc-comp-author{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:13px;font-weight:800;color:var(--ink)}
+#wcc-composer-text{width:100%;border:none;background:transparent;font-size:14.5px;color:var(--ink);outline:none;resize:none;min-height:90px;font-family:inherit;line-height:1.6}
+.wcc-comp-cats{display:flex;gap:6px;overflow-x:auto;padding:8px 0;scrollbar-width:none;margin-bottom:6px}
+.wcc-comp-cats::-webkit-scrollbar{display:none}
+.wcc-attach{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
+.wcc-attach-item{position:relative;width:74px;height:74px;border-radius:12px;overflow:hidden;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:22px}
+.wcc-attach-item img,.wcc-attach-item video{width:100%;height:100%;object-fit:cover}
+.wcc-attach-x{position:absolute;top:3px;right:3px;background:rgba(0,0,0,.6);color:#fff;border:none;width:20px;height:20px;border-radius:50%;font-size:10px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.wcc-link-row input,.wcc-poll-row input{width:100%;border:1px solid var(--line);border-radius:12px;padding:10px 13px;font-size:12.5px;background:var(--bg);color:var(--ink);outline:none;margin-bottom:6px}
+.wcc-comp-tools{display:flex;gap:5px;padding:10px 0;border-top:1px solid var(--line);margin-top:8px;overflow-x:auto;scrollbar-width:none}
+.wcc-comp-tools::-webkit-scrollbar{display:none}
+.wcc-comp-tools button{background:var(--bg);border:none;border-radius:12px;padding:9px 12px;font-size:11.5px;font-weight:800;color:var(--ink);cursor:pointer;white-space:nowrap;flex-shrink:0}
+.wcc-comp-tools button:hover{background:#FBE9E7;color:var(--brand)}
+.wcc-pub-btn{width:100%;background:linear-gradient(135deg,#C0392B,#8B1A1A);color:#fff;border:none;border-radius:16px;padding:14px;font-size:14.5px;font-weight:800;cursor:pointer;margin-top:8px;box-shadow:0 8px 20px -6px rgba(192,57,43,.5);transition:.15s}
+.wcc-pub-btn:active{transform:scale(.98)}
+.wcc-pub-btn:disabled{opacity:.6}
+/* Story viewer */
+#wcc-story-view{display:none;position:fixed;inset:0;background:#000;z-index:10000;flex-direction:column}
+#wcc-story-view.show{display:flex}
+.wcc-sv-progress{display:flex;gap:4px;padding:12px 14px 6px;z-index:3}
+.wcc-sv-progress div{flex:1;height:3px;background:rgba(255,255,255,.3);border-radius:2px;overflow:hidden}
+.wcc-sv-progress div i{display:block;height:100%;background:#fff;width:0%}
+.wcc-sv-progress div.done i{width:100%}
+.wcc-sv-progress div.cur i{animation:wcc-prog 6s linear forwards}
+@keyframes wcc-prog{from{width:0}to{width:100%}}
+.wcc-sv-head{display:flex;align-items:center;gap:10px;padding:8px 14px;color:#fff;font-size:13px;font-weight:800;z-index:3}
+.wcc-sv-head small{color:rgba(255,255,255,.6);font-weight:600}
+.wcc-sv-media{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.wcc-sv-media img,.wcc-sv-media video{max-width:100%;max-height:100%;object-fit:contain}
+.wcc-sv-nav{position:absolute;top:0;bottom:0;width:30%;z-index:2}
+.wcc-sv-nav.prev{left:0}
+.wcc-sv-nav.next{right:0}
+/* Lightbox */
+#wcc-lightbox{display:none;position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:10001;align-items:center;justify-content:center;cursor:zoom-out}
+#wcc-lightbox.show{display:flex}
+#wcc-lightbox img{max-width:96%;max-height:92%;border-radius:10px}
+/* Dark mode */
+body.dark .wcc-stories-wrap,body.dark .wcc-toolbar,body.dark .wcc-chips,body.dark .wcc-tabs,
+body.dark .wcc-post,body.dark .wcc-empty,body.dark .wcc-rank-row,body.dark .wcc-gal-grid,
+body.dark .wcc-comp-card,body.dark .wcc-menu,body.dark .wcc-palette{background:#111827}
+body.dark .wcc-rank-row.top{background:linear-gradient(135deg,#111827,#292312)}
+body.dark .wcc-search-box,body.dark .wcc-chip,body.dark .wcc-tab,body.dark .wcc-poll,
+body.dark .wcc-doc,body.dark .wcc-comment-b,body.dark .wcc-comp-tools button,
+body.dark .wcc-attach-item,body.dark .wcc-comment-row input{background:#0B1020}
+body.dark .wcc-story-plus{background:#111827}
+body.dark .wcc-chip.on,body.dark .wcc-actions button.on{background:rgba(192,57,43,.2);color:#FCA5A5}
 .pt-filter-toggle{background:transparent;border:1px solid var(--line);color:var(--sub);width:26px;height:26px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
 .pt-filter-toggle.on,.pt-filter-toggle:hover{background:var(--brand);color:#fff;border-color:var(--brand)}
 .pt-filters{display:none;flex-direction:column;gap:6px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px dashed var(--line)}
@@ -904,6 +1086,8 @@ body.dark .chip,body.dark .h-chip,body.dark .doc-type-opt,body.dark .mgr-tab,bod
 body.dark .chip.on{background:var(--grad-red);color:#fff}
 body.dark .h-chip.on{background:linear-gradient(135deg,#8B5CF6,#5B21B6);color:#fff}
 body.dark .mgr-tab.active{background:var(--grad-red);color:#fff}
+/* 5 onglets + slot central : élargir les 2 de gauche pour recentrer le slot Pointage à 50% */
+.tab-bar #tab-accueil,.tab-bar #tab-conges{flex:1.5}
 body.dark .tab-bar{background:rgba(10,14,26,.97);border-color:rgba(255,255,255,.06)}
 body.dark .tab-center-fab{box-shadow:0 0 0 5px rgba(10,14,26,.97),0 0 0 6px rgba(255,255,255,.07),0 14px 32px rgba(224,68,58,.5),inset 0 2px 0 rgba(255,255,255,.3)}
 body.dark .tab-badge{border-color:#0A0E1A}
@@ -1019,6 +1203,27 @@ const db = firebase.database();
     <div id="home-pt-content" style="text-align:center;color:var(--gray);font-size:13px">Pas encore de pointage</div>
   </div>
   <div class="card" id="emp-cal-card" style="padding:12px;"></div>
+  <!-- ═══ ACTIONS RAPIDES ═══ -->
+  <div class="card-title" style="margin-bottom:8px">Actions rapides</div>
+  <div class="quick-actions" id="home-quick-actions">
+    <button class="qa-btn qa-conge" onclick="openLFType('conge')">
+      <div class="qa-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg></div>
+      <div class="qa-lbl">Congé</div>
+    </button>
+    <button class="qa-btn qa-doc" onclick="openLFType('document')">
+      <div class="qa-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+      <div class="qa-lbl">Document</div>
+    </button>
+    <button class="qa-btn qa-sortie" onclick="openLFType('sortie')">
+      <div class="qa-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div>
+      <div class="qa-lbl">Sortie</div>
+    </button>
+    <button class="qa-btn qa-wa" onclick="openWhatsAppGroup()">
+      <div class="qa-ico"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg></div>
+      <div class="qa-lbl">WhatsApp</div>
+    </button>
+  </div>
+
   <div class="card-title" style="margin-bottom:8px">Accès rapide</div>
   <div class="quick-grid">
     <div class="quick-card" onclick="showPage('profil')" style="color:#3B6D11">
@@ -1215,12 +1420,106 @@ const db = firebase.database();
       <div id="ep-modal-body"></div>
     </div>
   </div>
+
+  <!-- ═══════════ WECAN CONNECT ═══════════ -->
+  <div class="wc-connect" id="wc-connect">
+    <div class="wcc-cover">
+      <div class="wcc-cover-deco d1"></div><div class="wcc-cover-deco d2"></div>
+      <div class="wcc-cover-body">
+        <div class="wcc-cover-badge">Communauté</div>
+        <div class="wcc-title">WECAN Connect</div>
+        <div class="wcc-sub">Partagez vos réussites, découvrez les actualités et restez connecté avec toute l'équipe.</div>
+      </div>
+    </div>
+    <div class="wcc-stories-wrap"><div class="wcc-stories" id="wcc-stories"></div></div>
+    <div class="wcc-toolbar">
+      <div class="wcc-search-box">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input id="wcc-search" placeholder="Rechercher un collègue, un post, #hashtag..." oninput="wccRenderFeed()">
+      </div>
+      <button class="wcc-new-btn" onclick="wccOpenComposer()">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+        Publication
+      </button>
+    </div>
+    <div class="wcc-chips" id="wcc-chips"></div>
+    <div class="wcc-tabs">
+      <button class="wcc-tab on" onclick="wccTab('feed',this)">📰 Fil</button>
+      <button class="wcc-tab" onclick="wccTab('gallery',this)">📸 Galerie</button>
+      <button class="wcc-tab" onclick="wccTab('rank',this)">🏆 Classement</button>
+    </div>
+    <div id="wcc-feed"></div>
+    <div id="wcc-gallery" style="display:none"></div>
+    <div id="wcc-rank" style="display:none"></div>
+  </div>
+  <input type="file" id="wcc-story-input" accept="image/*,video/*" style="display:none" onchange="wccAddStory(this)">
+  <input type="file" id="wcc-photos-input" accept="image/*" multiple style="display:none" onchange="wccAddPhotos(this)">
+  <input type="file" id="wcc-video-input" accept="video/*" style="display:none" onchange="wccAddVideo(this)">
+  <input type="file" id="wcc-doc-input" accept=".pdf,.doc,.docx,.xls,.xlsx,.txt" style="display:none" onchange="wccAddDoc(this)">
+
+  <!-- Composer WECAN Connect -->
+  <div id="wcc-composer" onclick="if(event.target===this)wccCloseComposer()">
+    <div class="wcc-comp-card">
+      <div class="wcc-comp-head"><span>Nouvelle publication</span><button onclick="wccCloseComposer()">✕</button></div>
+      <div class="wcc-comp-author" id="wcc-comp-author"></div>
+      <textarea id="wcc-composer-text" placeholder="Quoi de neuf ? Partagez une réussite, une annonce, une photo... Utilisez des #hashtags"></textarea>
+      <div class="wcc-comp-cats" id="wcc-comp-cats"></div>
+      <div id="wcc-attach" class="wcc-attach"></div>
+      <div id="wcc-link-row" class="wcc-link-row" style="display:none"><input id="wcc-link-input" placeholder="https://exemple.com" oninput="_wccLink=this.value.trim()"></div>
+      <div id="wcc-poll-row" class="wcc-poll-row" style="display:none">
+        <input id="wcc-poll-q" placeholder="Question du sondage...">
+        <input class="wcc-poll-o" placeholder="Option 1">
+        <input class="wcc-poll-o" placeholder="Option 2">
+        <input class="wcc-poll-o" placeholder="Option 3 (optionnel)">
+        <input class="wcc-poll-o" placeholder="Option 4 (optionnel)">
+      </div>
+      <div class="wcc-comp-tools">
+        <button onclick="document.getElementById('wcc-photos-input').click()">📷 Photos</button>
+        <button onclick="document.getElementById('wcc-video-input').click()">🎥 Vidéo</button>
+        <button onclick="document.getElementById('wcc-doc-input').click()">📎 Doc</button>
+        <button onclick="wccToggleLink()">🔗 Lien</button>
+        <button onclick="wccTogglePoll()">📊 Sondage</button>
+      </div>
+      <button class="wcc-pub-btn" id="wcc-pub-btn" onclick="wccPublish()">Publier</button>
+    </div>
+  </div>
+
+  <!-- Story viewer -->
+  <div id="wcc-story-view" onclick="wccCloseStory()">
+    <div class="wcc-sv-progress" id="wcc-sv-progress"></div>
+    <div class="wcc-sv-head" id="wcc-sv-head"></div>
+    <div class="wcc-sv-media" id="wcc-sv-media"></div>
+    <div class="wcc-sv-nav prev" onclick="event.stopPropagation();wccStoryNav(-1)"></div>
+    <div class="wcc-sv-nav next" onclick="event.stopPropagation();wccStoryNav(1)"></div>
+  </div>
+
+  <!-- Lightbox photos -->
+  <div id="wcc-lightbox" onclick="this.classList.remove('show')"><img id="wcc-lightbox-img"></div>
   <div id="pt-summary-card" style="display:none"><div id="sum-row"></div></div>
 </div>
 
 <!-- ===== PAGE CONGES ===== -->
 <div class="page" id="page-conges">
-  <div class="sec-title">Mes demandes</div>
+  <div class="sec-title">Nouvelle demande</div>
+  <div class="quick-actions">
+    <button class="qa-btn qa-conge" onclick="openLFType('conge')">
+      <div class="qa-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4M16 2v4M3 10h18M5 4h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z"/></svg></div>
+      <div class="qa-lbl">Congé</div>
+    </button>
+    <button class="qa-btn qa-doc" onclick="openLFType('document')">
+      <div class="qa-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></div>
+      <div class="qa-lbl">Document</div>
+    </button>
+    <button class="qa-btn qa-sortie" onclick="openLFType('sortie')">
+      <div class="qa-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg></div>
+      <div class="qa-lbl">Sortie</div>
+    </button>
+    <button class="qa-btn qa-wa" onclick="openWhatsAppGroup()">
+      <div class="qa-ico"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg></div>
+      <div class="qa-lbl">WhatsApp</div>
+    </button>
+  </div>
+  <div class="sec-title" style="margin-top:22px">Mes demandes</div>
   <div id="leaves-list"><div style="text-align:center;color:var(--gray);font-size:13px;padding:24px">Aucune demande</div></div>
   <button class="fab" onclick="openLF()" style="display:flex;align-items:center;justify-content:center;"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>
 </div>
@@ -1233,6 +1532,9 @@ const db = firebase.database();
   </div>
   <div id="conv-list"></div>
 </div>
+
+<!-- ===== PAGE COMMUNAUTÉ (WECAN Connect) ===== -->
+<div class="page" id="page-community"></div>
 
 <!-- ===== PAGE PROFIL ===== -->
 <div class="page" id="page-profil">
@@ -1306,6 +1608,13 @@ const db = firebase.database();
   <i class="fa-regular fa-comment"></i>
   <span class="nav-label">Chat</span>
   <span class="tab-badge" id="chat-badge" style="display:none">0</span>
+  <span class="nav-dot"></span>
+ </button>
+ <!-- Communauté -->
+ <button class="tab-btn" onclick="showPage('community')" id="tab-community">
+  <i class="fa-solid fa-users"></i>
+  <span class="nav-label">Connect</span>
+  <span class="tab-badge" id="wcc-badge" style="display:none">0</span>
   <span class="nav-dot"></span>
  </button>
  <!-- Profil -->
@@ -1461,6 +1770,10 @@ const db = firebase.database();
 </div>
 
 <!-- TOAST -->
+<!-- FAB WhatsApp global (toutes pages) -->
+<button id="wa-fab" onclick="openWhatsAppGroup()" aria-label="Groupe WhatsApp">
+  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51l-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+</button>
 <div class="toast" id="toast"></div>
 <div style="position:fixed;bottom:72px;right:10px;background:rgba(0,0,0,.2);color:rgba(255,255,255,.7);font-size:10px;padding:3px 8px;border-radius:10px;pointer-events:none;z-index:500;">v6.0</div>
 
@@ -1693,7 +2006,10 @@ function showPage(p){
   if(p==='pointage'){showPtTab('today');renderPtSummary();updateStatutBadge();}
   if(p==='conges') renderLeaves();
   if(p==='chat') renderConvs();
+  if(p==='community'){try{wccRenderFeed();wccRenderStories();wccRenderChips();}catch(e){}}
   if(p==='profil') renderProfil();
+  // FAB WhatsApp masqué sur la page Pointage (évite le conflit avec le bouton central)
+  document.body.classList.toggle('hide-wa-fab', p==='pointage');
 }
 
 // ===== CLOCK =====
@@ -2659,6 +2975,427 @@ function _nextTip(){
   const t=HEALTHY_TIPS[idx];
   b.innerHTML='<div class="ep-modal-title">💚 Conseil sante</div><div class="sante-tip-emoji">'+t.ico+'</div><div class="sante-tip-text">'+t.txt+'</div><div class="sante-tip-sub">'+t.sub+'</div><div class="doua-nav"><button onclick="_nextTip()">🔄 Autre conseil</button></div>';
 }
+
+// ═══════════ WECAN CONNECT (Community Hub) ═══════════
+const WCC_CATS=[
+  {k:'annonce',e:'📢',l:'Annonce'},{k:'anniv',e:'🎉',l:'Anniversaire'},
+  {k:'felicitations',e:'🏆',l:'Félicitations'},{k:'photos',e:'📸',l:'Photos'},
+  {k:'videos',e:'🎥',l:'Vidéos'},{k:'objectif',e:'🎯',l:'Objectif atteint'},
+  {k:'projet',e:'📦',l:'Nouveau projet'},{k:'livraison',e:'🚚',l:'Livraison'},
+  {k:'event',e:'🎊',l:'Événement'},{k:'astuce',e:'💡',l:'Astuce'},{k:'libre',e:'💬',l:'Discussion'}
+];
+const WCC_REACTS=['❤️','👏','🔥','😂','🎉','💯'];
+let WCC_POSTS={}, WCC_STORIES={}, _wccStart=Date.now(), _wccRT=null;
+let _wccFilter={cat:'',saved:false,tab:'feed'};
+let _wccMedia=[], _wccLink='', _wccCat='libre';
+let _wccPrev={}, _wccOpenC={};
+
+function _wccEsc(s){return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function _wccHash(t){
+  let h=_wccEsc(t).replace(/\n/g,'<br>');
+  h=h.replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener" class="wcc-link">$1</a>');
+  h=h.replace(/#([A-Za-z0-9_À-ɏ؀-ۿ]+)/g,'<span class="wcc-tag" onclick="wccSearchTag(\'#$1\');event.stopPropagation()">#$1</span>');
+  return h;
+}
+function wccSearchTag(t){const i=document.getElementById('wcc-search');if(i){i.value=t;wccRenderFeed();i.scrollIntoView({block:'center',behavior:'smooth'});}}
+function wccAgo(ts){
+  const s=Math.floor((Date.now()-(ts||0))/1000);
+  if(s<60)return "a l'instant";
+  if(s<3600)return 'il y a '+Math.floor(s/60)+' min';
+  if(s<86400)return 'il y a '+Math.floor(s/3600)+' h';
+  if(s<172800)return 'hier';
+  return 'il y a '+Math.floor(s/86400)+' j';
+}
+function wccIsAdmin(){return !!(ME&&(['admin','rh','manager'].includes(String(ME.role||'').toLowerCase())||ME.manager||ME.isManager));}
+function _wccAvatar(name,id){
+  const ini=(name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+  const hues=['#C0392B','#7C3AED','#0369A1','#047857','#B45309','#BE185D'];
+  const c=hues[Math.abs(parseInt(id)||String(id||'').length)%hues.length];
+  return '<div class="wcc-av" style="background:'+c+'">'+ini+'</div>';
+}
+function _wccCounts(p){return {r:Object.keys(p.reactions||{}).length,c:Object.keys(p.comments||{}).length};}
+function _wccSchedule(){clearTimeout(_wccRT);_wccRT=setTimeout(()=>{
+  wccRenderFeed();
+  if(_wccFilter.tab==='gallery')wccRenderGallery();
+  if(_wccFilter.tab==='rank')wccRenderRank();
+},150);}
+
+function wccInit(){
+  if(!ME) return;
+  // Déplacer WECAN Connect de la page Pointage vers son propre onglet Communauté
+  const pc=document.getElementById('page-community');
+  const wcEl=document.getElementById('wc-connect');
+  if(pc&&wcEl&&wcEl.parentElement!==pc){wcEl.style.marginTop='0';pc.appendChild(wcEl);}
+  // Sortir les overlays + inputs fichiers du stacking context de .page → les rattacher au body
+  ['wcc-composer','wcc-story-view','wcc-lightbox','wcc-story-input','wcc-photos-input','wcc-video-input','wcc-doc-input'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el&&el.parentElement!==document.body)document.body.appendChild(el);
+  });
+  try{
+    const ref=db.ref('wecan/community/posts').limitToLast(80);
+    ref.on('child_added',s=>{
+      const p=s.val();if(!p)return;p.id=s.key;WCC_POSTS[s.key]=p;_wccSchedule();
+      if(p.ts>_wccStart && String(p.authorId)!==String(ME.id)){
+        try{pushNotif('📣 '+(p.authorName||'Collègue'),(p.text||'Nouvelle publication sur WECAN Connect').slice(0,80),{action:'community'},{sticky:false,tag:'wcc-'+s.key});}catch(e){}
+      }
+      _wccPrev[s.key]=_wccCounts(p);
+    });
+    ref.on('child_changed',s=>{
+      const p=s.val();if(!p)return;p.id=s.key;WCC_POSTS[s.key]=p;_wccSchedule();
+      const c=_wccCounts(p), prev=_wccPrev[s.key]||{r:0,c:0};
+      if(String(p.authorId)===String(ME.id)){
+        if(c.c>prev.c){try{pushNotif('💬 Nouveau commentaire','Quelqu\'un a commenté votre publication',{action:'community'},{sticky:false,tag:'wccc-'+s.key});}catch(e){} showToast('💬 Nouveau commentaire sur votre publication');}
+        else if(c.r>prev.r){showToast('❤️ Nouvelle réaction sur votre publication');}
+      }
+      _wccPrev[s.key]=c;
+    });
+    ref.on('child_removed',s=>{delete WCC_POSTS[s.key];_wccSchedule();});
+    db.ref('wecan/community/stories').limitToLast(30).on('value',s=>{WCC_STORIES=s.val()||{};wccRenderStories();});
+    // Fermer palettes/menus au clic extérieur
+    if(!window._wccDocClick){
+      window._wccDocClick=true;
+      document.addEventListener('click',()=>{document.querySelectorAll('.wcc-palette.show,.wcc-menu.show').forEach(x=>x.classList.remove('show'));});
+    }
+  }catch(e){console.warn('[WCC] init',e);}
+  wccRenderChips();wccRenderFeed();wccRenderStories();
+}
+
+// ── Chips / Tabs ──
+function wccRenderChips(){
+  const el=document.getElementById('wcc-chips');if(!el)return;
+  let h='<button class="wcc-chip '+(!_wccFilter.cat&&!_wccFilter.saved?'on':'')+'" onclick="wccFilterCat(\'\')">✨ Tous</button>';
+  h+='<button class="wcc-chip '+(_wccFilter.saved?'on':'')+'" onclick="wccFilterSaved()">📌 Enregistrés</button>';
+  h+=WCC_CATS.map(c=>'<button class="wcc-chip '+(_wccFilter.cat===c.k?'on':'')+'" onclick="wccFilterCat(\''+c.k+'\')">'+c.e+' '+c.l+'</button>').join('');
+  el.innerHTML=h;
+}
+function wccFilterCat(k){_wccFilter.cat=k;_wccFilter.saved=false;wccRenderChips();wccRenderFeed();}
+function wccFilterSaved(){_wccFilter.saved=!_wccFilter.saved;_wccFilter.cat='';wccRenderChips();wccRenderFeed();}
+function wccTab(t,btn){
+  _wccFilter.tab=t;
+  document.querySelectorAll('.wcc-tab').forEach(b=>b.classList.remove('on'));btn.classList.add('on');
+  document.getElementById('wcc-feed').style.display=t==='feed'?'block':'none';
+  document.getElementById('wcc-gallery').style.display=t==='gallery'?'block':'none';
+  document.getElementById('wcc-rank').style.display=t==='rank'?'block':'none';
+  if(t==='gallery')wccRenderGallery();
+  if(t==='rank')wccRenderRank();
+}
+
+// ── Feed ──
+function wccRenderFeed(){
+  const el=document.getElementById('wcc-feed');if(!el)return;
+  const q=(document.getElementById('wcc-search')||{value:''}).value.trim().toLowerCase();
+  const saved=ld('wcc_saved',[]);
+  let arr=Object.values(WCC_POSTS);
+  if(_wccFilter.cat)arr=arr.filter(p=>p.cat===_wccFilter.cat);
+  if(_wccFilter.saved)arr=arr.filter(p=>saved.includes(p.id));
+  if(q)arr=arr.filter(p=>((p.text||'')+' '+(p.authorName||'')+' '+(p.cat||'')).toLowerCase().includes(q));
+  arr.sort((a,b)=>((b.pinned?1:0)-(a.pinned?1:0))||((b.ts||0)-(a.ts||0)));
+  if(!arr.length){el.innerHTML='<div class="wcc-empty">🌱 Aucune publication'+(q?' pour cette recherche':'')+'.<br>Soyez le premier à partager quelque chose !</div>';return;}
+  el.innerHTML=arr.map(p=>_wccPostHtml(p,saved)).join('');
+}
+function _wccPostHtml(p,saved){
+  const cat=WCC_CATS.find(c=>c.k===p.cat);
+  const myR=(p.reactions||{})[ME.id];
+  const rc={};Object.values(p.reactions||{}).forEach(e=>{rc[e]=(rc[e]||0)+1;});
+  const rSum=Object.entries(rc).sort((a,b)=>b[1]-a[1]);
+  const totR=Object.keys(p.reactions||{}).length;
+  const comments=Object.values(p.comments||{}).sort((a,b)=>(a.ts||0)-(b.ts||0));
+  const canMod=String(p.authorId)===String(ME.id)||wccIsAdmin();
+  let mediaH='';
+  const media=Array.isArray(p.media)?p.media:Object.values(p.media||{});
+  const imgs=media.filter(m=>m&&m.type==='img');
+  const vids=media.filter(m=>m&&m.type==='video');
+  const docs=media.filter(m=>m&&m.type==='doc');
+  if(imgs.length){
+    const show=imgs.slice(0,4);
+    mediaH+='<div class="wcc-media m'+Math.min(show.length,4)+'">'+show.map((m,i)=>
+      '<div class="wcc-media-item" onclick="wccLightboxPost(\''+p.id+'\','+i+')"><img src="'+m.data+'" loading="lazy">'+
+      (i===3&&imgs.length>4?'<div class="wcc-media-more">+'+(imgs.length-4)+'</div>':'')+'</div>').join('')+'</div>';
+  }
+  vids.forEach(m=>{mediaH+='<video class="wcc-video" src="'+m.data+'" controls playsinline preload="metadata"></video>';});
+  docs.forEach(m=>{mediaH+='<a class="wcc-doc" href="'+m.data+'" download="'+_wccEsc(m.name||'document')+'">📎 <span>'+_wccEsc(m.name||'Document')+'</span><small>Télécharger</small></a>';});
+  if(p.link){
+    const safeLink=/^https?:\/\//.test(p.link)?p.link:'https://'+p.link;
+    mediaH+='<a class="wcc-linkcard" href="'+_wccEsc(safeLink)+'" target="_blank" rel="noopener">🔗 <span>'+_wccEsc(p.link)+'</span></a>';
+  }
+  let pollH='';
+  if(p.poll&&p.poll.q){
+    const votes=p.poll.votes||{};
+    const myV=votes[ME.id];
+    const opts=Array.isArray(p.poll.opts)?p.poll.opts:Object.values(p.poll.opts||{});
+    const counts=opts.map((o,i)=>Object.values(votes).filter(v=>v===i).length);
+    const tot=counts.reduce((s,c)=>s+c,0);
+    pollH='<div class="wcc-poll"><div class="wcc-poll-q">📊 '+_wccEsc(p.poll.q)+'</div>'+opts.map((o,i)=>{
+      const pc=tot?Math.round(counts[i]*100/tot):0;
+      return '<div class="wcc-poll-opt '+(myV===i?'sel':'')+'" onclick="wccVote(\''+p.id+'\','+i+')"><div class="wcc-poll-bar" style="width:'+pc+'%"></div><span>'+_wccEsc(o)+'</span><b>'+pc+'%</b></div>';
+    }).join('')+'<div class="wcc-poll-tot">'+tot+' vote'+(tot>1?'s':'')+'</div></div>';
+  }
+  const isSaved=saved.includes(p.id);
+  const cOpen=!!_wccOpenC[p.id];
+  return '<div class="wcc-post '+(p.pinned?'pinned':'')+'" id="post-'+p.id+'">'+
+    (p.pinned?'<div class="wcc-pin-badge">📌 Épinglé</div>':'')+
+    '<div class="wcc-post-head">'+_wccAvatar(p.authorName,p.authorId)+
+      '<div class="wcc-post-who"><div class="wcc-post-name">'+_wccEsc(p.authorName)+'</div>'+
+      '<div class="wcc-post-meta">'+_wccEsc(p.authorPoste||'')+(p.authorAgence?' · '+_wccEsc(p.authorAgence):'')+' · '+wccAgo(p.ts)+'</div></div>'+
+      (cat?'<span class="wcc-cat-chip">'+cat.e+' '+cat.l+'</span>':'')+
+      (canMod?'<button class="wcc-menu-btn" onclick="wccMenu(\''+p.id+'\');event.stopPropagation()">⋮</button>'+
+        '<div class="wcc-menu" id="menu-'+p.id+'">'+
+        (wccIsAdmin()?'<div onclick="wccPin(\''+p.id+'\')">'+(p.pinned?'Désépingler':'📌 Épingler en haut')+'</div>':'')+
+        '<div class="danger" onclick="wccDelete(\''+p.id+'\')">🗑️ Supprimer</div></div>':'')+
+    '</div>'+
+    (p.text?'<div class="wcc-post-text">'+_wccHash(p.text)+'</div>':'')+
+    mediaH+pollH+
+    (totR||comments.length?'<div class="wcc-counts">'+rSum.slice(0,3).map(x=>x[0]).join('')+' '+(totR||'')+(comments.length?' · '+comments.length+' commentaire'+(comments.length>1?'s':''):'')+'</div>':'')+
+    '<div class="wcc-actions">'+
+      '<button class="'+(myR?'on':'')+'" onclick="wccTogglePal(\''+p.id+'\');event.stopPropagation()">'+(myR||'🤍')+' Réagir</button>'+
+      '<button onclick="wccToggleComments(\''+p.id+'\')">💬 Commenter</button>'+
+      '<button onclick="wccShare(\''+p.id+'\')">🔁 Partager</button>'+
+      '<button class="'+(isSaved?'on':'')+'" onclick="wccSave(\''+p.id+'\')">'+(isSaved?'📌':'🔖')+'</button>'+
+    '</div>'+
+    '<div class="wcc-palette" id="pal-'+p.id+'">'+WCC_REACTS.map(e=>'<span onclick="wccReact(\''+p.id+'\',\''+e+'\');event.stopPropagation()">'+e+'</span>').join('')+'</div>'+
+    '<div class="wcc-comments" id="cs-'+p.id+'" style="display:'+(cOpen?'block':'none')+'">'+
+      comments.map(c=>'<div class="wcc-comment">'+_wccAvatar(c.name,c.from)+'<div class="wcc-comment-b"><b>'+_wccEsc(c.name)+'</b>'+_wccHash(c.text)+'<small>'+wccAgo(c.ts)+'</small></div></div>').join('')+
+      '<div class="wcc-comment-row"><input id="ci-'+p.id+'" placeholder="Écrire un commentaire..." onkeydown="if(event.key===\'Enter\')wccSendComment(\''+p.id+'\')"><button onclick="wccSendComment(\''+p.id+'\')">➤</button></div>'+
+    '</div>'+
+  '</div>';
+}
+function wccMenu(id){
+  const m=document.getElementById('menu-'+id);if(!m)return;
+  const was=m.classList.contains('show');
+  document.querySelectorAll('.wcc-menu.show').forEach(x=>x.classList.remove('show'));
+  if(!was)m.classList.add('show');
+}
+function wccTogglePal(id){
+  const pal=document.getElementById('pal-'+id);if(!pal)return;
+  const was=pal.classList.contains('show');
+  document.querySelectorAll('.wcc-palette.show').forEach(x=>x.classList.remove('show'));
+  if(!was)pal.classList.add('show');
+}
+function wccReact(id,emo){
+  const p=WCC_POSTS[id];if(!p)return;
+  const cur=(p.reactions||{})[ME.id];
+  const ref=db.ref('wecan/community/posts/'+id+'/reactions/'+ME.id);
+  if(cur===emo)ref.remove();else ref.set(emo);
+}
+function wccToggleComments(id){
+  _wccOpenC[id]=!_wccOpenC[id];
+  const cs=document.getElementById('cs-'+id);
+  if(cs)cs.style.display=_wccOpenC[id]?'block':'none';
+  if(_wccOpenC[id]){const i=document.getElementById('ci-'+id);if(i)setTimeout(()=>i.focus(),50);}
+}
+function wccSendComment(id){
+  const inp=document.getElementById('ci-'+id);if(!inp)return;
+  const t=inp.value.trim();if(!t)return;inp.value='';
+  _wccOpenC[id]=true;
+  db.ref('wecan/community/posts/'+id+'/comments').push({from:ME.id,name:ME.prenom+' '+ME.nom,text:t,ts:Date.now()});
+}
+function wccVote(id,idx){db.ref('wecan/community/posts/'+id+'/poll/votes/'+ME.id).set(idx);}
+function wccPin(id){const p=WCC_POSTS[id];if(!p||!wccIsAdmin())return;db.ref('wecan/community/posts/'+id+'/pinned').set(!p.pinned);showToast(p.pinned?'Publication désépinglée':'📌 Publication épinglée');}
+function wccDelete(id){
+  const p=WCC_POSTS[id];if(!p)return;
+  if(String(p.authorId)!==String(ME.id)&&!wccIsAdmin())return;
+  if(!confirm('Supprimer cette publication ?'))return;
+  db.ref('wecan/community/posts/'+id).remove();showToast('🗑️ Publication supprimée');
+}
+function wccSave(id){
+  let s=ld('wcc_saved',[]);
+  if(s.includes(id)){s=s.filter(x=>x!==id);showToast('Retiré des enregistrements');}
+  else{s.push(id);showToast('📌 Publication enregistrée');}
+  localStorage.setItem('wecan_wcc_saved',JSON.stringify(s));
+  wccRenderFeed();
+}
+function wccShare(id){
+  const p=WCC_POSTS[id];if(!p)return;
+  const t=(p.authorName||'Collègue')+' sur WECAN Connect :\n'+(p.text||'(média)').slice(0,300);
+  if(navigator.share){navigator.share({text:t}).catch(()=>{});}
+  else{
+    try{navigator.clipboard.writeText(t);}catch(e){}
+    window.open('https://wa.me/?text='+encodeURIComponent(t),'_blank','noopener');
+  }
+}
+function wccLightboxPost(id,i){
+  const p=WCC_POSTS[id];if(!p)return;
+  const media=Array.isArray(p.media)?p.media:Object.values(p.media||{});
+  const imgs=media.filter(m=>m&&m.type==='img');
+  if(!imgs[i])return;
+  document.getElementById('wcc-lightbox-img').src=imgs[i].data;
+  document.getElementById('wcc-lightbox').classList.add('show');
+}
+
+// ── Composer ──
+function wccOpenComposer(){
+  const m=document.getElementById('wcc-composer');if(!m)return;
+  _wccMedia=[];_wccLink='';_wccCat='libre';
+  document.getElementById('wcc-composer-text').value='';
+  document.getElementById('wcc-link-input').value='';
+  document.getElementById('wcc-poll-q').value='';
+  document.querySelectorAll('.wcc-poll-o').forEach(i=>i.value='');
+  document.getElementById('wcc-link-row').style.display='none';
+  document.getElementById('wcc-poll-row').style.display='none';
+  document.getElementById('wcc-comp-author').innerHTML=_wccAvatar(ME.prenom+' '+ME.nom,ME.id)+'<div>'+_wccEsc(ME.prenom+' '+ME.nom)+'<div style="font-size:10.5px;color:var(--sub);font-weight:600">'+_wccEsc(ME.poste||'')+'</div></div>';
+  document.getElementById('wcc-comp-cats').innerHTML=WCC_CATS.map(c=>'<button class="wcc-chip '+(c.k===_wccCat?'on':'')+'" onclick="wccSetCat(\''+c.k+'\',this)">'+c.e+' '+c.l+'</button>').join('');
+  wccRenderAttach();
+  m.classList.add('show');
+  setTimeout(()=>document.getElementById('wcc-composer-text').focus(),100);
+}
+function wccCloseComposer(){document.getElementById('wcc-composer').classList.remove('show');}
+function wccSetCat(k,btn){_wccCat=k;btn.parentElement.querySelectorAll('.wcc-chip').forEach(b=>b.classList.remove('on'));btn.classList.add('on');}
+function wccToggleLink(){const r=document.getElementById('wcc-link-row');r.style.display=r.style.display==='none'?'block':'none';}
+function wccTogglePoll(){const r=document.getElementById('wcc-poll-row');r.style.display=r.style.display==='none'?'block':'none';}
+function _wccCompress(file,cb){
+  const r=new FileReader();
+  r.onload=e=>{
+    const img=new Image();
+    img.onload=()=>{
+      const max=1000;let w=img.width,h=img.height;
+      if(w>max||h>max){const k=Math.min(max/w,max/h);w=Math.round(w*k);h=Math.round(h*k);}
+      const c=document.createElement('canvas');c.width=w;c.height=h;
+      c.getContext('2d').drawImage(img,0,0,w,h);
+      cb(c.toDataURL('image/jpeg',0.72));
+    };
+    img.src=e.target.result;
+  };
+  r.readAsDataURL(file);
+}
+function wccAddPhotos(inp){
+  const cur=_wccMedia.filter(m=>m.type==='img').length;
+  const files=Array.from(inp.files||[]).slice(0,Math.max(0,6-cur));
+  inp.value='';
+  files.forEach(f=>{if(!/^image\//.test(f.type))return;_wccCompress(f,d=>{_wccMedia.push({type:'img',data:d});wccRenderAttach();});});
+}
+function wccAddVideo(inp){
+  const f=inp.files&&inp.files[0];inp.value='';
+  if(!f)return;
+  if(f.size>6*1024*1024){showToast('⚠️ Vidéo trop lourde (max 6 Mo)');return;}
+  const r=new FileReader();r.onload=e=>{_wccMedia.push({type:'video',data:e.target.result});wccRenderAttach();};r.readAsDataURL(f);
+}
+function wccAddDoc(inp){
+  const f=inp.files&&inp.files[0];inp.value='';
+  if(!f)return;
+  if(f.size>3*1024*1024){showToast('⚠️ Document trop lourd (max 3 Mo)');return;}
+  const r=new FileReader();r.onload=e=>{_wccMedia.push({type:'doc',name:f.name,data:e.target.result});wccRenderAttach();};r.readAsDataURL(f);
+}
+function wccRemoveMedia(i){_wccMedia.splice(i,1);wccRenderAttach();}
+function wccRenderAttach(){
+  const el=document.getElementById('wcc-attach');if(!el)return;
+  el.innerHTML=_wccMedia.map((m,i)=>{
+    let inner=m.type==='img'?'<img src="'+m.data+'">':m.type==='video'?'<video src="'+m.data+'" muted></video>':'📎';
+    return '<div class="wcc-attach-item">'+inner+'<button class="wcc-attach-x" onclick="wccRemoveMedia('+i+')">✕</button></div>';
+  }).join('');
+}
+function wccPublish(){
+  const txt=document.getElementById('wcc-composer-text').value.trim();
+  let poll=null;
+  if(document.getElementById('wcc-poll-row').style.display!=='none'){
+    const q=document.getElementById('wcc-poll-q').value.trim();
+    const opts=Array.from(document.querySelectorAll('.wcc-poll-o')).map(i=>i.value.trim()).filter(Boolean);
+    if(q&&opts.length>=2)poll={q,opts};
+  }
+  if(!txt&&!_wccMedia.length&&!poll){showToast('Écrivez quelque chose ou ajoutez un média');return;}
+  const btn=document.getElementById('wcc-pub-btn');btn.disabled=true;btn.textContent='Publication...';
+  const post={
+    authorId:ME.id,authorName:ME.prenom+' '+ME.nom,authorPoste:ME.poste||'',
+    authorAgence:ME.agenceName||String(ME.agenceId||''),
+    ts:Date.now(),time:now(),date:tday(),
+    text:txt,cat:_wccCat,media:_wccMedia,link:_wccLink||null,poll:poll,reactions:{},pinned:false
+  };
+  db.ref('wecan/community/posts').push(post).then(()=>{
+    btn.disabled=false;btn.textContent='Publier';
+    wccCloseComposer();showToast('✅ Publication partagée !');
+  }).catch(e=>{
+    btn.disabled=false;btn.textContent='Publier';
+    showToast('❌ Erreur: '+(e&&e.message||'réseau'));
+  });
+}
+
+// ── Stories ──
+function wccRenderStories(){
+  const el=document.getElementById('wcc-stories');if(!el)return;
+  const cut=Date.now()-86400000;
+  const arr=Object.entries(WCC_STORIES).map(([k,v])=>({...v,id:k})).filter(s=>(s.ts||0)>cut).sort((a,b)=>b.ts-a.ts);
+  window._wccStoryArr=arr;
+  let h='<div class="wcc-story" onclick="document.getElementById(\'wcc-story-input\').click()">'+
+    '<div class="wcc-story-ring add"><div class="wcc-story-plus">+</div></div><div class="wcc-story-name">Votre story</div></div>';
+  h+=arr.map((s,i)=>{
+    const thumb=s.type==='video'?'<video src="'+s.data+'" muted></video>':'<img src="'+s.data+'">';
+    return '<div class="wcc-story" onclick="wccViewStory('+i+')"><div class="wcc-story-ring">'+thumb+'</div><div class="wcc-story-name">'+_wccEsc((s.authorName||'').split(' ')[0])+'</div></div>';
+  }).join('');
+  el.innerHTML=h;
+}
+function wccAddStory(inp){
+  const f=inp.files&&inp.files[0];inp.value='';if(!f)return;
+  if(/^video\//.test(f.type)){
+    if(f.size>6*1024*1024){showToast('⚠️ Vidéo trop lourde (max 6 Mo)');return;}
+    const r=new FileReader();r.onload=e=>_wccPushStory('video',e.target.result);r.readAsDataURL(f);
+  }else if(/^image\//.test(f.type)){
+    _wccCompress(f,d=>_wccPushStory('img',d));
+  }
+}
+function _wccPushStory(type,data){
+  db.ref('wecan/community/stories').push({authorId:ME.id,authorName:ME.prenom+' '+ME.nom,ts:Date.now(),type,data})
+    .then(()=>showToast('✅ Story publiée (visible 24h)'))
+    .catch(e=>showToast('❌ Erreur story: '+(e&&e.message||'réseau')));
+}
+let _wccStoryIdx=0,_wccStoryTimer=null;
+function wccViewStory(i){
+  const arr=window._wccStoryArr||[];if(!arr[i])return;
+  _wccStoryIdx=i;
+  document.getElementById('wcc-story-view').classList.add('show');
+  _wccShowStory();
+}
+function _wccShowStory(){
+  const arr=window._wccStoryArr||[];
+  const s=arr[_wccStoryIdx];if(!s){wccCloseStory();return;}
+  clearTimeout(_wccStoryTimer);
+  document.getElementById('wcc-sv-progress').innerHTML=arr.map((_,j)=>'<div class="'+(j<_wccStoryIdx?'done':j===_wccStoryIdx?'cur':'')+'"><i></i></div>').join('');
+  document.getElementById('wcc-sv-head').innerHTML=_wccAvatar(s.authorName,s.authorId)+'<div>'+_wccEsc(s.authorName)+'<br><small>'+wccAgo(s.ts)+'</small></div>';
+  document.getElementById('wcc-sv-media').innerHTML=s.type==='video'
+    ?'<video src="'+s.data+'" autoplay muted playsinline></video>'
+    :'<img src="'+s.data+'">';
+  _wccStoryTimer=setTimeout(()=>wccStoryNav(1),6000);
+}
+function wccStoryNav(dir){
+  const arr=window._wccStoryArr||[];
+  _wccStoryIdx+=dir;
+  if(_wccStoryIdx<0||_wccStoryIdx>=arr.length){wccCloseStory();return;}
+  _wccShowStory();
+}
+function wccCloseStory(){clearTimeout(_wccStoryTimer);document.getElementById('wcc-story-view').classList.remove('show');}
+
+// ── Galerie ──
+function wccRenderGallery(){
+  const el=document.getElementById('wcc-gallery');if(!el)return;
+  const imgs=[];
+  Object.values(WCC_POSTS).sort((a,b)=>(b.ts||0)-(a.ts||0)).forEach(p=>{
+    const media=Array.isArray(p.media)?p.media:Object.values(p.media||{});
+    media.forEach(m=>{if(m&&m.type==='img')imgs.push(m.data);});
+  });
+  if(!imgs.length){el.innerHTML='<div class="wcc-empty">📸 Aucune photo partagée pour le moment.<br>Les photos des publications apparaîtront ici automatiquement.</div>';return;}
+  window._wccGal=imgs;
+  el.innerHTML='<div class="wcc-gal-grid">'+imgs.map((d,i)=>'<div class="wcc-gal-item" onclick="document.getElementById(\'wcc-lightbox-img\').src=_wccGal['+i+'];document.getElementById(\'wcc-lightbox\').classList.add(\'show\')"><img src="'+d+'" loading="lazy"></div>').join('')+'</div>';
+}
+
+// ── Classement ──
+function wccRenderRank(){
+  const el=document.getElementById('wcc-rank');if(!el)return;
+  const empNames={};ld('employees',[]).forEach(e=>{empNames[e.id]=e.prenom+' '+e.nom;});
+  const sc={};
+  const add=(id,name,pts)=>{
+    if(id==null)return;
+    if(!sc[id])sc[id]={name:name||empNames[id]||('Employé #'+id),p:0};
+    sc[id].p+=pts;
+    if(name)sc[id].name=name;
+  };
+  Object.values(WCC_POSTS).forEach(p=>{
+    add(p.authorId,p.authorName,5);
+    Object.values(p.comments||{}).forEach(c=>add(c.from,c.name,2));
+    Object.keys(p.reactions||{}).forEach(uid=>add(uid,null,1));
+  });
+  const arr=Object.entries(sc).map(([id,v])=>({id,...v})).sort((a,b)=>b.p-a.p).slice(0,10);
+  if(!arr.length){el.innerHTML='<div class="wcc-empty">🏆 Le classement apparaîtra dès les premières publications.</div>';return;}
+  const medals=['🥇','🥈','🥉'];
+  el.innerHTML=arr.map((u,i)=>'<div class="wcc-rank-row '+(i<3?'top':'')+'"><div class="wcc-rank-pos">'+(medals[i]||(i+1))+'</div>'+_wccAvatar(u.name,u.id)+'<div class="wcc-rank-name">'+_wccEsc(u.name)+'</div><div class="wcc-rank-pts">'+u.p+' pts</div></div>').join('');
+}
 function updHomePt(){renderActivity();}
 
 // ===== ACTIVITY =====
@@ -2778,6 +3515,16 @@ function renderPostesDash(){
 function openLF(){
   selReqType('conge');
   document.getElementById('lf-modal').classList.add('open');
+}
+function openLFType(t){
+  const m=document.getElementById('lf-modal');
+  if(!m) return;
+  m.classList.add('open');
+  setTimeout(()=>{ try{ selReqType(t); }catch(e){} },30);
+}
+function openWhatsAppGroup(){
+  const url='https://chat.whatsapp.com/JN6R2MdfwuMCTOAHZTgLg7?mode=gi_t';
+  try{ window.open(url,'_blank','noopener'); }catch(e){ window.location.href=url; }
 }
 function closeLF(){
   const m=document.getElementById('lf-modal');
@@ -3957,6 +4704,8 @@ function initApp(){
   try{ startInboxListener(); }catch(e){ console.warn('initApp inbox:', e); }
   // Démarrer listeners chat employé↔employé pour toutes les conversations existantes + nouvelles
   try{ startAllChatListeners(); }catch(e){ console.warn('initApp chat listeners:', e); }
+  // WECAN Connect (communauté)
+  try{ wccInit(); }catch(e){ console.warn('initApp wccInit:', e); }
   // Démarrer surveillance périmètre GPS
   setTimeout(()=>{ try{ startGeoWatch(); }catch(e){} }, 1500);
   // Mode test GPS caché (?debug=1 ou 5 taps sur la topbar)
