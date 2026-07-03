@@ -423,6 +423,69 @@ body::before{
   background:var(--surface);border-radius:22px;padding:19px;
   box-shadow:var(--sh-card);
 }
+/* Onglets Aujourd'hui / Historique */
+.pt-tabs{display:flex;gap:10px;margin-top:14px;margin-bottom:14px}
+.pt-tab-btn{display:flex;align-items:center;gap:8px;padding:11px 18px;border-radius:16px;border:1px solid var(--line);background:var(--surface);color:var(--sub);font-weight:700;font-size:13.5px;cursor:pointer;transition:.18s;letter-spacing:-.2px}
+.pt-tab-btn:hover{background:#F8FAFC}
+.pt-tab-btn.on{background:#FBE9E7;color:var(--brand);border-color:#F5B7B1;box-shadow:0 3px 10px -2px rgba(192,57,43,.18)}
+.pt-tab-badge{background:linear-gradient(135deg,var(--brand),#8B1A1A);color:#fff;font-size:10px;font-weight:800;padding:2px 7px;border-radius:9px;min-width:20px;text-align:center;margin-left:2px}
+.pt-tab-btn:not(.on) .pt-tab-badge{background:#E2E8F0;color:#64748B}
+.pt-panel{background:var(--surface);border-radius:20px;padding:16px;box-shadow:var(--sh-card);animation:pt-panel-in .25s ease}
+@keyframes pt-panel-in{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+.pt-hist-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.pt-hist-label{font-size:11px;font-weight:800;color:var(--sub);text-transform:uppercase;letter-spacing:1.1px;display:flex;align-items:center;gap:6px}
+body.dark .pt-tab-btn{background:#0F172A;border-color:rgba(255,255,255,.08);color:#94A3B8}
+body.dark .pt-tab-btn.on{background:rgba(192,57,43,.18);border-color:rgba(192,57,43,.5);color:#FCA5A5}
+body.dark .pt-panel{background:#111827}
+/* ═══ ESPACE PAUSE ═══ */
+.espace-pause{background:linear-gradient(135deg,#F5F3FF 0%,#EDE9FE 100%);border-radius:26px;padding:20px;margin-top:18px;box-shadow:var(--sh-card)}
+body.dark .espace-pause{background:linear-gradient(135deg,#1E1B3A 0%,#2A2454 100%)}
+.ep-head{margin-bottom:14px}
+.ep-title{font-size:19px;font-weight:800;letter-spacing:-.4px;color:var(--ink)}
+.ep-sub{font-size:12.5px;color:var(--sub);margin-top:3px;font-weight:500}
+.ep-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+@media (min-width:520px){ .ep-grid{grid-template-columns:repeat(3,1fr)} }
+.ep-btn{background:var(--surface);border:none;border-radius:18px;padding:16px 10px;box-shadow:0 2px 8px -2px rgba(0,0,0,.08);display:flex;flex-direction:column;align-items:center;gap:6px;cursor:pointer;transition:transform .15s,box-shadow .15s;font-weight:700;font-size:12.5px;color:var(--ink);text-align:center;line-height:1.25}
+.ep-btn:hover{transform:translateY(-2px);box-shadow:0 6px 18px -4px rgba(139,92,246,.28)}
+.ep-btn:active{transform:scale(.97)}
+.ep-btn-ico{font-size:24px;display:flex;align-items:center;justify-content:center;height:32px;line-height:1}
+body.dark .ep-btn{background:#0F172A;color:#E7EBF4}
+/* Modal Espace Pause */
+.ep-modal-card{background:var(--surface);border-radius:24px;padding:26px 22px 22px;max-width:400px;width:100%;box-shadow:0 24px 60px rgba(0,0,0,.35);position:relative;max-height:80vh;overflow-y:auto;animation:pt-panel-in .25s ease}
+.ep-modal-close{position:absolute;top:12px;right:12px;background:#F1F5F9;border:none;width:32px;height:32px;border-radius:50%;font-size:14px;cursor:pointer;color:#475569;display:flex;align-items:center;justify-content:center}
+body.dark .ep-modal-card{background:#111827;color:#E7EBF4}
+body.dark .ep-modal-close{background:rgba(255,255,255,.08);color:#E7EBF4}
+.doua-arabic{font-size:26px;text-align:center;font-weight:700;color:var(--brand);line-height:1.6;direction:rtl;margin:10px 0 14px;font-family:"Amiri","Traditional Arabic",serif}
+.doua-fr{font-size:14px;text-align:center;color:var(--sub);font-style:italic;margin-bottom:10px;line-height:1.5}
+.doua-nav{display:flex;justify-content:center;gap:8px;margin-top:16px}
+.doua-nav button{background:var(--brand);color:#fff;border:none;border-radius:12px;padding:8px 16px;font-size:12px;font-weight:700;cursor:pointer}
+.doua-nav button:hover{opacity:.9}
+.sante-tip-emoji{font-size:52px;text-align:center;margin:10px 0}
+.sante-tip-text{font-size:15px;text-align:center;color:var(--ink);line-height:1.5;font-weight:600;padding:0 6px}
+.sante-tip-sub{font-size:12px;text-align:center;color:var(--sub);margin-top:8px}
+.ep-modal-title{font-size:16px;font-weight:800;color:var(--ink);margin-bottom:12px;text-align:center;letter-spacing:-.3px}
+.ep-soon{text-align:center;padding:20px 0;color:var(--sub)}
+.ep-soon-ico{font-size:60px;margin-bottom:12px}
+.ep-soon-msg{font-size:14px;font-weight:600;color:var(--ink)}
+.ep-soon-sub{font-size:12px;margin-top:6px}
+.pt-filter-toggle{background:transparent;border:1px solid var(--line);color:var(--sub);width:26px;height:26px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
+.pt-filter-toggle.on,.pt-filter-toggle:hover{background:var(--brand);color:#fff;border-color:var(--brand)}
+.pt-filters{display:none;flex-direction:column;gap:6px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px dashed var(--line)}
+.pt-filters.open{display:flex}
+.pt-filter-row{display:flex;gap:6px}
+.pt-filter-input{flex:1;min-width:0;font-size:11px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font-weight:600}
+.pt-list{max-height:380px;overflow-y:auto;padding-right:2px}
+.pt-list::-webkit-scrollbar{width:4px}
+.pt-list::-webkit-scrollbar-thumb{background:var(--line);border-radius:2px}
+.pt-hist-cal{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:10px;font-size:10px}
+.pt-hist-cal .cal-hd{font-weight:800;color:var(--sub);text-align:center;padding:2px 0;text-transform:uppercase;letter-spacing:.5px}
+.pt-hist-cal .cal-d{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:6px;font-weight:700;color:var(--sub);cursor:pointer;transition:.1s;font-size:10px;position:relative}
+.pt-hist-cal .cal-d:hover{background:var(--line)}
+.pt-hist-cal .cal-d.has{background:#E4F5EC;color:#0B5C33}
+.pt-hist-cal .cal-d.today{outline:2px solid var(--brand);outline-offset:-2px}
+.pt-hist-cal .cal-d.sel{background:var(--brand);color:#fff}
+.pt-hist-cal .cal-d.mute{opacity:.3;pointer-events:none}
+.pt-empty{text-align:center;color:var(--gray);font-size:12px;padding:14px 0}
 .pt-hist-title{
   font-size:11px;font-weight:800;color:var(--sub);
   text-transform:uppercase;letter-spacing:1.2px;margin-bottom:14px;
@@ -612,7 +675,12 @@ input:focus,select:focus,textarea:focus{border-color:var(--red);box-shadow:0 0 0
 .bw.ai{background:#fff;color:#3E1C96;align-self:flex-start;border-bottom-left-radius:6px;border-left:3px solid #8B5CF6}
 .bw.ai-alert{background:#FBE9E7;color:#8E2318;align-self:flex-start;border-bottom-left-radius:6px;border-left:3px solid var(--red)}
 .bw.them{background:#fff;color:var(--ink);align-self:flex-start;border-bottom-left-radius:6px}
-.bw-time{font-size:10px;opacity:.55;margin-top:4px}
+.bw-time{font-size:10px;opacity:.55;margin-top:4px;display:flex;align-items:center;gap:4px}
+.bw-tick{font-size:11px;font-weight:700;line-height:1;letter-spacing:-1px;display:inline-flex}
+.tick-sent{color:rgba(255,255,255,.7)}
+.tick-delv{color:rgba(255,255,255,.85)}
+.tick-read{color:#4FC3F7}
+.bw.them .bw-tick{display:none}
 .typing{display:none;align-self:flex-start;background:#fff;border-left:3px solid #8B5CF6;border-radius:20px;padding:13px 16px;box-shadow:var(--sh-card)}
 .typing.show{display:flex;gap:4px}
 .typing span{width:7px;height:7px;background:#8B5CF6;border-radius:50%;animation:bounce .8s infinite}
@@ -1042,12 +1110,110 @@ const db = firebase.database();
     </div>
     <div style="padding:20px;text-align:center;color:rgba(255,255,255,.6);font-size:13px">Centrez le QR code dans le cadre rouge</div>
   </div>
-  <div class="pt-hist-wrap">
-    <div class="pt-hist-title">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+  <!-- ONGLETS Aujourd'hui / Historique -->
+  <div class="pt-tabs">
+    <button class="pt-tab-btn on" id="pt-tab-today" onclick="showPtTab('today')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      Aujourd'hui
+      <span class="pt-tab-badge" id="pt-today-count">0</span>
+    </button>
+    <button class="pt-tab-btn" id="pt-tab-hist" onclick="showPtTab('history')">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
       Historique
+    </button>
+  </div>
+  <!-- PANEL Aujourd'hui -->
+  <div class="pt-panel" id="pt-panel-today">
+    <div id="pt-today-list" class="pt-list"></div>
+  </div>
+  <!-- PANEL Historique -->
+  <div class="pt-panel" id="pt-panel-hist" style="display:none">
+    <div class="pt-hist-head">
+      <div class="pt-hist-label">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Historique
+      </div>
+      <button class="pt-filter-toggle" onclick="togglePtFilters()" id="pt-filter-btn" aria-label="Filtres">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"/></svg>
+      </button>
     </div>
-    <div id="pt-hist"></div>
+    <div class="pt-filters" id="pt-filters">
+      <div class="pt-filter-row">
+        <select id="pt-f-period" class="pt-filter-input" onchange="applyPtFilters()">
+          <option value="today">Aujourd'hui</option>
+          <option value="7">7 derniers jours</option>
+          <option value="30" selected>30 derniers jours</option>
+          <option value="month">Ce mois</option>
+          <option value="custom">Période perso</option>
+        </select>
+        <select id="pt-f-status" class="pt-filter-input" onchange="applyPtFilters()">
+          <option value="">Tous statuts</option>
+          <option value="Entree">Entrée</option>
+          <option value="Sortie">Sortie</option>
+          <option value="Debut pause">Début pause</option>
+          <option value="Fin pause">Fin pause</option>
+        </select>
+      </div>
+      <div class="pt-filter-row" id="pt-custom-range" style="display:none">
+        <input type="date" id="pt-f-from" class="pt-filter-input" onchange="applyPtFilters()">
+        <input type="date" id="pt-f-to"   class="pt-filter-input" onchange="applyPtFilters()">
+      </div>
+      <div class="pt-filter-row" id="pt-emp-row" style="display:none">
+        <select id="pt-f-emp" class="pt-filter-input" onchange="applyPtFilters()">
+          <option value="">Tous les employés</option>
+        </select>
+      </div>
+    </div>
+    <div class="pt-hist-cal" id="pt-hist-cal"></div>
+    <div id="pt-hist-list" class="pt-list"></div>
+  </div>
+
+  <!-- ═══ ESPACE PAUSE ═══ -->
+  <div class="espace-pause">
+    <div class="ep-head">
+      <div>
+        <div class="ep-title">🌴 Espace Pause</div>
+        <div class="ep-sub">Profitez de votre pause avec des activites relaxantes.</div>
+      </div>
+    </div>
+    <div class="ep-grid">
+      <button class="ep-btn" onclick="openEspacePause('jeux')">
+        <div class="ep-btn-ico">🎮</div>
+        <div>Jeux</div>
+      </button>
+      <button class="ep-btn" onclick="openEspacePause('quiz')">
+        <div class="ep-btn-ico">🧠</div>
+        <div>Quiz</div>
+      </button>
+      <button class="ep-btn" onclick="openEspacePause('erreurs')">
+        <div class="ep-btn-ico">🧩</div>
+        <div>7 Erreurs</div>
+      </button>
+      <button class="ep-btn" onclick="openEspacePause('histoires')">
+        <div class="ep-btn-ico">📖</div>
+        <div>Histoires</div>
+      </button>
+      <button class="ep-btn" onclick="openEspacePause('douaa')">
+        <div class="ep-btn-ico">🤲</div>
+        <div>Douaa</div>
+      </button>
+      <button class="ep-btn" onclick="openEspacePause('actu')">
+        <div class="ep-btn-ico">📰</div>
+        <div>Actualites</div>
+      </button>
+      <button class="ep-btn" onclick="openEspacePause('sante')">
+        <div class="ep-btn-ico">💚</div>
+        <div>Conseils Sante</div>
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal Espace Pause -->
+  <div id="ep-modal" onclick="if(event.target===this)closeEspacePause()" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:9998;align-items:center;justify-content:center;padding:20px">
+    <div class="ep-modal-card">
+      <button class="ep-modal-close" onclick="closeEspacePause()">✕</button>
+      <div id="ep-modal-body"></div>
+    </div>
   </div>
   <div id="pt-summary-card" style="display:none"><div id="sum-row"></div></div>
 </div>
@@ -1522,7 +1688,7 @@ function showPage(p){
   document.getElementById('tab-'+p).classList.add('active');
   try{updateTabAlerts();}catch(e){}
   if(p==='accueil') renderHome();
-  if(p==='pointage'){renderPtHist();renderPtSummary();updateStatutBadge();}
+  if(p==='pointage'){showPtTab('today');renderPtSummary();updateStatutBadge();}
   if(p==='conges') renderLeaves();
   if(p==='chat') renderConvs();
   if(p==='profil') renderProfil();
@@ -2247,49 +2413,250 @@ function renderPtSummary(){
   if(btnS&&sortie){btnS.style.opacity='0.75';btnS.style.boxShadow='none';}
 }
 
+// ═══ ICONES POINTAGE (partages entre today/hist) ═══
+const _PT_ICO={
+  'Entree':[`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>`,'h-in'],
+  'Sortie':[`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,'h-out'],
+  'Debut pause':[`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`,'h-pb'],
+  'Fin pause':[`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>`,'h-pe']
+};
+function _ptItemHtml(p){
+  const [ico,cls]=_PT_ICO[p.type]||_PT_ICO['Entree'];
+  const typeLabel={'Entree':'Entree','Sortie':'Sortie','Debut pause':'Debut pause','Fin pause':'Fin pause'}[p.type]||p.type;
+  return `<div class="hist-item"><div class="h-dot ${cls}">${ico}</div><div class="h-info"><div class="h-type">${typeLabel}</div><div class="h-meta">${p.agenceName||'Agence'} · ${p.method||'GPS'}</div></div><div class="h-time">${p.time}</div></div>`;
+}
+
+// ═══ CARTE 1 : POINTAGES DU JOUR ═══
+function renderPtToday(){
+  const el=document.getElementById('pt-today-list');
+  if(!el) return;
+  const pts=ld('pointages',[]).filter(p=>p.empId===ME.id&&p.date===tday()).sort((a,b)=>a.time.localeCompare(b.time));
+  const cntEl=document.getElementById('pt-today-count');
+  if(cntEl) cntEl.textContent=pts.length;
+  if(!pts.length){ el.innerHTML='<div class="pt-empty">Aucun pointage aujourd\'hui</div>'; return; }
+  el.innerHTML=pts.map(_ptItemHtml).join('');
+}
+
+// ═══ CARTE 2 : HISTORIQUE FILTRE + CALENDRIER ═══
+window._ptFilter={period:'30',status:'',from:'',to:'',empId:'',selDate:''};
+function togglePtFilters(){
+  const p=document.getElementById('pt-filters');
+  const b=document.getElementById('pt-filter-btn');
+  if(!p) return;
+  p.classList.toggle('open');
+  if(b) b.classList.toggle('on', p.classList.contains('open'));
+}
+function _parseFrDate(d){ // "DD/MM/YYYY" → Date
+  const parts=(d||'').split('/'); if(parts.length!==3) return null;
+  return new Date(+parts[2], (+parts[1])-1, +parts[0]);
+}
+function _toFrDate(d){ // Date → "DD/MM/YYYY"
+  const p=(n)=>(n<10?'0':'')+n;
+  return p(d.getDate())+'/'+p(d.getMonth()+1)+'/'+d.getFullYear();
+}
+function _isoToFr(iso){ // "YYYY-MM-DD" → "DD/MM/YYYY"
+  if(!iso) return ''; const parts=iso.split('-'); if(parts.length!==3) return '';
+  return parts[2]+'/'+parts[1]+'/'+parts[0];
+}
+function applyPtFilters(){
+  const f=window._ptFilter;
+  const pd=document.getElementById('pt-f-period'); if(pd) f.period=pd.value;
+  const st=document.getElementById('pt-f-status'); if(st) f.status=st.value;
+  const fr=document.getElementById('pt-f-from');   if(fr) f.from=_isoToFr(fr.value);
+  const to=document.getElementById('pt-f-to');     if(to) f.to  =_isoToFr(to.value);
+  const em=document.getElementById('pt-f-emp');    if(em) f.empId=em.value;
+  document.getElementById('pt-custom-range').style.display=(f.period==='custom')?'flex':'none';
+  f.selDate='';
+  renderPtHist();
+}
+function _ptDateInRange(dateFr){
+  const f=window._ptFilter;
+  const d=_parseFrDate(dateFr); if(!d) return false;
+  d.setHours(0,0,0,0);
+  const today=new Date(); today.setHours(0,0,0,0);
+  if(f.period==='today') return dateFr===tday();
+  if(f.period==='7'){ const cut=new Date(today); cut.setDate(cut.getDate()-7); return d>=cut && d<=today; }
+  if(f.period==='30'){ const cut=new Date(today); cut.setDate(cut.getDate()-30); return d>=cut && d<=today; }
+  if(f.period==='month'){ return d.getMonth()===today.getMonth() && d.getFullYear()===today.getFullYear(); }
+  if(f.period==='custom'){
+    const from=f.from?_parseFrDate(f.from):null;
+    const to  =f.to  ?_parseFrDate(f.to)  :null;
+    if(from && d<from) return false;
+    if(to && d>to) return false;
+    return true;
+  }
+  return true;
+}
 function renderPtHist(){
-  const pts=ld('pointages',[]).filter(p=>p.empId===ME.id);
-  const hist=document.getElementById('pt-hist');
-  if(!pts.length){hist.innerHTML='<div style="text-align:center;color:#94a3b8;font-size:13px;padding:20px 0">Aucun pointage enregistre</div>';return;}
+  const listEl=document.getElementById('pt-hist-list');
+  const calEl =document.getElementById('pt-hist-cal');
+  if(!listEl) return;
+  const f=window._ptFilter;
+  const isAdmin=ME&&(ME.role==='admin'||ME.role==='rh');
+  // Alimenter le select employés si admin
+  const empRow=document.getElementById('pt-emp-row');
+  if(empRow){
+    empRow.style.display=isAdmin?'flex':'none';
+    if(isAdmin){
+      const sel=document.getElementById('pt-f-emp');
+      if(sel && sel.options.length<=1){
+        const emps=ld('employees',[]);
+        sel.innerHTML='<option value="">Tous les employés</option>'+emps.map(e=>`<option value="${e.id}">${e.prenom} ${e.nom}</option>`).join('');
+      }
+    }
+  }
+  // Filtrer les pointages
+  let pts=ld('pointages',[]);
+  if(!isAdmin || !f.empId){ pts=pts.filter(p=>p.empId===ME.id); }
+  else if(f.empId){ pts=pts.filter(p=>String(p.empId)===String(f.empId)); }
+  pts=pts.filter(p=>_ptDateInRange(p.date));
+  if(f.status) pts=pts.filter(p=>p.type===f.status);
+  if(f.selDate) pts=pts.filter(p=>p.date===f.selDate);
+  // Calendrier (mois courant)
+  if(calEl){
+    const today=new Date();
+    const y=today.getFullYear(), mo=today.getMonth();
+    const firstDay=new Date(y,mo,1);
+    const lastDay =new Date(y,mo+1,0).getDate();
+    const startDow=firstDay.getDay(); // 0=Dim
+    const jours=['D','L','M','M','J','V','S'];
+    let html=jours.map(j=>`<div class="cal-hd">${j}</div>`).join('');
+    for(let i=0;i<startDow;i++) html+='<div class="cal-d mute"></div>';
+    const daysWithPt=new Set(ld('pointages',[]).filter(p=>p.empId===ME.id).map(p=>p.date));
+    for(let d=1;d<=lastDay;d++){
+      const fr=(d<10?'0':'')+d+'/'+((mo+1)<10?'0':'')+(mo+1)+'/'+y;
+      const cls=['cal-d'];
+      if(daysWithPt.has(fr)) cls.push('has');
+      if(fr===tday()) cls.push('today');
+      if(f.selDate===fr) cls.push('sel');
+      html+=`<div class="${cls.join(' ')}" onclick="selectPtDate('${fr}')">${d}</div>`;
+    }
+    calEl.innerHTML=html;
+  }
+  if(!pts.length){ listEl.innerHTML='<div class="pt-empty">Aucun pointage sur cette periode</div>'; return; }
+  // Grouper par date
   const byDate={};
-  pts.forEach(p=>{if(!byDate[p.date])byDate[p.date]=[];byDate[p.date].push(p);});
-  const dates=Object.keys(byDate).sort().reverse();
-  const typeIco={
-    'Entree':[`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>`,'h-in'],
-    'Sortie':[`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>`,'h-out'],
-    'Debut pause':[`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>`,'h-pb'],
-    'Fin pause':[`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>`,'h-pe']
-  };
-  hist.innerHTML=dates.slice(0,7).map(dt=>{
+  pts.forEach(p=>{ if(!byDate[p.date])byDate[p.date]=[]; byDate[p.date].push(p); });
+  const dates=Object.keys(byDate).sort((a,b)=>{
+    const da=_parseFrDate(a), db=_parseFrDate(b);
+    return (db?db.getTime():0)-(da?da.getTime():0);
+  });
+  const jours=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+  const moisC=['jan','fev','mar','avr','mai','jui','jul','aou','sep','oct','nov','dec'];
+  listEl.innerHTML=dates.slice(0,30).map(dt=>{
     const dpts=byDate[dt].slice().sort((a,b)=>a.time.localeCompare(b.time));
     let tPause=0;
     const pbs=dpts.filter(p=>p.type==='Debut pause');
     const pes=dpts.filter(p=>p.type==='Fin pause');
-    pbs.forEach((pb,i)=>{if(pes[i]){const d=toMins2(pes[i].time)-toMins2(pb.time);if(d>0)tPause+=d;}});
+    pbs.forEach((pb,i)=>{ if(pes[i]){ const d=toMins2(pes[i].time)-toMins2(pb.time); if(d>0)tPause+=d; }});
     const ent=dpts.find(p=>p.type==='Entree');
     const srt=dpts.find(p=>p.type==='Sortie');
     let netH='';
-    if(ent&&srt){const n=Math.max(0,toMins2(srt.time)-toMins2(ent.time)-tPause);netH=Math.floor(n/60)+'h'+(n%60?n%60+'m':'');}
+    if(ent&&srt){ const n=Math.max(0,toMins2(srt.time)-toMins2(ent.time)-tPause); netH=Math.floor(n/60)+'h'+(n%60?n%60+'m':''); }
     const pauseH=tPause?Math.floor(tPause/60)+'h'+(tPause%60?tPause%60+'m':''):'';
     const parts=dt.split('/');
     const dateObj=new Date(parts[2],parts[1]-1,parts[0]);
-    const jours=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
-    const moisC=['jan','fev','mar','avr','mai','jui','jul','aou','sep','oct','nov','dec'];
     const dtLabel=jours[dateObj.getDay()]+' '+parts[0]+' '+moisC[parseInt(parts[1])-1];
     return `<div class="hist-day"><span style="font-weight:800;color:#475569">${dtLabel}</span>
       <div class="hist-badges">
-        ${pauseH?`<span class="hist-badge hb-pause"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg> ${pauseH}</span>`:''}
-        ${netH?`<span class="hist-badge hb-work"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> ${netH}</span>`:''}
+        ${pauseH?`<span class="hist-badge hb-pause">${pauseH}</span>`:''}
+        ${netH?`<span class="hist-badge hb-work">${netH}</span>`:''}
       </div></div>`+
-    dpts.map(p=>{
-      const[ico,cls]=typeIco[p.type]||[`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>`,'h-in'];
-      const typeLabel={'Entree':'Entree','Sortie':'Sortie','Debut pause':'Debut pause','Fin pause':'Fin pause'}[p.type]||p.type;
-      return `<div class="hist-item"><div class="h-dot ${cls}">${ico}</div><div class="h-info"><div class="h-type">${typeLabel}</div><div class="h-meta">${p.agenceName||'Agence'} · ${p.method||'GPS'}</div></div><div class="h-time">${p.time}</div></div>`;
-    }).join('');
+    dpts.map(_ptItemHtml).join('');
   }).join('');
 }
+function selectPtDate(fr){
+  const f=window._ptFilter;
+  f.selDate=(f.selDate===fr)?'':fr;
+  renderPtHist();
+}
+function updPt(){renderPtSummary();renderPtToday();renderPtHist();}
 
-function updPt(){renderPtSummary();renderPtHist();}
+// ═══ ONGLETS AUJOURD'HUI / HISTORIQUE ═══
+function showPtTab(t){
+  const btnT=document.getElementById('pt-tab-today');
+  const btnH=document.getElementById('pt-tab-hist');
+  const panT=document.getElementById('pt-panel-today');
+  const panH=document.getElementById('pt-panel-hist');
+  if(!btnT||!btnH||!panT||!panH) return;
+  if(t==='history'){
+    btnH.classList.add('on'); btnT.classList.remove('on');
+    panT.style.display='none'; panH.style.display='block';
+    renderPtHist();
+  } else {
+    btnT.classList.add('on'); btnH.classList.remove('on');
+    panH.style.display='none'; panT.style.display='block';
+    renderPtToday();
+  }
+}
+
+// ═══ ESPACE PAUSE ═══
+const DOUAS=[
+  {ar:'اللَّهُمَّ بَارِكْ لَنَا فِيمَا رَزَقْتَنَا وَقِنَا عَذَابَ النَّارِ', fr:'O Allah, benis-nous dans ce que Tu nous as accorde et preserve-nous du chatiment du Feu.'},
+  {ar:'بِسْمِ اللَّهِ', fr:'Au nom d Allah.'},
+  {ar:'الْحَمْدُ لِلَّهِ الَّذِي أَطْعَمَنَا وَسَقَانَا وَجَعَلَنَا مُسْلِمِينَ', fr:'Louange a Allah qui nous a nourris, abreuves et faits musulmans.'},
+  {ar:'اللَّهُمَّ إِنِّي أَسْأَلُكَ عِلْماً نَافِعاً وَرِزْقاً طَيِّباً وَعَمَلاً مُتَقَبَّلاً', fr:'O Allah, je Te demande une science utile, une subsistance saine et une action agreee.'},
+  {ar:'رَبِّ اشْرَحْ لِي صَدْرِي وَيَسِّرْ لِي أَمْرِي', fr:'Seigneur, ouvre-moi la poitrine et facilite-moi mon affaire.'}
+];
+const HEALTHY_TIPS=[
+  {ico:'🍽️', txt:'Mange lentement — ton cerveau met 20 min pour sentir la satiete.', sub:'Prends le temps de savourer.'},
+  {ico:'💧', txt:'Bois au moins 1 verre d eau pendant ta pause.', sub:'L hydratation booste la concentration.'},
+  {ico:'🥤', txt:'Evite les boissons trop sucrees.', sub:'Elles provoquent un coup de barre 1h plus tard.'},
+  {ico:'🚶', txt:'Fais une petite marche apres le repas.', sub:'5 min suffisent pour ameliorer la digestion.'},
+  {ico:'🥗', txt:'Privilegie les legumes dans ton assiette.', sub:'Fibres, vitamines, energie durable.'},
+  {ico:'⏳', txt:'Ne reprends pas le travail immediatement apres avoir mange.', sub:'Laisse 10-15 min a ton corps.'},
+  {ico:'🧘', txt:'Respire profondement quelques instants avant de reprendre.', sub:'3 respirations lentes = reset mental.'},
+  {ico:'☕', txt:'Le cafe apres 15h peut perturber ton sommeil.', sub:'Prefere une tisane ou de l eau.'},
+  {ico:'😊', txt:'Souris a un collegue — c est contagieux et ca detend.', sub:'Bien-etre gratuit.'},
+  {ico:'🌤️', txt:'Prends l air 2 min si possible.', sub:'La lumiere naturelle recharge.'}
+];
+function _dayIdx(mod){
+  const d=new Date();
+  const dayOfYear=Math.floor((d - new Date(d.getFullYear(),0,0))/86400000);
+  return dayOfYear % mod;
+}
+let _dIdx=0;
+function openEspacePause(kind){
+  const m=document.getElementById('ep-modal');
+  const b=document.getElementById('ep-modal-body');
+  if(!m||!b) return;
+  m.style.display='flex';
+  if(kind==='douaa'){
+    _dIdx=0;
+    _renderDoua();
+  } else if(kind==='sante'){
+    _renderSanteTip();
+  } else {
+    const meta={
+      jeux:{ico:'🎮',t:'Jeux',s:'Mini-jeux relaxants (bientot disponibles).'},
+      quiz:{ico:'🧠',t:'Quiz',s:'Quiz culture generale et RH (bientot disponibles).'},
+      erreurs:{ico:'🧩',t:'7 Erreurs',s:'Trouve les differences entre 2 images (bientot).'},
+      histoires:{ico:'📖',t:'Histoires',s:'Courtes histoires inspirantes (bientot).'},
+      actu:{ico:'📰',t:'Actualites',s:'Fil d actualites Wecan (bientot connecte).'}
+    }[kind]||{ico:'✨',t:'Activite',s:'Bientot disponible.'};
+    b.innerHTML='<div class="ep-modal-title">'+meta.t+'</div><div class="ep-soon"><div class="ep-soon-ico">'+meta.ico+'</div><div class="ep-soon-msg">Bientot disponible</div><div class="ep-soon-sub">'+meta.s+'</div></div>';
+  }
+}
+function closeEspacePause(){ const m=document.getElementById('ep-modal'); if(m) m.style.display='none'; }
+function _renderDoua(){
+  const b=document.getElementById('ep-modal-body');
+  const d=DOUAS[_dIdx];
+  b.innerHTML='<div class="ep-modal-title">🤲 Douaa avant le repas</div><div class="doua-arabic">'+d.ar+'</div><div class="doua-fr">'+d.fr+'</div><div class="doua-nav"><button onclick="_doua(-1)">← Precedent</button><button onclick="_doua(1)">Suivant →</button></div><div style="text-align:center;font-size:11px;color:var(--sub);margin-top:10px">'+(_dIdx+1)+' / '+DOUAS.length+'</div>';
+}
+function _doua(dir){ _dIdx=(_dIdx+dir+DOUAS.length)%DOUAS.length; _renderDoua(); }
+function _renderSanteTip(){
+  const b=document.getElementById('ep-modal-body');
+  const t=HEALTHY_TIPS[_dayIdx(HEALTHY_TIPS.length)];
+  b.innerHTML='<div class="ep-modal-title">💚 Conseil sante du jour</div><div class="sante-tip-emoji">'+t.ico+'</div><div class="sante-tip-text">'+t.txt+'</div><div class="sante-tip-sub">'+t.sub+'</div><div class="doua-nav"><button onclick="_nextTip()">🔄 Autre conseil</button></div>';
+}
+let _tipRand=null;
+function _nextTip(){
+  const b=document.getElementById('ep-modal-body');
+  let idx; do{ idx=Math.floor(Math.random()*HEALTHY_TIPS.length); }while(idx===_tipRand&&HEALTHY_TIPS.length>1);
+  _tipRand=idx;
+  const t=HEALTHY_TIPS[idx];
+  b.innerHTML='<div class="ep-modal-title">💚 Conseil sante</div><div class="sante-tip-emoji">'+t.ico+'</div><div class="sante-tip-text">'+t.txt+'</div><div class="sante-tip-sub">'+t.sub+'</div><div class="doua-nav"><button onclick="_nextTip()">🔄 Autre conseil</button></div>';
+}
 function updHomePt(){renderActivity();}
 
 // ===== ACTIVITY =====
@@ -2592,9 +2959,10 @@ function openConv(id){
   document.getElementById('chat-win').classList.add('open');
   renderMsgs(id);
   updBadge();
-  // Pour conversations directes (non-AI), écouter les réponses Firebase
+  // Pour conversations directes (non-AI), écouter les réponses Firebase + marquer comme lu
   if(!isAI && id){
     _listenDirectConv(id);
+    if(id!=='admin_direct' && !id.startsWith('direct_admin')) _markInboundAsRead(id);
   }
 }
 function closeWin(){document.getElementById('chat-win').classList.remove('open');renderConvs();}
@@ -2624,32 +2992,95 @@ function sendRdv(){
 
 // ===== FIREBASE DIRECT CONV LISTENER =====
 const _convListeners={};
+const _convOutListeners={};
+function _markInboundAsRead(convId){
+  if(!ME) return;
+  msgs=ld('emp_msgs',{});
+  const list=msgs[convId]||[];
+  list.filter(m=>m.from&&m.from!==ME.id&&m.fbKey).forEach(m=>{
+    try{ db.ref('wecan/per_emp/'+m.from+'/direct_out/'+convId+'/'+m.fbKey+'/status').set('read'); }catch(e){}
+  });
+}
 function _listenDirectConv(convId){
   if(_convListeners[convId]) return; // Already listening
   try{
-    const otherEmpIds=(convs.find(c=>c.id===convId)||{}).participants||[];
     const myId=ME.id;
-    // Listen to our inbox for messages sent by others to this conversation
+    // Inbox: messages arriving from others in this conv
     db.ref('wecan/per_emp/'+myId+'/direct/'+convId).on('child_added',snap=>{
       const m=snap.val(); if(!m) return;
+      const fbKey=snap.key;
+      if(m.from===myId) return; // Skip messages we sent (already in local)
       msgs=ld('emp_msgs',{});
       if(!msgs[convId]) msgs[convId]=[];
-      if(!msgs[convId].find(x=>x.ts&&x.ts===m.ts)){
-        msgs[convId].push(m);
+      if(!msgs[convId].find(x=>(x.fbKey&&x.fbKey===fbKey)||(x.ts&&x.ts===m.ts))){
+        msgs[convId].push({...m,fbKey});
         sv('emp_msgs',msgs);
         const c=convs.find(x=>x.id===convId);
         if(c){c.lastMsg=m.text;c.lastTime=m.time;if(aCid!==convId)c.unread=(c.unread||0)+1;sv('emp_convs',convs);}
+        // Send delivery ack to sender
+        if(m.from){
+          try{
+            const targetStatus = (aCid===convId) ? 'read' : 'delivered';
+            db.ref('wecan/per_emp/'+m.from+'/direct_out/'+convId+'/'+fbKey+'/status').set(targetStatus);
+          }catch(e){}
+        }
         if(aCid===convId) renderMsgs(convId);
         updBadge();
-        showToast('💬 '+m.name+': '+m.text.slice(0,40));
-        // Notification lock screen
+        if(aCid!==convId) showToast('💬 '+m.name+': '+m.text.slice(0,40));
         if(document.hidden || !document.hasFocus()){
           pushNotif('💬 '+m.name, m.text.slice(0,80), {action:'chat', convId}, {sticky:false, tag:'chat-'+convId});
         }
       }
     });
+    // Outbound: status updates (delivered/read) for messages we sent
+    if(!_convOutListeners[convId]){
+      db.ref('wecan/per_emp/'+myId+'/direct_out/'+convId).on('child_changed',snap=>{
+        const upd=snap.val(); if(!upd||!upd.status) return;
+        const fbKey=snap.key;
+        msgs=ld('emp_msgs',{});
+        const list=msgs[convId]||[];
+        const local=list.find(x=>x.fbKey===fbKey);
+        if(local && local.status!==upd.status){
+          local.status=upd.status;
+          sv('emp_msgs',msgs);
+          if(aCid===convId) renderMsgs(convId);
+        }
+      });
+      _convOutListeners[convId]=true;
+    }
     _convListeners[convId]=true;
-  }catch(e){}
+  }catch(e){ console.warn('[Chat] _listenDirectConv',convId,e); }
+}
+function startAllChatListeners(){
+  if(!ME) return;
+  convs=ld('emp_convs',[]);
+  convs.filter(c=>c.type==='direct' && c.id!=='admin_direct' && !c.id.startsWith('direct_admin')).forEach(c=>{
+    _listenDirectConv(c.id);
+  });
+  // Watch for NEW conversations initiated by others
+  try{
+    db.ref('wecan/per_emp/'+ME.id+'/direct').on('child_added',snap=>{
+      const convId=snap.key;
+      convs=ld('emp_convs',[]);
+      if(convs.find(c=>c.id===convId)){ _listenDirectConv(convId); return; }
+      // New conv: derive info from first message
+      db.ref('wecan/per_emp/'+ME.id+'/direct/'+convId).limitToFirst(1).once('value').then(first=>{
+        const val=first.val(); if(!val) return;
+        const firstKey=Object.keys(val)[0];
+        const firstMsg=val[firstKey];
+        const senderId=firstMsg.from||firstMsg.empId;
+        if(senderId===ME.id) return;
+        const senderName=firstMsg.name||firstMsg.empName||'Contact';
+        const av=senderName.split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
+        convs=ld('emp_convs',[]);
+        if(convs.find(c=>c.id===convId)){ _listenDirectConv(convId); return; }
+        convs.push({id:convId,type:'direct',name:senderName,participants:[ME.id,senderId],unread:0,lastMsg:'',lastTime:'',avatar:av,color:'#FDEDEC'});
+        sv('emp_convs',convs);
+        try{ renderConvs&&renderConvs(); }catch(e){}
+        _listenDirectConv(convId);
+      });
+    });
+  }catch(e){ console.warn('[Chat] Global new-conv listener',e); }
 }
 
 function renderMsgs(cid){
@@ -2665,7 +3096,16 @@ function renderMsgs(cid){
     const cls=isMe?'me':isAI?'ai':'them';
     const div=document.createElement('div');
     div.className='bw '+cls;
-    div.innerHTML=m.text+'<div class="bw-time">'+m.time+'</div>';
+    let tickHtml='';
+    if(isMe && m.fbKey){
+      const s=m.status||'sent';
+      if(s==='read') tickHtml=' <span class="bw-tick tick-read" title="Vu">&#10003;&#10003;</span>';
+      else if(s==='delivered') tickHtml=' <span class="bw-tick tick-delv" title="Recu">&#10003;&#10003;</span>';
+      else tickHtml=' <span class="bw-tick tick-sent" title="Envoye">&#10003;</span>';
+    }
+    // Échapper le texte pour éviter XSS depuis d'autres employés
+    const safeText=(m.text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+    div.innerHTML=safeText+'<div class="bw-time">'+m.time+tickHtml+'</div>';
     area.insertBefore(div,typing);
   });
   area.scrollTop=area.scrollHeight;
@@ -2680,7 +3120,7 @@ function sMsg(){
   if(!msgs[aCid])msgs[aCid]=[];
   const m={from:ME.id,name:ME.prenom+' '+ME.nom,text:txt,time:now(),date:tday()};
   const ts = Date.now();
-  const fullMsg={...m,ts};
+  const fullMsg={...m,ts,status:'sent'};
   msgs[aCid].push(fullMsg);
   sv('emp_msgs',msgs);
   const c=convs.find(x=>x.id===aCid);
@@ -2694,11 +3134,23 @@ function sMsg(){
     window._lastOutboxMsg={...m,ts,empName:ME.prenom+' '+ME.nom,empId:ME.id,convId:aCid};
     try{ db.ref('wecan/emp_outbox/'+ME.id+'/msgs').push(window._lastOutboxMsg); }catch(e){}
   } else {
-    // Message employé → employé : pousser dans Firebase inbox du destinataire
+    // Message employé → employé : pousser dans Firebase inbox du destinataire + tracker sortant
     const conv=convs.find(x=>x.id===aCid);
     if(conv&&conv.participants){
       conv.participants.filter(pid=>pid!==ME.id).forEach(pid=>{
-        try{ db.ref('wecan/per_emp/'+pid+'/direct/'+aCid).push(fullMsg); }catch(e){}
+        try{
+          const ref=db.ref('wecan/per_emp/'+pid+'/direct/'+aCid).push();
+          const fbKey=ref.key;
+          ref.set({...fullMsg,fbKey});
+          // Mirror local pour tracker delivered/read
+          db.ref('wecan/per_emp/'+ME.id+'/direct_out/'+aCid+'/'+fbKey).set({...fullMsg,fbKey,toId:pid});
+          // Attacher fbKey au message local
+          msgs=ld('emp_msgs',{});
+          const local=(msgs[aCid]||[]).find(x=>x.ts===ts);
+          if(local){ local.fbKey=fbKey; sv('emp_msgs',msgs); }
+          // Écouter les changements de statut pour cette conv (idempotent)
+          _listenDirectConv(aCid);
+        }catch(e){ console.warn('[Chat] send',e); }
       });
     }
     // Notifier admin aussi via outbox
@@ -2717,32 +3169,60 @@ async function aiR(text,cid){
   const knowledgeBase = localStorage.getItem('wecan_agent_knowledge') || 'REGLEMENT & INFORMATIONS WECAN SERVICES:\n- Equipe 1 : Horaires 8h00-17h00, du samedi au jeudi.\n- Equipe 2 : Horaires 11h30-20h00, du samedi au jeudi.\n- Pour connaitre ses heures de travail : consulter son compte dans l application (onglet pointage ou profil).\n- Conge annuel : Toujours voir avec Mr Billel le gerant general, pas de regle fixe.\n- Contact RH : 0770450055\n- Retard tolere : 15 minutes maximum.\n- Heures supplementaires : Payees normalement. Les jours feries comptent double journee ou recuperation selon le travail effectue.\n- Responsable general : Mr Billel (1er responsable de l entreprise).';
   const context=`Tu es Agent RH IA pour WeCheckin, assistant de ${ME.prenom} ${ME.nom} (${ME.poste}, agence ${ME.agenceId}). Aujourd\u2019hui: entree=${ent?ent.time:'non pointe'}, sortie=${srt?srt.time:'N/A'}.\n\nBASE DE CONNAISSANCES ENTREPRISE:\n${knowledgeBase}\n\nReponds en francais avec emojis. Utilise ces informations pour repondre. Si tu ne connais pas la reponse, dis de contacter le RH au 0770450055 ou Mr Billel.`;
   const gk=localStorage.getItem('groq_api_key')||GK;
-  if(!gk){
+  console.log('[Groq] Cle detectee: len='+(gk?gk.length:0)+', prefix='+(gk?gk.slice(0,7):'(vide)'));
+  if(!gk||gk.length<20){
     typing.classList.remove('show');
     msgs=ld('emp_msgs',{});if(!msgs[cid])msgs[cid]=[];
     msgs[cid].push({from:'ai',name:'Agent IA',text:"\u26a0\ufe0f Clé API manquante.\n\nAllez sur console.groq.com (gratuit), copiez votre clé, puis dans la console du navigateur (F12) tapez :\n\nlocalStorage.setItem('groq_api_key', 'gsk_VOTRE_CLE')",time:now(),date:tday()});
     sv('emp_msgs',msgs);renderMsgs(cid);return;
   }
   const history=(msgs[cid]||[]).slice(-6).map(m=>({role:m.from==='ai'?'assistant':'user',content:m.text}));
-  try{
-    const res=await fetch(GU,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+gk},body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'system',content:context},...history,{role:'user',content:text}],max_tokens:300,temperature:0.7})});
-    const data=await res.json();
-    const reply=data.choices?.[0]?.message?.content||'Desolee, je ne peux pas repondre maintenant. 😔';
+  const pushAiReply=(txt)=>{
     typing.classList.remove('show');
     msgs=ld('emp_msgs',{});
     if(!msgs[cid])msgs[cid]=[];
-    msgs[cid].push({from:'ai',name:'Agent IA',text:reply,time:now(),date:tday()});
+    msgs[cid].push({from:'ai',name:'Agent IA',text:txt,time:now(),date:tday()});
     sv('emp_msgs',msgs);
     const c=convs.find(x=>x.id===cid);
-    if(c){c.lastMsg=reply.substring(0,40)+'...';c.lastTime=now();sv('emp_convs',convs);}
+    if(c){c.lastMsg=txt.substring(0,40)+'...';c.lastTime=now();sv('emp_convs',convs);}
     renderMsgs(cid);
-  }catch(e){
-    typing.classList.remove('show');
-    msgs=ld('emp_msgs',{});
-    if(!msgs[cid])msgs[cid]=[];
-    msgs[cid].push({from:'ai',name:'Agent IA',text:'Desolee, service temporairement indisponible. Reessayez. 🙏',time:now(),date:tday()});
-    sv('emp_msgs',msgs);renderMsgs(cid);
+  };
+  const models=['llama-3.3-70b-versatile','llama-3.1-70b-versatile','llama3-70b-8192','llama-3.1-8b-instant'];
+  let lastErr='', data=null, usedModel='', hardFail=false, hardMsg='';
+  for(const model of models){
+    try{
+      console.log('[Groq] Tentative modele:',model);
+      const res=await fetch(GU,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+gk},body:JSON.stringify({model,messages:[{role:'system',content:context},...history,{role:'user',content:text}],max_tokens:400,temperature:0.7})});
+      const rawText=await res.text();
+      try{ data=JSON.parse(rawText); }catch(_){ data={raw:rawText}; }
+      console.log('[Groq] HTTP',res.status,'model=',model,'response=',data);
+      if(res.ok && data && data.choices && data.choices[0] && data.choices[0].message && data.choices[0].message.content){ usedModel=model; break; }
+      if(res.status===401){
+        hardFail=true;
+        hardMsg="Cle API refusee (401). Votre cle Groq est invalide ou expiree.\nCreez une nouvelle sur console.groq.com/keys, puis en console (F12) tapez:\nlocalStorage.setItem('groq_api_key','gsk_...') et rechargez.";
+        break;
+      }
+      if(res.status===429){
+        hardFail=true;
+        hardMsg='Limite atteinte (429). Trop de requetes ou quota gratuit epuise. Attendez 1 min. Details: '+((data.error&&data.error.message)||'rate limit');
+        break;
+      }
+      lastErr='HTTP '+res.status+' - '+((data.error&&(data.error.message||data.error.code))||JSON.stringify(data).slice(0,150));
+      if(res.status===400 && /decommissioned|not.*found|invalid.*model|does.*not.*exist/i.test(JSON.stringify(data))){ data=null; continue; }
+      break;
+    }catch(e){
+      lastErr='Reseau: '+(e&&e.message||String(e));
+      console.error('[Groq] Erreur fetch',e);
+      break;
+    }
   }
+  if(hardFail){ pushAiReply(hardMsg); return; }
+  if(!data||!data.choices||!data.choices[0]||!data.choices[0].message||!data.choices[0].message.content){
+    pushAiReply('Service IA indisponible. '+(lastErr||'Erreur inconnue')+'\nOuvrez la console (F12) pour plus de details, ou contactez le RH au 0770450055.');
+    return;
+  }
+  console.log('[Groq] Reponse OK (modele:',usedModel,')');
+  pushAiReply(data.choices[0].message.content);
 }
 
 function openAgentChat(){openConv('agent');}
@@ -3455,6 +3935,8 @@ function initApp(){
   try{ initLangBtn(); }catch(e){}
   // Démarrer listener messages admin → employé (après login, ME est défini)
   try{ startInboxListener(); }catch(e){ console.warn('initApp inbox:', e); }
+  // Démarrer listeners chat employé↔employé pour toutes les conversations existantes + nouvelles
+  try{ startAllChatListeners(); }catch(e){ console.warn('initApp chat listeners:', e); }
   // Démarrer surveillance périmètre GPS
   setTimeout(()=>{ try{ startGeoWatch(); }catch(e){} }, 1500);
   // Mode test GPS caché (?debug=1 ou 5 taps sur la topbar)
