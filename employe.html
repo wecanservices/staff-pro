@@ -5241,13 +5241,23 @@ function watchPushNotifs(){
       const val=snap.val(); if(!val) return;
       const arr=Array.isArray(val)?val:Object.values(val);
       arr.filter(p=>p&&(p.title||p.body||p.message)).forEach(p=>{
-        // Cible : tous, ou l agence/employe de ME (best-effort selon champs dispo)
-        const target=p.target||p.audience;
-        if(target && target!=='all'){
+        // Cible definie cote admin : 'all'/'tous' | 'branch:<agenceId>' | 'custom:<id1,id2,...>'
+        // On n affiche QUE les notifications qui concernent CET employe.
+        const target=String(p.target||p.audience||'all');
+        let concerne=false;
+        if(target==='all'||target==='tous'){
+          concerne=true;
+        }else if(target.startsWith('branch:')){
+          concerne=String(target.slice(7))===String(ME.agenceId);
+        }else if(target.startsWith('custom:')){
+          concerne=target.slice(7).split(',').map(s=>s.trim()).includes(String(ME.id));
+        }else{
+          // Formats herites (anciennes notifs) : champs p.agenceId / p.empId
           const okAg = p.agenceId && String(p.agenceId)===String(ME.agenceId);
           const okEmp = p.empId && String(p.empId)===String(ME.id);
-          if(!okAg && !okEmp && target!=='tous') return;
+          concerne = okAg || okEmp;
         }
+        if(!concerne) return;
         const uid='push_'+(p.id||p.ts||(p.title||'')+ (p.date||''));
         const title=p.title||'📣 Notification';
         const body=p.body||p.message||'';
