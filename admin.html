@@ -1253,6 +1253,40 @@ const db = firebase.database();
           <button class="appro-tab" onclick="switchApproTab('recuperation',this)" id="tab-recuperation">Récupération</button>
         </div>
 
+        <!-- ADVANCED FILTER -->
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;">
+          <input id="appro-f-search" type="text" placeholder="Rechercher (nom, poste)..." oninput="applyApproFilters()" style="flex:1;min-width:160px;padding:7px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;color:#1e293b;">
+          <select id="appro-f-status" onchange="applyApproFilters()" style="padding:7px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;color:#1e293b;background:#fff;">
+            <option value="active">Actives</option>
+            <option value="pending">En attente</option>
+            <option value="approved">Approuvées</option>
+            <option value="rejected">Rejetées</option>
+            <option value="archived">Archivées</option>
+            <option value="all">Toutes</option>
+          </select>
+          <label style="font-size:11px;color:#64748b;">Du</label>
+          <input id="appro-f-from" type="date" onchange="applyApproFilters()" style="padding:6px 8px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;color:#1e293b;">
+          <label style="font-size:11px;color:#64748b;">Au</label>
+          <input id="appro-f-to" type="date" onchange="applyApproFilters()" style="padding:6px 8px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;color:#1e293b;">
+          <button onclick="resetApproFilters()" style="padding:7px 12px;border-radius:8px;border:1px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:12px;font-weight:600;cursor:pointer;">Réinitialiser</button>
+          <button onclick="deleteProcessed()" style="padding:7px 12px;border-radius:8px;border:1px solid #F7C1C1;background:#FCEBEB;color:#A32D2D;font-size:12px;font-weight:600;cursor:pointer;">Supprimer traitées</button>
+          <button onclick="purgeAllAppros()" style="padding:7px 12px;border-radius:8px;border:none;background:#A32D2D;color:#fff;font-size:12px;font-weight:700;cursor:pointer;">Vider tout</button>
+        </div>
+
+        <!-- SELECT-ALL + SELECTION BAR -->
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:10px;flex-wrap:wrap;">
+          <label style="display:flex;align-items:center;gap:7px;font-size:12px;color:#475569;font-weight:600;cursor:pointer;">
+            <input type="checkbox" id="appro-selectall" onchange="toggleSelectAllAppro(this.checked)" style="width:16px;height:16px;cursor:pointer;accent-color:#C0392B;">
+            Tout cocher
+          </label>
+          <div id="appro-selbar" style="display:none;align-items:center;gap:10px;background:#FFF7ED;border:1px solid #FED7AA;border-radius:10px;padding:6px 12px;">
+            <span id="appro-selcount" style="font-size:12px;font-weight:700;color:#9A3412;"></span>
+            <button onclick="deleteSelected()" style="padding:6px 12px;border-radius:8px;border:1px solid #F7C1C1;background:#FCEBEB;color:#A32D2D;font-size:12px;font-weight:600;cursor:pointer;">Supprimer la sélection</button>
+            <button onclick="archiveSelected()" style="padding:6px 12px;border-radius:8px;border:1px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:12px;font-weight:600;cursor:pointer;">Archiver la sélection</button>
+            <button onclick="clearApproSelection()" style="padding:6px 12px;border-radius:8px;border:1px solid #e2e8f0;background:#fff;color:#64748b;font-size:12px;font-weight:600;cursor:pointer;">Désélectionner</button>
+          </div>
+        </div>
+
         <!-- LIST -->
         <div id="appro-list"></div>
 
@@ -2318,6 +2352,12 @@ function saveData(k,d){
   try{ db.ref('wecan/'+k).set(data); }catch(e){}
 }
 
+// Détecte les demandes auto-générées par l'Agent IA (à purger, jamais à réintégrer)
+function isAutoAppro(a){
+  const m = a && a.detail && a.detail.motif ? String(a.detail.motif) : '';
+  return /Agent\s*IA|Absence automatique/i.test(m);
+}
+
 // ── Firebase Sync ──
 // admin.html : Firebase est la source de vérité pour les données de configuration.
 // Au démarrage : lire depuis Firebase → mettre à jour localStorage + variables.
@@ -2400,14 +2440,31 @@ function fbInitSync(){
     });
   });
   // Écouter les demandes des employés (approbations) créées depuis employe.html
+  // Firebase = SOURCE DE VÉRITÉ : on remplace intégralement la liste locale (comme les
+  // pointages). Cela retire réellement les demandes supprimées et empêche leur résurrection.
+  // IMPORTANT : ce listener NE réécrit PAS Firebase (sinon un 2e onglet ressusciterait
+  // les demandes supprimées en repoussant sa copie périmée).
   db.ref('wecan/approbations').on('value', snap=>{
     const val = snap.val();
-    if(!val) return;
-    const arr = Array.isArray(val) ? val : Object.values(val);
-    const incoming = arr.filter(a=>a&&a.id);
-    if(!incoming.length) return;
-    incoming.forEach(a=>{ if(!approbations.find(x=>x.id===a.id)){ approbations.push(a); } else { const idx=approbations.findIndex(x=>x.id===a.id); if(approbations[idx].status==='pending'&&a.status!=='pending') approbations[idx]=a; } });
-    saveData('approbations', approbations);
+    const arr = (val==null) ? [] : (Array.isArray(val) ? val : Object.values(val));
+    // Garder les demandes valides, écarter les auto-générées de l'Agent IA
+    let list = arr.filter(a=>a&&!isAutoAppro(a));
+    // DÉDUPLIQUER par id : une demande postée en double (même id) est fusionnée en UNE seule
+    // carte. On garde la version la plus avancée (approuvée/rejetée > en attente).
+    // Les demandes sans id reçoivent un id déterministe (distinct par position).
+    const byId={}; const orderIds=[];
+    const rank=s=> (s==='approved'||s==='rejected') ? 1 : 0;
+    list.forEach((a,i)=>{
+      const id = (a.id!==undefined && a.id!==null && a.id!=='') ? String(a.id) : ('appro-'+i+'-'+(a.date||'')+'-'+(a.empId||''));
+      a.id = id;
+      if(!byId[id]){ byId[id]=a; orderIds.push(id); }
+      else if(rank(a.status) > rank(byId[id].status)){ byId[id]=a; } // garde la décidée
+    });
+    approbations = orderIds.map(id=>byId[id]);
+    localStorage.setItem('wecan_approbations', JSON.stringify(approbations));
+    // Auto-nettoyage : si des doublons existaient en base, réécrire la version dédupliquée
+    // (retire uniquement des doublons → ne peut PAS ressusciter une demande supprimée).
+    if(approbations.length !== list.length){ try{ db.ref('wecan/approbations').set(approbations); }catch(e){} }
     try{ renderApprobations(); updateApproBadge(); }catch(e){} try{updateSidebarAlerts();}catch(e){}
   });
   // Écouter les pointages créés depuis employe.html
@@ -4704,6 +4761,16 @@ function selectEmpTrajet(id){
 let approbations = loadData('approbations', []);
 let nextApproId = approbations.length ? Math.max(...approbations.map(a=>a.id))+1 : 1;
 let currentApproTab = 'all';
+// Filtre avancé de la boîte d'approbations
+let approFilters = { status:'active', search:'', from:'', to:'' };
+// Sélection multiple (cases à cocher) pour suppression/archivage groupé
+let approSelected = new Set();
+// Convertit une date "DD/MM/YYYY" en "YYYY-MM-DD" (pour comparaison avec input type=date)
+function _approToISO(dmy){
+  if(!dmy) return '';
+  const m = String(dmy).match(/(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  return m ? m[3]+'-'+String(m[2]).padStart(2,'0')+'-'+String(m[1]).padStart(2,'0') : '';
+}
 
 const APPRO_CONFIG = {
   conge:    {icon:'&#9728;', label:'Congé',          bg:'#FEF9C3', color:'#92400E'},
@@ -4777,11 +4844,142 @@ function rejectAll(){
 }
 
 function getFiltered(){
-  return currentApproTab==='all' ? approbations : approbations.filter(a=>a.type===currentApproTab);
+  const f = approFilters;
+  return approbations.filter(a=>{
+    if(!a) return false;
+    // Onglet type
+    if(currentApproTab!=='all' && a.type!==currentApproTab) return false;
+    // Statut / archive
+    if(f.status==='archived'){ if(!a.archived) return false; }
+    else if(f.status==='active'){ if(a.archived) return false; }
+    else if(f.status==='all'){ /* tout, y compris archivées */ }
+    else { if(a.archived) return false; if(a.status!==f.status) return false; }
+    // Recherche employé / poste
+    if(f.search){
+      const q=f.search.toLowerCase();
+      if(!((a.empName||'').toLowerCase().includes(q) || (a.poste||'').toLowerCase().includes(q))) return false;
+    }
+    // Plage de dates sur a.date (DD/MM/YYYY)
+    if(f.from || f.to){
+      const iso=_approToISO(a.date);
+      if(iso){
+        if(f.from && iso<f.from) return false;
+        if(f.to   && iso>f.to)   return false;
+      }
+    }
+    return true;
+  });
+}
+
+function applyApproFilters(){
+  approFilters.search = (document.getElementById('appro-f-search')?.value||'').trim();
+  approFilters.status = document.getElementById('appro-f-status')?.value||'active';
+  approFilters.from   = document.getElementById('appro-f-from')?.value||'';
+  approFilters.to     = document.getElementById('appro-f-to')?.value||'';
+  renderApprobations();
+}
+function resetApproFilters(){
+  approFilters = { status:'active', search:'', from:'', to:'' };
+  const s=document.getElementById('appro-f-search');  if(s) s.value='';
+  const st=document.getElementById('appro-f-status'); if(st) st.value='active';
+  const fr=document.getElementById('appro-f-from');   if(fr) fr.value='';
+  const to=document.getElementById('appro-f-to');     if(to) to.value='';
+  renderApprobations();
+}
+
+// Supprime définitivement une demande (local + Firebase)
+function deleteRequest(id){
+  const a = approbations.find(x=>String(x.id)===String(id));
+  if(!a) return;
+  if(!confirm('Supprimer définitivement cette demande de '+a.empName+' ? Action irréversible.')) return;
+  approbations = approbations.filter(x=>String(x.id)!==String(id));
+  saveData('approbations',approbations);
+  renderApprobations(); updateApproBadge(); updateChatBadge();
+}
+// Archive une demande (masquée mais récupérable via le filtre "Archivées")
+function archiveRequest(id){
+  const a = approbations.find(x=>String(x.id)===String(id));
+  if(!a) return;
+  a.archived = true;
+  saveData('approbations',approbations);
+  renderApprobations(); updateApproBadge();
+}
+function unarchiveRequest(id){
+  const a = approbations.find(x=>String(x.id)===String(id));
+  if(!a) return;
+  a.archived = false;
+  saveData('approbations',approbations);
+  renderApprobations(); updateApproBadge();
+}
+// ── Sélection multiple par cases à cocher ──
+function toggleApproSelect(id, checked){
+  id=String(id);
+  if(checked) approSelected.add(id); else approSelected.delete(id);
+  updateApproSelBar();
+}
+function toggleSelectAllAppro(checked){
+  const ids = getFiltered().map(a=>String(a.id));
+  if(checked) ids.forEach(i=>approSelected.add(i));
+  else ids.forEach(i=>approSelected.delete(i));
+  renderApprobations();
+}
+function clearApproSelection(){
+  approSelected.clear();
+  renderApprobations();
+}
+function updateApproSelBar(){
+  const bar=document.getElementById('appro-selbar');
+  const cnt=document.getElementById('appro-selcount');
+  if(!bar) return;
+  const n=approSelected.size;
+  bar.style.display = n>0 ? 'flex' : 'none';
+  if(cnt) cnt.textContent = n+' demande'+(n>1?'s':'')+' sélectionnée'+(n>1?'s':'');
+  const all=document.getElementById('appro-selectall');
+  if(all){ const vis=getFiltered().map(a=>String(a.id)); all.checked = vis.length>0 && vis.every(i=>approSelected.has(i)); }
+}
+// Supprime définitivement les demandes cochées
+function deleteSelected(){
+  const ids=[...approSelected];
+  if(!ids.length){ alert('Aucune demande sélectionnée.'); return; }
+  if(!confirm('Supprimer définitivement les '+ids.length+' demande(s) sélectionnée(s) ? Action irréversible.')) return;
+  const set=new Set(ids.map(String));
+  approbations = approbations.filter(a=>!set.has(String(a.id)));
+  approSelected.clear();
+  saveData('approbations',approbations);
+  renderApprobations(); updateApproBadge(); updateChatBadge();
+}
+// Archive les demandes cochées
+function archiveSelected(){
+  const ids=[...approSelected];
+  if(!ids.length){ alert('Aucune demande sélectionnée.'); return; }
+  const set=new Set(ids.map(String));
+  approbations.forEach(a=>{ if(set.has(String(a.id))) a.archived=true; });
+  approSelected.clear();
+  saveData('approbations',approbations);
+  renderApprobations(); updateApproBadge();
+}
+// Vide DÉFINITIVEMENT toutes les demandes (historique + exemples par défaut).
+// Comme aucun code ne re-sème ces données, elles ne reviendront pas.
+function purgeAllAppros(){
+  if(!confirm('Supprimer DÉFINITIVEMENT TOUTES les demandes (historique + exemples) ?\nSeules les nouvelles demandes apparaîtront ensuite. Action irréversible.')) return;
+  approbations = [];
+  approSelected.clear();
+  localStorage.setItem('wecan_approbations', JSON.stringify([]));
+  try{ db.ref('wecan/approbations').set(null); }catch(e){}   // vide vraiment le nœud Firebase
+  renderApprobations(); updateApproBadge(); updateChatBadge();
+}
+// Supprime toutes les demandes déjà traitées (approuvées + rejetées) — garde les demandes en attente
+function deleteProcessed(){
+  const processed = approbations.filter(a=>a.status==='approved'||a.status==='rejected');
+  if(!processed.length){ alert('Aucune demande traitée à supprimer.'); return; }
+  if(!confirm('Supprimer définitivement les '+processed.length+' demandes déjà traitées (approuvées + rejetées) ?\nLes demandes en attente sont conservées.')) return;
+  approbations = approbations.filter(a=>!(a.status==='approved'||a.status==='rejected'));
+  saveData('approbations',approbations);
+  renderApprobations(); updateApproBadge(); updateChatBadge();
 }
 
 function updateApproBadge(){
-  const pending = approbations.filter(a=>a.status==='pending').length;
+  const pending = approbations.filter(a=>a.status==='pending'&&!a.archived).length;
   const badge = document.getElementById('appro-badge');
   if(badge){
     badge.style.display = pending>0 ? 'inline' : 'none';
@@ -4793,6 +4991,8 @@ function updateApproBadge(){
 function renderApprobations(){
   updateApproBadge(); updateChatBadge();
   if(document.getElementById('page-adjust').classList.contains('active')) updateRamadanStatus();
+  // Purge la sélection des demandes qui n'existent plus
+  { const ex=new Set(approbations.map(a=>String(a.id))); [...approSelected].forEach(i=>{ if(!ex.has(i)) approSelected.delete(i); }); }
 
   // Summary badges
   const types = ['conge','hsup','sortie','document'];
@@ -4818,6 +5018,7 @@ function renderApprobations(){
 
   if(!list.length){
     document.getElementById('appro-list').innerHTML=`<div style="padding:40px;text-align:center;color:#94a3b8;font-size:13px;background:#fff;border-radius:12px;border:1px solid #e2e8f0;">${t('appro_no_pending')}</div>`;
+    updateApproSelBar();
     return;
   }
 
@@ -4847,20 +5048,27 @@ function renderApprobations(){
 
     const canEdit = isPending && (a.type==='conge' || a.type==='sortie' || a.type==='pret' || a.type==='recuperation');
     const jid = JSON.stringify(String(a.id));
+    const isSel = approSelected.has(String(a.id));
+    const archBtn = a.archived
+      ? `<button style="padding:4px 10px;border-radius:8px;border:1px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:11px;cursor:pointer;" onclick='unarchiveRequest(${jid})'>Désarchiver</button>`
+      : `<button style="padding:4px 10px;border-radius:8px;border:1px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:11px;cursor:pointer;" onclick='archiveRequest(${jid})'>Archiver</button>`;
     const statusHtml = isPending
       ? `<div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;">
           <button style="padding:4px 10px;border-radius:8px;border:1px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:11px;cursor:pointer;" onclick='openApproDetail(${jid})'>Voir</button>
           ${canEdit ? `<button class="btn-edit-appro" onclick='editApproRequest(${jid})'>Modifier</button>` : ''}
           <button class="btn-approve" onclick='approveRequest(${jid})'><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Approuver</button>
           <button class="btn-reject"  onclick='rejectRequest(${jid})'><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Rejeter</button>
+          ${archBtn}
         </div>`
       : `<div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;">
           <button style="padding:4px 10px;border-radius:8px;border:1px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:11px;cursor:pointer;" onclick='openApproDetail(${jid})'>Voir</button>
           <span class="appro-status ${a.status}">${a.status==='approved'?t('status_approved'):t('status_rejected')}</span>
+          ${archBtn}
         </div>`;
 
     return`<div class="appro-card ${a.status}">
       <div class="appro-card-inner">
+        <input type="checkbox" class="appro-check" ${isSel?'checked':''} onclick='toggleApproSelect(${jid}, this.checked)' style="width:16px;height:16px;flex-shrink:0;cursor:pointer;accent-color:#C0392B;">
         <div class="appro-type-badge" style="background:${cfg.bg};">${cfg.icon}</div>
         <div style="width:34px;height:34px;border-radius:50%;background:${c.bg};color:${c.text};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">${ini(a.empName.split(' ')[0],a.empName.split(' ')[1]||'')}</div>
         <div class="appro-meta">
@@ -4878,6 +5086,7 @@ function renderApprobations(){
       </div>
     </div>`;
   }).join('');
+  updateApproSelBar();
 }
 
 
@@ -7754,15 +7963,8 @@ Son shift commence à ${shift.debut}. Écris un message WhatsApp court, bienveil
       const adminConv = conversations.find(c=>c.type==='groupe');
       if(adminConv) agentSendMessage(adminConv.id, '[x] '+msg, 'agent_alert');
       agentSendPush('Absence non justifiée', emp.prenom+' '+emp.nom, 'urgent', null);
-      // Créer approbation automatique
-      approbations.push({
-        id:nextApproId++, type:'conge', empId:emp.id,
-        empName:emp.prenom+' '+emp.nom, poste:emp.poste,
-        status:'pending', date:today,
-        detail:{debut:today, fin:today, jours:1, motif:'Absence automatique — signalée par Agent IA'}
-      });
-      saveData('approbations', approbations);
-      updateApproBadge();
+      // NE crée AUCUNE demande automatique. L'agent se contente d'alerter l'admin ;
+      // la décision (congé, absence, etc.) reste manuelle. (retrait création auto)
     }
   }
 
