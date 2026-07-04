@@ -126,6 +126,41 @@ body::before{
 }
 .avatar-sm:active{transform:scale(.9)}
 
+/* ── CLOCHE NOTIFICATIONS (Tache 9) ─────────────────────────── */
+.notif-bell{position:relative;width:38px;height:38px;border-radius:13px;border:1px solid rgba(255,255,255,.22);background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:transform .15s,background .2s;-webkit-tap-highlight-color:transparent}
+.notif-bell:active{transform:scale(.9)}
+.notif-bell svg{width:19px;height:19px;stroke:#fff}
+.notif-bell-badge{position:absolute;top:-4px;right:-4px;min-width:18px;height:18px;border-radius:9px;padding:0 5px;background:var(--grad-red);color:#fff;font-size:10px;font-weight:800;display:none;align-items:center;justify-content:center;border:2px solid #0D1326;box-shadow:0 3px 8px rgba(224,68,58,.5)}
+.notif-bell-badge.on{display:flex}
+/* Centre de notifications (feuille) */
+.notif-sheet-ov{position:fixed;inset:0;background:rgba(9,12,22,.55);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px);z-index:6000;display:none;animation:fadeInBg .2s}
+.notif-sheet-ov.open{display:block}
+.notif-sheet{position:fixed;top:0;right:0;bottom:0;width:min(88%,380px);background:var(--bg,#fff);z-index:6001;transform:translateX(100%);transition:transform .3s cubic-bezier(.22,.9,.32,1);display:flex;flex-direction:column;box-shadow:-16px 0 40px rgba(9,12,22,.3)}
+body.dark .notif-sheet{background:#12172A}
+.notif-sheet.open{transform:translateX(0)}
+.notif-sheet-head{display:flex;align-items:center;justify-content:space-between;padding:18px 18px 14px;border-bottom:1px solid rgba(0,0,0,.06)}
+body.dark .notif-sheet-head{border-color:rgba(255,255,255,.08)}
+.notif-sheet-head h3{font-size:17px;font-weight:800;letter-spacing:-.3px}
+.notif-sheet-actions{display:flex;align-items:center;gap:8px}
+.notif-mark-all{font-size:11px;font-weight:700;color:var(--brand,#C0392B);background:none;border:none;cursor:pointer;font-family:inherit}
+.notif-close{width:30px;height:30px;border-radius:10px;border:none;background:rgba(0,0,0,.05);cursor:pointer;font-size:16px;line-height:1;color:var(--gray,#64748B)}
+body.dark .notif-close{background:rgba(255,255,255,.08);color:#cbd5e1}
+.notif-list{flex:1;overflow-y:auto;padding:8px 12px 24px}
+.notif-item{display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:16px;margin-bottom:8px;background:rgba(0,0,0,.02);cursor:pointer;transition:background .15s;position:relative}
+body.dark .notif-item{background:rgba(255,255,255,.03)}
+.notif-item.unread{background:rgba(192,57,43,.07)}
+body.dark .notif-item.unread{background:rgba(192,57,43,.14)}
+.notif-item:active{background:rgba(0,0,0,.06)}
+.notif-ico{width:40px;height:40px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:19px;background:#F1F5F9}
+body.dark .notif-ico{background:rgba(255,255,255,.06)}
+.notif-body{flex:1;min-width:0}
+.notif-title{font-size:13.5px;font-weight:700;margin-bottom:2px;color:var(--ink,#0F172A)}
+body.dark .notif-title{color:#e2e8f0}
+.notif-text{font-size:12px;color:var(--gray,#64748B);line-height:1.35;word-break:break-word}
+.notif-time{font-size:10.5px;color:var(--gray,#94A3B8);margin-top:4px}
+.notif-unread-dot{position:absolute;top:14px;right:12px;width:8px;height:8px;border-radius:50%;background:var(--brand,#C0392B)}
+.notif-empty{text-align:center;color:var(--gray,#94A3B8);font-size:13px;padding:60px 20px}
+
 /* ── PAGES ───────────────────────────────────────────────────── */
 .page{display:none;padding:18px 16px;padding-bottom:132px;min-height:calc(100vh - 56px);position:relative;z-index:1}
 .page.active{display:block;animation:pageIn .34s cubic-bezier(.22,.9,.32,1)}
@@ -1287,8 +1322,25 @@ const db = firebase.database();
     <h1 style="font-weight:800;letter-spacing:-0.5px;">WeCheckin RH</h1>
   </div>
   <div class="topbar-right">
+    <div class="notif-bell" id="notif-bell" onclick="openNotifCenter()" title="Notifications">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+      <span class="notif-bell-badge" id="notif-bell-badge">0</span>
+    </div>
     <div id="top-av" class="avatar-sm" onclick="showPage('profil')">KB</div>
   </div>
+</div>
+
+<!-- ═══ CENTRE DE NOTIFICATIONS (Taches 9 + 3) ═══ -->
+<div class="notif-sheet-ov" id="notif-sheet-ov" onclick="closeNotifCenter()"></div>
+<div class="notif-sheet" id="notif-sheet">
+  <div class="notif-sheet-head">
+    <h3>Notifications</h3>
+    <div class="notif-sheet-actions">
+      <button class="notif-mark-all" onclick="markAllNotifsRead()">Tout lire</button>
+      <button class="notif-close" onclick="closeNotifCenter()">&times;</button>
+    </div>
+  </div>
+  <div class="notif-list" id="notif-list"></div>
 </div>
 
 <!-- ===== PAGE ACCUEIL ===== -->
@@ -1953,6 +2005,8 @@ function fbEmpSync(){
       else if(existing[idx].status!==a.status){existing[idx]=a;changed=true;}
     });
     if(changed) localStorage.setItem('approbations',JSON.stringify(existing));
+    // Notifier l employe des changements de statut de ses demandes (Tache 3)
+    try{ if(typeof watchApproNotifs==='function') watchApproNotifs(); }catch(e){}
   });
   // Sync tous les pointages depuis Firebase → localStorage (pour sous-admin et rapports cross-device)
   db.ref('wecan/pointages').on('value', snap=>{
@@ -2879,6 +2933,128 @@ function _approvedHsupMins(dateStr){
     return mins;
   }catch(e){ return 0; }
 }
+// ── TACHE 11 : sortie anticipee APPROUVEE pour aujourd hui ──
+// Contrat partage (ecrit par admin) : demande type 'sortie', status 'approved',
+// champ heureSortieEffective = "HH:MM" (24h) = heure de sortie approuvee.
+// Retourne "HH:MM" si une telle demande existe pour la date du jour, sinon null.
+function _approvedSortieToday(){
+  try{
+    const src = ld('approbations',[]).concat(ld('emp_leaves',[]));
+    const seen={};
+    let best=null;
+    src.forEach(function(r){
+      if(!r||seen[r.id])return; seen[r.id]=1;
+      if(r.empId!==ME.id) return;
+      if(r.type!=='sortie') return;
+      if(r.status!=='approved') return;
+      const d=r.detail||{};
+      // La date de la sortie approuvee doit etre aujourd hui
+      const dateSortie = d.date || r.date;
+      if(dateSortie!==tday()) return;
+      const h = r.heureSortieEffective || d.heureSortieEffective;
+      if(h && /^\d{1,2}:\d{2}$/.test(h)) best=h;
+    });
+    return best;
+  }catch(e){ return null; }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TACHE 4 : PAUSE AUTOMATIQUE
+// Utilise l horaire de pause du shift de l employe (pauseDebut/pauseFin, HH:MM)
+// pour : (1) alerter + demarrer la pause automatiquement a l heure de debut,
+// (2) compter le temps de pause en direct, (3) alerter a l heure de retour et
+// terminer la pause automatiquement. Degradation gracieuse si pas d horaire.
+// ═══════════════════════════════════════════════════════════════
+// Retourne {debut,fin,debutMins,finMins} du shift de l employe, ou null.
+function _shiftPause(){
+  try{
+    const sid = ME && (ME.shiftId!=null?ME.shiftId:ME.shift_id);
+    if(sid==null) return null;
+    const shifts = JSON.parse(localStorage.getItem('wecan_shifts')||'[]');
+    const s = shifts.find(x=>x&&String(x.id)===String(sid));
+    if(!s) return null;
+    if(!s.pauseDebut||!s.pauseFin) return null;
+    if(!/^\d{1,2}:\d{2}$/.test(s.pauseDebut)||!/^\d{1,2}:\d{2}$/.test(s.pauseFin)) return null;
+    return {debut:s.pauseDebut, fin:s.pauseFin, debutMins:toMins2(s.pauseDebut), finMins:toMins2(s.pauseFin)};
+  }catch(e){ return null; }
+}
+// Cree un pointage de pause (Debut pause / Fin pause) via l agence assignee.
+function _addPausePoint(type){
+  try{
+    const agId = String(ME.agenceId||(ME.agenceIds&&ME.agenceIds[0])||'');
+    const ag = agencies.find(a=>String(a.id)===agId) || agencies[0] || null;
+    doPoint(ag, 'AUTO', type, ag?parseFloat(ag.lat||0):null, ag?parseFloat(ag.lng||0):null);
+  }catch(e){ console.warn('_addPausePoint', e); }
+}
+// Verifie l horaire de pause et declenche les evenements automatiques.
+// Appele au demarrage puis toutes les 30s.
+function _autoPauseTick(){
+  try{
+    if(!ME) return;
+    const pz=_shiftPause();
+    if(!pz) return; // pas d horaire de pause -> comportement actuel (degradation gracieuse)
+    const pts=ld('pointages',[]).filter(p=>p.empId===ME.id&&p.date===tday());
+    const hasEntree=pts.some(p=>p.type==='Entree');
+    const hasSortie=pts.some(p=>p.type==='Sortie');
+    if(!hasEntree||hasSortie) return; // pause auto seulement pendant le service
+    const nDebut=pts.filter(p=>p.type==='Debut pause').length;
+    const nFin=pts.filter(p=>p.type==='Fin pause').length;
+    const enPause = nDebut>nFin;
+    const nowMins=toMins2(now());
+    const dayKey=tday();
+    // ── 1. DEBUT DE PAUSE AUTOMATIQUE ──
+    // A l heure de debut (fenetre debut..fin), si aucune pause encore commencee.
+    const flagDeb='wecan_autopause_deb_'+ME.id+'_'+dayKey;
+    if(!enPause && nDebut===0 && nowMins>=pz.debutMins && nowMins<pz.finMins && !localStorage.getItem(flagDeb)){
+      localStorage.setItem(flagDeb,'1');
+      _addPausePoint('Debut pause');
+      showToast('☕ Debut de votre pause ('+pz.debut+') — chronometre lance');
+      try{ addNotif('system','☕ Pause commencee','Votre pause a demarre a '+pz.debut+'. Retour prevu a '+pz.fin+'.','autopause_deb_'+dayKey,{}); }catch(e){}
+      try{ _sysNotif('☕ Pause commencee','Votre pause debute maintenant ('+pz.debut+')',{tag:'autopause-deb'}); }catch(e){}
+      try{ _livePauseCounter(); }catch(e){} // comptage direct des le debut
+    }
+    // ── 2. FIN DE PAUSE AUTOMATIQUE ──
+    // A l heure de retour, si une pause est en cours.
+    const flagFin='wecan_autopause_fin_'+ME.id+'_'+dayKey;
+    if(enPause && nowMins>=pz.finMins && !localStorage.getItem(flagFin)){
+      localStorage.setItem(flagFin,'1');
+      _addPausePoint('Fin pause');
+      showToast('🔔 Fin de pause ('+pz.fin+') — reprise du travail');
+      try{ addNotif('system','🔔 Fin de pause','Votre pause est terminee ('+pz.fin+'). Reprenez le travail.','autopause_fin_'+dayKey,{}); }catch(e){}
+      try{ _sysNotif('🔔 Fin de pause','Votre pause est terminee, reprenez le travail',{tag:'autopause-fin'}); }catch(e){}
+    }
+  }catch(e){ console.warn('_autoPauseTick', e); }
+}
+// Compteur live du temps de pause : si une pause est en cours, met a jour la
+// stat #hs-pause en direct (temps ecoule depuis le dernier Debut pause).
+function _livePauseCounter(){
+  try{
+    if(!ME) return;
+    const el=document.getElementById('hs-pause'); if(!el) return;
+    const pts=ld('pointages',[]).filter(p=>p.empId===ME.id&&p.date===tday());
+    const pbs=pts.filter(p=>p.type==='Debut pause');
+    const pes=pts.filter(p=>p.type==='Fin pause');
+    if(pbs.length>pes.length){
+      // Pause en cours : total des paires terminees + temps ecoule sur la paire ouverte
+      let total=0;
+      for(let i=0;i<pes.length;i++){ const d=toMins2(pes[i].time)-toMins2(pbs[i].time); if(d>0) total+=d; }
+      const openStart=toMins2(pbs[pbs.length-1].time);
+      const live=Math.max(0, toMins2(now())-openStart);
+      total+=live;
+      el.textContent=(total>=60?Math.floor(total/60)+'h'+(total%60?total%60+'m':''):total+'m');
+      el.style.color='#E8A23D';
+    } else {
+      el.style.color='';
+    }
+  }catch(e){}
+}
+let _autoPauseTimer=null;
+function startAutoPause(){
+  if(_autoPauseTimer) return;
+  _autoPauseTick();
+  _autoPauseTimer=setInterval(function(){ _autoPauseTick(); _livePauseCounter(); }, 30000);
+  // Compteur live plus fluide (chaque 20s suffit, minute-resolution)
+}
 
 function renderPtSummary(){
   const pts=ld('pointages',[]).filter(p=>p.empId===ME.id&&p.date===tday());
@@ -2889,13 +3065,39 @@ function renderPtSummary(){
   let totalPause=0;
   pbs.forEach((pb,i)=>{if(pes[i]){const d=toMins2(pes[i].time)-toMins2(pb.time);if(d>0)totalPause+=d;}});
   let netStr='-',pauseStr='-';
-  if(entree&&sortie){
+  // ── TACHE 11 : sortie anticipee approuvee (heure imposee par l admin) ──
+  const apprSortie = _approvedSortieToday(); // "HH:MM" ou null
+  const nowMins = toMins2(now());
+  // Heure de sortie EFFECTIVE a afficher (string) et son label.
+  // Si sortie approuvee : on plafonne a heureSortieEffective et on interdit
+  // d afficher la sortie AVANT cette heure. La sortie apparait a l heure
+  // approuvee meme si l employe n a pas encore pointe physiquement.
+  let sortieDispTime = sortie ? sortie.time : null;
+  let sortieLabel = 'hs-sortie';
+  let sortieIsApproved = false;
+  if(apprSortie){
+    const apprMins = toMins2(apprSortie);
+    if(sortie){
+      // Une sortie physique existe : on la plafonne a l heure approuvee.
+      sortieDispTime = (toMins2(sortie.time) > apprMins) ? apprSortie : sortie.time;
+    } else if(nowMins >= apprMins){
+      // Pas de pointage physique mais l heure approuvee est atteinte -> affichee.
+      sortieDispTime = apprSortie;
+    } else {
+      // Avant l heure approuvee : ne rien afficher.
+      sortieDispTime = null;
+    }
+    if(sortieDispTime) sortieIsApproved = true;
+  }
+  if(entree && (sortie || (apprSortie && sortieDispTime))){
     // ── TÂCHE 8 : les heures faites au-dela de l heure de fin de shift SANS
     //    demande d h.sup approuvee ne comptent PAS. On plafonne l heure de
     //    sortie a l heure de fin du shift, PUIS on ajoute les h.sup approuvees
     //    du jour. Ex : shift finit 17h00, sortie 17h30 sans demande -> compte
     //    jusqu a 17h00. Avec 30min d h.sup approuvees -> compte 17h30.
-    const sortieMins = toMins2(sortie.time);
+    let sortieMins = toMins2(sortieDispTime || sortie.time);
+    // ── TACHE 11 : plafond a l heure de sortie approuvee ──
+    if(apprSortie){ sortieMins = Math.min(sortieMins, toMins2(apprSortie)); }
     const endMins = _shiftEndMins(); // heure de fin de shift (ou null si inconnue)
     let effSortie = sortieMins;
     if(endMins!=null && sortieMins>endMins){
@@ -2913,17 +3115,23 @@ function renderPtSummary(){
   if(pts.length&&statsEl){statsEl.style.display='flex';}
   const setEl=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v;};
   setEl('hs-entree',entree?entree.time:'--');
-  setEl('hs-sortie',sortie?sortie.time:'--');
+  setEl('hs-sortie',sortieDispTime?sortieDispTime:'--');
   setEl('hs-pause',pauseStr);
   setEl('hs-net',netStr);
+  // Libelle "Sortie approuvee" sous la stat sortie (Tache 11)
+  const sortieLblEl=document.querySelector('#hs-sortie')?document.querySelector('#hs-sortie').closest('.pt-hero-stat'):null;
+  if(sortieLblEl){
+    const lbl=sortieLblEl.querySelector('.psl');
+    if(lbl) lbl.textContent = sortieIsApproved ? 'Sortie approuvée' : 'Sortie';
+  }
   // Update action button times
   setEl('entree-time-disp',entree?entree.time:'--:--');
-  setEl('sortie-time-disp',sortie?sortie.time:'--:--');
+  setEl('sortie-time-disp',sortieDispTime?sortieDispTime:'--:--');
   // Visual feedback on buttons
   const btnE=document.querySelector('.pt-action-entree');
   const btnS=document.querySelector('.pt-action-sortie');
   if(btnE&&entree){btnE.style.opacity='0.75';btnE.style.boxShadow='none';}
-  if(btnS&&sortie){btnS.style.opacity='0.75';btnS.style.boxShadow='none';}
+  if(btnS&&(sortie||sortieIsApproved)){btnS.style.opacity='0.75';btnS.style.boxShadow='none';}
 }
 
 // ═══ ICONES POINTAGE (partages entre today/hist) ═══
@@ -3986,7 +4194,10 @@ function _listenDirectConv(convId){
         }
         if(aCid===convId) renderMsgs(convId);
         updBadge();
-        if(aCid!==convId) showToast('💬 '+m.name+': '+m.text.slice(0,40));
+        if(aCid!==convId){
+          showToast('💬 '+m.name+': '+m.text.slice(0,40));
+          try{ addNotif('chat','💬 '+(m.name||'Message'), m.text?m.text.slice(0,80):'', 'chat_'+convId+'_'+(fbKey||m.ts||Date.now()), {convId}); }catch(e){}
+        }
         if(document.hidden || !document.hasFocus()){
           pushNotif('💬 '+m.name, m.text.slice(0,80), {action:'chat', convId}, {sticky:false, tag:'chat-'+convId});
         }
@@ -4904,6 +5115,148 @@ function pushNotif(title, body, data={}, options={}){
   }
 }
 
+// ═══════════════════════════════════════════════════════════════
+// CENTRE DE NOTIFICATIONS IN-APP (Taches 9 + 3)
+// Agrege : messages chat, mises a jour d approbation, push admin.
+// Stockage local par employe : wecan_emp_notifs_<empId>
+// ═══════════════════════════════════════════════════════════════
+function _notifKey(){ return 'wecan_emp_notifs_' + (ME&&ME.id!=null?ME.id:'anon'); }
+function _loadNotifs(){ try{ return JSON.parse(localStorage.getItem(_notifKey())||'[]'); }catch(e){ return []; } }
+function _saveNotifs(list){ try{ localStorage.setItem(_notifKey(), JSON.stringify(list.slice(0,120))); }catch(e){} }
+
+// Ajoute une notif au centre (dedupe par uid). kind: chat|appro|push|system
+// Retourne true si nouvellement ajoutee.
+function addNotif(kind, title, text, uid, data){
+  const list=_loadNotifs();
+  const id = uid || (kind+'_'+Date.now());
+  if(list.some(n=>n.uid===id)) return false;
+  list.unshift({uid:id, kind, title:title||'', text:text||'', data:data||{}, ts:Date.now(), read:false});
+  _saveNotifs(list);
+  updNotifBadge();
+  if(document.getElementById('notif-sheet')&&document.getElementById('notif-sheet').classList.contains('open')) renderNotifCenter();
+  return true;
+}
+function _notifUnreadCount(){ return _loadNotifs().filter(n=>!n.read).length; }
+function updNotifBadge(){
+  const b=document.getElementById('notif-bell-badge'); if(!b)return;
+  const c=_notifUnreadCount();
+  b.textContent = c>99?'99+':String(c);
+  b.classList.toggle('on', c>0);
+}
+const _NOTIF_ICO={chat:'💬', appro:'✅', push:'📣', system:'🔔'};
+function _notifRelTime(ts){
+  const d=Math.max(0,Date.now()-ts), m=Math.floor(d/60000);
+  if(m<1) return 'A l instant';
+  if(m<60) return 'il y a '+m+' min';
+  const h=Math.floor(m/60); if(h<24) return 'il y a '+h+'h';
+  const j=Math.floor(h/24); return 'il y a '+j+'j';
+}
+function renderNotifCenter(){
+  const el=document.getElementById('notif-list'); if(!el)return;
+  const list=_loadNotifs();
+  if(!list.length){ el.innerHTML='<div class="notif-empty">Aucune notification</div>'; return; }
+  el.innerHTML=list.map(n=>{
+    const ico=_NOTIF_ICO[n.kind]||'🔔';
+    return '<div class="notif-item '+(n.read?'':'unread')+'" onclick="onNotifClick(\''+n.uid+'\')">'
+      +'<div class="notif-ico">'+ico+'</div>'
+      +'<div class="notif-body"><div class="notif-title">'+_esc(n.title)+'</div>'
+      +(n.text?'<div class="notif-text">'+_esc(n.text)+'</div>':'')
+      +'<div class="notif-time">'+_notifRelTime(n.ts)+'</div></div>'
+      +(n.read?'':'<span class="notif-unread-dot"></span>')+'</div>';
+  }).join('');
+}
+function _esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function openNotifCenter(){
+  renderNotifCenter();
+  document.getElementById('notif-sheet-ov').classList.add('open');
+  document.getElementById('notif-sheet').classList.add('open');
+}
+function closeNotifCenter(){
+  document.getElementById('notif-sheet-ov').classList.remove('open');
+  document.getElementById('notif-sheet').classList.remove('open');
+}
+function markAllNotifsRead(){
+  const list=_loadNotifs(); list.forEach(n=>n.read=true); _saveNotifs(list);
+  updNotifBadge(); renderNotifCenter();
+}
+function onNotifClick(uid){
+  const list=_loadNotifs();
+  const n=list.find(x=>x.uid===uid); if(!n)return;
+  n.read=true; _saveNotifs(list); updNotifBadge(); renderNotifCenter();
+  const d=n.data||{};
+  closeNotifCenter();
+  try{
+    if(n.kind==='chat'){ showPage('chat'); if(d.convId&&typeof openConv==='function') openConv(d.convId); }
+    else if(n.kind==='appro'){ showPage('conges'); }
+    else if(n.kind==='push'){ /* rester sur place */ }
+  }catch(e){}
+}
+// Notification systeme (foreground) via l API navigateur, si permission accordee.
+// Reutilise pushNotif() qui gere natif/SW/Notification. Best-effort.
+function _sysNotif(title, body, data){
+  try{
+    if(typeof Notification!=='undefined' && Notification.permission==='default'){
+      Notification.requestPermission().catch(function(){});
+    }
+    if(document.hidden || !document.hasFocus()){
+      pushNotif(title, body, data||{}, {sticky:false, tag:(data&&data.tag)||'notif'});
+    }
+  }catch(e){}
+}
+
+// ── Ecoute des mises a jour d approbation (approuvee/rejetee) ──
+// Compare le statut precedent connu pour ne notifier que les changements.
+let _approStatusSeen = null;
+function watchApproNotifs(){
+  try{
+    const arr = ld('approbations',[]).filter(a=>a&&a.empId===ME.id);
+    if(_approStatusSeen===null){
+      // Premier passage : memoriser sans notifier (evite le spam au demarrage)
+      _approStatusSeen={}; arr.forEach(a=>{ _approStatusSeen[a.id]=a.status; });
+      return;
+    }
+    const TYPE_LBL={conge:'Conge', sortie:'Sortie anticipee', document:'Document', hsup:'Heures sup', pret:'Pret', recuperation:'Recuperation'};
+    arr.forEach(a=>{
+      const prev=_approStatusSeen[a.id];
+      if(prev!==a.status && (a.status==='approved'||a.status==='rejected')){
+        const lbl=TYPE_LBL[a.type]||a.type||'Demande';
+        const verb=a.status==='approved'?'approuvee':'refusee';
+        const title=(a.status==='approved'?'✅ ':'❌ ')+lbl+' '+verb;
+        let extra='';
+        if(a.type==='sortie' && a.status==='approved' && a.heureSortieEffective){ extra=' Sortie a '+a.heureSortieEffective; }
+        const isNew=addNotif('appro', title, 'Votre demande a ete '+verb+'.'+extra, 'appro_'+a.id+'_'+a.status, {reqId:a.id});
+        if(isNew) _sysNotif(title, 'Votre demande a ete '+verb, {action:'appro', tag:'appro-'+a.id});
+      }
+      _approStatusSeen[a.id]=a.status;
+    });
+  }catch(e){}
+}
+
+// ── Ecoute des notifications push admin (wecan/pushNotifications) ──
+function watchPushNotifs(){
+  if(!ME) return;
+  try{
+    db.ref('wecan/pushNotifications').on('value', snap=>{
+      const val=snap.val(); if(!val) return;
+      const arr=Array.isArray(val)?val:Object.values(val);
+      arr.filter(p=>p&&(p.title||p.body||p.message)).forEach(p=>{
+        // Cible : tous, ou l agence/employe de ME (best-effort selon champs dispo)
+        const target=p.target||p.audience;
+        if(target && target!=='all'){
+          const okAg = p.agenceId && String(p.agenceId)===String(ME.agenceId);
+          const okEmp = p.empId && String(p.empId)===String(ME.id);
+          if(!okAg && !okEmp && target!=='tous') return;
+        }
+        const uid='push_'+(p.id||p.ts||(p.title||'')+ (p.date||''));
+        const title=p.title||'📣 Notification';
+        const body=p.body||p.message||'';
+        const isNew=addNotif('push', title, body, uid, {});
+        if(isNew) _sysNotif(title, body, {action:'push', tag:uid});
+      });
+    });
+  }catch(e){}
+}
+
 function initApp(){
   // Chaque etape est isolee : une erreur ne doit pas empecher les suivantes
   // (bug historique : rHome() n existait pas → startGeoWatch/_dbgInit jamais lances)
@@ -4923,6 +5276,14 @@ function initApp(){
   try{ _dbgInit(); }catch(e){}
   // Initialiser Service Worker + permissions notifications
   try{ initSW(); }catch(e){ console.warn('initApp initSW:', e); }
+  // Centre de notifications (Taches 9 + 3)
+  try{ updNotifBadge(); }catch(e){}
+  try{ watchApproNotifs(); }catch(e){ console.warn('initApp watchApproNotifs:', e); }
+  try{ watchPushNotifs(); }catch(e){ console.warn('initApp watchPushNotifs:', e); }
+  // Pause automatique (Tache 4)
+  try{ startAutoPause(); }catch(e){ console.warn('initApp startAutoPause:', e); }
+  // Demander la permission Notification navigateur (foreground) au demarrage
+  try{ if(typeof Notification!=='undefined' && Notification.permission==='default'){ Notification.requestPermission().catch(function(){}); } }catch(e){}
 }
 
 function startInboxListener(){
@@ -4948,6 +5309,10 @@ function startInboxListener(){
     localStorage.setItem('wecan_emp_convs', JSON.stringify(convs));
     try{ renderConvs && renderConvs(); updBadge && updBadge(); }catch(e){}
     if(window.aCid==='admin_direct') renderMsgs('admin_direct');
+    // Centre de notifications (Tache 3) : ne pas notifier si la conv est ouverte
+    if(window.aCid!=='admin_direct'){
+      try{ addNotif('chat','💬 Admin RH', m.text?m.text.slice(0,80):'', 'chat_admin_'+(m.ts||Date.now()), {convId:'admin_direct'}); }catch(e){}
+    }
     // Notification lock screen message admin
     if(document.hidden || !document.hasFocus()){
       pushNotif('💬 Admin RH', m.text.slice(0,80), {action:'chat', convId:'admin_direct'}, {sticky:false, tag:'chat-admin'});
