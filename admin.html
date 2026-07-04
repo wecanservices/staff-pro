@@ -246,6 +246,14 @@ body.rtl .topbar-left{flex-direction:row-reverse;}
 
 
 /* ── APPROBATIONS ── */
+.appro-summary-row{display:flex;gap:8px;align-items:center;overflow-x:auto;padding:2px 2px 8px;}
+.appro-summary-row::-webkit-scrollbar{height:6px;}
+.appro-summary-row::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px;}
+.appro-chip{display:inline-flex;align-items:center;gap:8px;border-radius:12px;padding:8px 12px;cursor:pointer;white-space:nowrap;flex-shrink:0;transition:transform .1s,box-shadow .12s,background .12s;}
+.appro-chip:hover{transform:translateY(-1px);}
+.appro-count{min-width:22px;height:20px;padding:0 6px;border-radius:20px;color:#fff;font-size:11px;font-weight:800;display:inline-flex;align-items:center;justify-content:center;}
+@keyframes approPulse{0%,100%{box-shadow:0 0 0 0 rgba(245,158,11,.55);}70%{box-shadow:0 0 0 6px rgba(245,158,11,0);}}
+.appro-count.appro-pulse{animation:approPulse 1.5s ease-in-out infinite;}
 .appro-tab{background:none;border:none;padding:7px 14px;border-radius:8px;font-size:12px;font-weight:500;color:#64748b;cursor:pointer;}
 .appro-tab.active{background:#fff;color:#1e293b;font-weight:600;box-shadow:0 1px 4px rgba(0,0,0,0.08);}
 .appro-tab:hover:not(.active){color:#1e293b;}
@@ -4977,36 +4985,46 @@ function renderApprobations(){
   // Purge la sélection des demandes qui n'existent plus
   { const ex=new Set(approbations.map(a=>String(a.id))); [...approSelected].forEach(i=>{ if(!ex.has(i)) approSelected.delete(i); }); }
 
-  // ── FILTRES CLIQUABLES (statut + type) — remplacent les anciens badges + onglets ──
+  // ── FILTRES CLIQUABLES type "pipeline" (icône + libellé + pastille compteur) ──
   const A = a=>!a.archived;
   const nb = f => approbations.filter(f).length;
   const cType = ty => nb(a=>A(a)&&a.type===ty);
+  const SIC = {
+    all:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>',
+    pending:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+    approved:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>',
+    rejected:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M15 9l-6 6M9 9l6 6"/></svg>',
+    archived:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="4" rx="1"/><path d="M5 8v11a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8"/><path d="M10 12h4"/></svg>',
+  };
   const statusChips = [
-    {label:'Tous',       count:nb(A),                                color:'#475569', bg:'#f1f5f9', active:approFilters.status==='active',   act:"setApproStatus('active')"},
-    {label:'En attente', count:nb(a=>A(a)&&a.status==='pending'),    color:'#854F0B', bg:'#FAEEDA', active:approFilters.status==='pending',  act:"setApproStatus('pending')"},
-    {label:'Approuvées', count:nb(a=>A(a)&&a.status==='approved'),   color:'#3B6D11', bg:'#EAF3DE', active:approFilters.status==='approved', act:"setApproStatus('approved')"},
-    {label:'Rejetées',   count:nb(a=>A(a)&&a.status==='rejected'),   color:'#A32D2D', bg:'#FCEBEB', active:approFilters.status==='rejected', act:"setApproStatus('rejected')"},
-    {label:'Archivées',  count:nb(a=>a.archived),                    color:'#6b21a8', bg:'#F3E8FF', active:approFilters.status==='archived', act:"setApproStatus('archived')"},
+    {kind:'status', k:'active',   label:'Tous',       count:nb(A),                             pill:'#2563EB', ic:SIC.all,      active:approFilters.status==='active'},
+    {kind:'status', k:'pending',  label:'En attente', count:nb(a=>A(a)&&a.status==='pending'), pill:'#F59E0B', ic:SIC.pending,  active:approFilters.status==='pending', alert:true},
+    {kind:'status', k:'approved', label:'Approuvées', count:nb(a=>A(a)&&a.status==='approved'),pill:'#16A34A', ic:SIC.approved, active:approFilters.status==='approved'},
+    {kind:'status', k:'rejected', label:'Rejetées',   count:nb(a=>A(a)&&a.status==='rejected'),pill:'#DC2626', ic:SIC.rejected, active:approFilters.status==='rejected'},
+    {kind:'status', k:'archived', label:'Archivées',  count:nb(a=>a.archived),                 pill:'#7C3AED', ic:SIC.archived, active:approFilters.status==='archived'},
   ];
-  const typeChips = [
-    {label:'Toutes',        count:nb(A),                  color:'#475569', bg:'#f1f5f9', active:currentApproTab==='all',          act:"setApproType('all')"},
-    {label:'Congés',        count:cType('conge'),         color:'#92400E', bg:'#FEF9C3', active:currentApproTab==='conge',        act:"setApproType('conge')"},
-    {label:'H.Sup',         count:cType('hsup'),          color:'#7C3AED', bg:'#EDE9FE', active:currentApproTab==='hsup',         act:"setApproType('hsup')"},
-    {label:'Sorties',       count:cType('sortie'),        color:'#7B241C', bg:'#FDEDEC', active:currentApproTab==='sortie',       act:"setApproType('sortie')"},
-    {label:'Documents',     count:cType('document'),      color:'#166534', bg:'#F0FDF4', active:currentApproTab==='document',     act:"setApproType('document')"},
-    {label:'Prêts',         count:cType('pret'),          color:'#C2410C', bg:'#FFF7ED', active:currentApproTab==='pret',         act:"setApproType('pret')"},
-    {label:'Récupérations', count:cType('recuperation'),  color:'#166534', bg:'#F0FDF4', active:currentApproTab==='recuperation', act:"setApproType('recuperation')"},
-  ];
-  const chip = c=>`<button onclick="${c.act}" style="display:inline-flex;align-items:center;gap:7px;background:${c.active?c.color:c.bg};border:1px solid ${c.active?c.color:c.color+'22'};border-radius:10px;padding:7px 12px;cursor:pointer;box-shadow:${c.active?'0 3px 10px '+c.color+'55':'none'};transition:all .12s;">
-      <span style="font-size:15px;font-weight:800;color:${c.active?'#fff':c.color};">${c.count}</span>
-      <span style="font-size:11px;font-weight:700;color:${c.active?'#fff':c.color};">${c.label}</span>
-    </button>`;
-  const lbl = t=>`<span style="font-size:10px;color:#94a3b8;font-weight:800;text-transform:uppercase;letter-spacing:.6px;min-width:42px;">${t}</span>`;
-  document.getElementById('appro-summary').innerHTML = `
-    <div style="display:flex;flex-direction:column;gap:10px;">
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">${lbl('Statut')}${statusChips.map(chip).join('')}</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">${lbl('Type')}${typeChips.map(chip).join('')}</div>
-    </div>`;
+  const typeMeta = [['all','Toutes','#475569'],['conge','Congés','#92400E'],['hsup','H.Sup','#7C3AED'],['sortie','Sorties','#7B241C'],['document','Documents','#166534'],['pret','Prêts','#C2410C'],['recuperation','Récupérations','#0E7490']];
+  const typeChips = typeMeta.map(([k,label,pill])=>({
+    kind:'type', k, label, pill,
+    count: k==='all' ? nb(A) : cType(k),
+    ic: k==='all' ? SIC.all : (APPRO_CONFIG[k] ? '<span style="font-size:14px;">'+APPRO_CONFIG[k].icon+'</span>' : ''),
+    active: currentApproTab===k
+  }));
+  const chip = c=>{
+    const onclick = c.kind==='status' ? `setApproStatus('${c.k}')` : `setApproType('${c.k}')`;
+    const pulse = (c.alert && c.count>0 && !c.active) ? ' appro-pulse' : '';
+    const bg = c.active ? c.pill+'14' : '#fff';
+    const border = c.active ? c.pill : '#e8ecf1';
+    const shadow = c.active ? '0 2px 10px '+c.pill+'33' : '0 1px 2px rgba(15,23,42,.05)';
+    return `<button class="appro-chip" onclick="${onclick}" style="background:${bg};border:1px solid ${border};box-shadow:${shadow};">
+        <span style="display:flex;color:${c.active?c.pill:'#94a3b8'};line-height:1;">${c.ic}</span>
+        <span style="font-size:12.5px;font-weight:600;color:${c.active?'#0f172a':'#475569'};">${c.label}</span>
+        <span class="appro-count${pulse}" style="background:${c.pill};">${c.count}</span>
+      </button>`;
+  };
+  const divider = '<span style="width:1px;height:26px;background:#e2e8f0;margin:0 4px;flex-shrink:0;"></span>';
+  document.getElementById('appro-summary').innerHTML =
+    `<div class="appro-summary-row">${statusChips.map(chip).join('')}${divider}${typeChips.map(chip).join('')}</div>`;
 
   const list = getFiltered().sort((a,b)=>{
     const order={pending:0,approved:1,rejected:2};
