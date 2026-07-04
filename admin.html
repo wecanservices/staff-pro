@@ -1239,31 +1239,12 @@ const db = firebase.database();
           </div>
         </div>
 
-        <!-- SUMMARY BADGES -->
-        <div id="appro-summary" style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;"></div>
-
-        <!-- TABS -->
-        <div style="display:flex;gap:2px;background:#f1f5f9;border-radius:10px;padding:3px;margin-bottom:16px;width:fit-content;">
-          <button class="appro-tab active" onclick="switchApproTab('all',this)" id="tab-all"><span data-t="appro_all">Toutes</span></button>
-          <button class="appro-tab" onclick="switchApproTab('conge',this)" id="tab-conge">Congés</button>
-          <button class="appro-tab" onclick="switchApproTab('hsup',this)" id="tab-hsup">H.Sup</button>
-          <button class="appro-tab" onclick="switchApproTab('sortie',this)" id="tab-sortie">Sorties</button>
-          <button class="appro-tab" onclick="switchApproTab('document',this)" id="tab-document">Documents</button>
-          <button class="appro-tab" onclick="switchApproTab('pret',this)" id="tab-pret">Prêts</button>
-          <button class="appro-tab" onclick="switchApproTab('recuperation',this)" id="tab-recuperation">Récupération</button>
-        </div>
+        <!-- SUMMARY = FILTRES CLIQUABLES (statut + type). Remplace les anciens onglets. -->
+        <div id="appro-summary" style="margin-bottom:16px;"></div>
 
         <!-- ADVANCED FILTER -->
         <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:16px;background:#fff;border:1px solid #e2e8f0;border-radius:10px;padding:10px 12px;">
           <input id="appro-f-search" type="text" placeholder="Rechercher (nom, poste)..." oninput="applyApproFilters()" style="flex:1;min-width:160px;padding:7px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;color:#1e293b;">
-          <select id="appro-f-status" onchange="applyApproFilters()" style="padding:7px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;color:#1e293b;background:#fff;">
-            <option value="active">Actives</option>
-            <option value="pending">En attente</option>
-            <option value="approved">Approuvées</option>
-            <option value="rejected">Rejetées</option>
-            <option value="archived">Archivées</option>
-            <option value="all">Toutes</option>
-          </select>
           <label style="font-size:11px;color:#64748b;">Du</label>
           <input id="appro-f-from" type="date" onchange="applyApproFilters()" style="padding:6px 8px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;color:#1e293b;">
           <label style="font-size:11px;color:#64748b;">Au</label>
@@ -4873,11 +4854,13 @@ function getFiltered(){
 
 function applyApproFilters(){
   approFilters.search = (document.getElementById('appro-f-search')?.value||'').trim();
-  approFilters.status = document.getElementById('appro-f-status')?.value||'active';
   approFilters.from   = document.getElementById('appro-f-from')?.value||'';
   approFilters.to     = document.getElementById('appro-f-to')?.value||'';
   renderApprobations();
 }
+// Filtres cliquables (badges du haut)
+function setApproType(type){ currentApproTab = type; renderApprobations(); }
+function setApproStatus(status){ approFilters.status = status; renderApprobations(); }
 function resetApproFilters(){
   approFilters = { status:'active', search:'', from:'', to:'' };
   const s=document.getElementById('appro-f-search');  if(s) s.value='';
@@ -4994,22 +4977,36 @@ function renderApprobations(){
   // Purge la sélection des demandes qui n'existent plus
   { const ex=new Set(approbations.map(a=>String(a.id))); [...approSelected].forEach(i=>{ if(!ex.has(i)) approSelected.delete(i); }); }
 
-  // Summary badges
-  const types = ['conge','hsup','sortie','document'];
-  document.getElementById('appro-summary').innerHTML = [
-    [t('status_pending'), approbations.filter(a=>a.status==='pending').length, '#854F0B','#FAEEDA'],
-    ['Approuvées',  approbations.filter(a=>a.status==='approved').length,'#3B6D11','#EAF3DE'],
-    ['Rejetées',    approbations.filter(a=>a.status==='rejected').length, '#A32D2D','#FCEBEB'],
-    ['Congés',     approbations.filter(a=>a.type==='conge').length,      '#92400E','#FEF9C3'],
-    ['H.Sup',      approbations.filter(a=>a.type==='hsup').length,       '#7C3AED','#EDE9FE'],
-    ['Sorties',    approbations.filter(a=>a.type==='sortie').length,     '#7B241C','#FDEDEC'],
-    ['Documents',  approbations.filter(a=>a.type==='document').length,   '#166534','#F0FDF4'],
-    ['Prêts',      approbations.filter(a=>a.type==='pret').length,       '#C2410C','#FFF7ED'],
-    ['Récupérations', approbations.filter(a=>a.type==='recuperation').length, '#166534','#F0FDF4'],
-  ].map(([l,v,c,bg])=>`<div style="background:${bg};border-radius:8px;padding:8px 12px;display:flex;align-items:center;gap:8px;border:1px solid ${c}25;">
-    <span style="font-size:18px;font-weight:700;color:${c};">${v}</span>
-    <span style="font-size:10px;color:${c};font-weight:600;line-height:1.3;">${l}</span>
-  </div>`).join('');
+  // ── FILTRES CLIQUABLES (statut + type) — remplacent les anciens badges + onglets ──
+  const A = a=>!a.archived;
+  const nb = f => approbations.filter(f).length;
+  const cType = ty => nb(a=>A(a)&&a.type===ty);
+  const statusChips = [
+    {label:'Tous',       count:nb(A),                                color:'#475569', bg:'#f1f5f9', active:approFilters.status==='active',   act:"setApproStatus('active')"},
+    {label:'En attente', count:nb(a=>A(a)&&a.status==='pending'),    color:'#854F0B', bg:'#FAEEDA', active:approFilters.status==='pending',  act:"setApproStatus('pending')"},
+    {label:'Approuvées', count:nb(a=>A(a)&&a.status==='approved'),   color:'#3B6D11', bg:'#EAF3DE', active:approFilters.status==='approved', act:"setApproStatus('approved')"},
+    {label:'Rejetées',   count:nb(a=>A(a)&&a.status==='rejected'),   color:'#A32D2D', bg:'#FCEBEB', active:approFilters.status==='rejected', act:"setApproStatus('rejected')"},
+    {label:'Archivées',  count:nb(a=>a.archived),                    color:'#6b21a8', bg:'#F3E8FF', active:approFilters.status==='archived', act:"setApproStatus('archived')"},
+  ];
+  const typeChips = [
+    {label:'Toutes',        count:nb(A),                  color:'#475569', bg:'#f1f5f9', active:currentApproTab==='all',          act:"setApproType('all')"},
+    {label:'Congés',        count:cType('conge'),         color:'#92400E', bg:'#FEF9C3', active:currentApproTab==='conge',        act:"setApproType('conge')"},
+    {label:'H.Sup',         count:cType('hsup'),          color:'#7C3AED', bg:'#EDE9FE', active:currentApproTab==='hsup',         act:"setApproType('hsup')"},
+    {label:'Sorties',       count:cType('sortie'),        color:'#7B241C', bg:'#FDEDEC', active:currentApproTab==='sortie',       act:"setApproType('sortie')"},
+    {label:'Documents',     count:cType('document'),      color:'#166534', bg:'#F0FDF4', active:currentApproTab==='document',     act:"setApproType('document')"},
+    {label:'Prêts',         count:cType('pret'),          color:'#C2410C', bg:'#FFF7ED', active:currentApproTab==='pret',         act:"setApproType('pret')"},
+    {label:'Récupérations', count:cType('recuperation'),  color:'#166534', bg:'#F0FDF4', active:currentApproTab==='recuperation', act:"setApproType('recuperation')"},
+  ];
+  const chip = c=>`<button onclick="${c.act}" style="display:inline-flex;align-items:center;gap:7px;background:${c.active?c.color:c.bg};border:1px solid ${c.active?c.color:c.color+'22'};border-radius:10px;padding:7px 12px;cursor:pointer;box-shadow:${c.active?'0 3px 10px '+c.color+'55':'none'};transition:all .12s;">
+      <span style="font-size:15px;font-weight:800;color:${c.active?'#fff':c.color};">${c.count}</span>
+      <span style="font-size:11px;font-weight:700;color:${c.active?'#fff':c.color};">${c.label}</span>
+    </button>`;
+  const lbl = t=>`<span style="font-size:10px;color:#94a3b8;font-weight:800;text-transform:uppercase;letter-spacing:.6px;min-width:42px;">${t}</span>`;
+  document.getElementById('appro-summary').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:10px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">${lbl('Statut')}${statusChips.map(chip).join('')}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">${lbl('Type')}${typeChips.map(chip).join('')}</div>
+    </div>`;
 
   const list = getFiltered().sort((a,b)=>{
     const order={pending:0,approved:1,rejected:2};
