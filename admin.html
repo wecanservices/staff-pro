@@ -7266,14 +7266,25 @@ function createConversation(){
 // ── NOTIFICATIONS PUSH ──
 // ── CENTRE DE NOTIFICATIONS (Tache 9) ──
 // Agrege les demandes d'approbation en attente + les messages chat non lus.
-// Notifs marquees comme vues (masquees du panneau) — n'affecte PAS les donnees reelles
-function _notifKey(it){ return it.kind+'|'+it.id+'|'+(it.sub||''); }
-function _getNotifSeen(){ try{ return JSON.parse(localStorage.getItem('wecan_admin_notif_seen')||'[]'); }catch(e){ return []; } }
-function _saveNotifSeen(a){ try{ localStorage.setItem('wecan_admin_notif_seen', JSON.stringify(a.slice(-500))); }catch(e){} }
+// Etat lu / non-lu des notifs (par cle). N'affecte PAS les donnees reelles (demandes/messages).
+function _notifKey(it){ return it.kind+'|'+(it.id||'')+'|'+(it.title||'')+'|'+(it.sub||''); }
+function _getNotifRead(){ try{ return JSON.parse(localStorage.getItem('wecan_admin_notif_read')||'[]'); }catch(e){ return []; } }
+function _saveNotifRead(a){ try{ localStorage.setItem('wecan_admin_notif_read', JSON.stringify(a.slice(-800))); }catch(e){} }
 function _notifItems(){
-  const seen=_getNotifSeen();
-  return _rawNotifItems().filter(it=>seen.indexOf(_notifKey(it))===-1);
+  const read=_getNotifRead();
+  const seen={};
+  return _rawNotifItems().map(function(it){
+    let k=_notifKey(it);
+    const n=(seen[k]=(seen[k]||0)+1);
+    if(n>1) k=k+'#'+n; // desambigue les doublons (meme employe/type sans id) -> chaque ligne unique et stable
+    it.key=k; it.read=read.indexOf(k)!==-1;
+    return it;
+  });
 }
+function _notifItemByIdx(i){ const items=_notifItems(); return items[i]||null; }
+function markNotifReadByIdx(i){ const it=_notifItemByIdx(i); if(!it) return; const r=_getNotifRead(); if(r.indexOf(it.key)===-1){ r.push(it.key); _saveNotifRead(r); } try{ updateNotifBell(); }catch(e){} }
+function toggleNotifReadByIdx(i){ const it=_notifItemByIdx(i); if(!it) return; const r=_getNotifRead(); const p=r.indexOf(it.key); if(p===-1) r.push(it.key); else r.splice(p,1); _saveNotifRead(r); renderNotifCenter(); try{ updateNotifBell(); }catch(e){} }
+function markAllNotifs(read){ const items=_notifItems(); let r=_getNotifRead(); if(read){ items.forEach(function(it){ if(r.indexOf(it.key)===-1) r.push(it.key); }); } else { const keys=items.map(function(it){ return it.key; }); r=r.filter(function(k){ return keys.indexOf(k)===-1; }); } _saveNotifRead(r); renderNotifCenter(); try{ updateNotifBell(); }catch(e){} }
 function _rawNotifItems(){
   const items=[];
   try{
@@ -7304,7 +7315,7 @@ function updateNotifBell(){
   const badge=document.getElementById('notif-bell-badge');
   if(!badge) return;
   let count=0;
-  try{ count=_notifItems().length; }catch(e){ count=0; }
+  try{ count=_notifItems().filter(function(it){ return !it.read; }).length; }catch(e){ count=0; }
   badge.style.display=count>0?'block':'none';
   badge.textContent=count>9?'9+':count;
   // Si le panneau est ouvert, le rafraichir
@@ -7316,40 +7327,37 @@ function renderNotifCenter(){
   const panel=document.getElementById('notif-center-panel');
   if(!panel) return;
   const items=_notifItems();
-  const header=`<div style="padding:12px 14px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;">
+  const unread=items.filter(function(it){ return !it.read; }).length;
+  const header=`<div style="padding:12px 14px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;z-index:1;">
     <span style="font-size:13px;font-weight:700;color:#1e293b;">Notifications</span>
-    <span style="font-size:11px;color:#fff;background:#C0392B;border-radius:20px;padding:1px 8px;font-weight:600;">${items.length}</span>
+    <span style="font-size:11px;color:#fff;background:${unread?'#C0392B':'#94a3b8'};border-radius:20px;padding:1px 8px;font-weight:600;">${unread} non lu${unread>1?'s':''}</span>
   </div>`;
   if(!items.length){
-    panel.innerHTML=header+`<div style="padding:28px 16px;text-align:center;color:#94a3b8;font-size:12px;">Aucune nouvelle notification</div>`;
+    panel.innerHTML=header+`<div style="padding:28px 16px;text-align:center;color:#94a3b8;font-size:12px;">Aucune notification</div>`;
     return;
   }
-  const rows=items.map(it=>{
+  const rows=items.map(function(it,i){
     const act = it.kind==='appro' ? `showPage('approbations',document.querySelector('.nav-item[onclick*=approbations]'));closeNotifCenter();`
                                   : `showPage('chat',document.querySelector('.nav-item[onclick*=chat]'));closeNotifCenter();`;
-    return `<div onclick="${act}" style="padding:11px 14px;border-bottom:1px solid #f8fafc;display:flex;gap:10px;align-items:flex-start;cursor:pointer;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
-      <div style="width:30px;height:30px;border-radius:8px;background:${it.color}18;color:${it.color};display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">${it.icon}</div>
-      <div style="flex:1;min-width:0;">
-        <div style="font-size:12px;font-weight:600;color:#1e293b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${it.title}</div>
+    const dot = it.read ? `<span style="width:8px;flex-shrink:0;"></span>` : `<span style="width:8px;height:8px;border-radius:50%;background:#C0392B;flex-shrink:0;margin-top:6px;"></span>`;
+    return `<div style="padding:11px 12px;border-bottom:1px solid #f8fafc;display:flex;gap:8px;align-items:flex-start;background:${it.read?'#fff':'#FCF6F5'};opacity:${it.read?'0.6':'1'};">
+      ${dot}
+      <div onclick="markNotifReadByIdx(${i});${act}" style="width:30px;height:30px;border-radius:8px;background:${it.color}18;color:${it.color};display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;cursor:pointer;">${it.icon}</div>
+      <div onclick="markNotifReadByIdx(${i});${act}" style="flex:1;min-width:0;cursor:pointer;">
+        <div style="font-size:12px;font-weight:${it.read?'500':'700'};color:#1e293b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${it.title}</div>
         <div style="font-size:11px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${it.sub}</div>
       </div>
-      ${it.date?`<span style="font-size:9px;color:#94a3b8;flex-shrink:0;">${it.date}</span>`:''}
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
+        ${it.date?`<span style="font-size:9px;color:#94a3b8;">${it.date}</span>`:''}
+        <button onclick="event.stopPropagation();toggleNotifReadByIdx(${i})" title="Basculer lu / non lu" style="font-size:9px;font-weight:700;color:${it.read?'#C0392B':'#64748b'};background:${it.read?'#FDEDEC':'#f1f5f9'};border:none;border-radius:6px;padding:2px 7px;cursor:pointer;white-space:nowrap;">${it.read?'Non lu':'Lu'}</button>
+      </div>
     </div>`;
   }).join('');
+  const allRead = unread===0;
   const footer=`<div style="position:sticky;bottom:0;background:#fff;border-top:1px solid #f1f5f9;padding:8px 10px;">
-    <button onclick="clearAllNotifs(event)" style="width:100%;padding:9px;border:1px solid #F1C7C1;border-radius:8px;background:#FDEDEC;color:#C0392B;font-size:12px;font-weight:700;cursor:pointer;">🗑️ Effacer les notifications</button>
+    <button onclick="markAllNotifs(${allRead?'0':'1'})" style="width:100%;padding:9px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;color:#1e293b;font-size:12px;font-weight:700;cursor:pointer;">${allRead?'Marquer tout comme non lu':'✓ Tout marquer comme lu'}</button>
   </div>`;
   panel.innerHTML=header+rows+footer;
-}
-
-// Masque toutes les notifs affichees (les marque comme vues). Les demandes/messages reels restent intacts.
-function clearAllNotifs(ev){
-  if(ev) ev.stopPropagation();
-  const seen=_getNotifSeen();
-  _rawNotifItems().forEach(it=>{ const k=_notifKey(it); if(seen.indexOf(k)===-1) seen.push(k); });
-  _saveNotifSeen(seen);
-  renderNotifCenter();
-  try{ updateNotifBell(); }catch(e){}
 }
 
 function toggleNotifCenter(ev){
@@ -7357,6 +7365,8 @@ function toggleNotifCenter(ev){
   const panel=document.getElementById('notif-center-panel');
   if(!panel) return;
   if(panel.style.display==='block'){ closeNotifCenter(); return; }
+  // Portal : sortir le panneau vers body pour echapper au contexte d empilement de la topbar (z-index:1)
+  if(panel.parentElement!==document.body) document.body.appendChild(panel);
   renderNotifCenter();
   panel.style.display='block';
   setTimeout(()=>{ document.addEventListener('click', _notifOutside); },0);
@@ -7368,7 +7378,10 @@ function closeNotifCenter(){
 }
 function _notifOutside(e){
   const wrap=document.getElementById('notif-center-wrap');
-  if(wrap && !wrap.contains(e.target)) closeNotifCenter();
+  const panel=document.getElementById('notif-center-panel');
+  if(panel && panel.contains(e.target)) return;
+  if(wrap && wrap.contains(e.target)) return;
+  closeNotifCenter();
 }
 
 function openNotifPush(){
