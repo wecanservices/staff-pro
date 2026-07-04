@@ -7270,8 +7270,12 @@ function createConversation(){
 function _notifKey(it){ return it.kind+'|'+(it.id||'')+'|'+(it.title||'')+'|'+(it.sub||''); }
 function _getNotifRead(){ try{ return JSON.parse(localStorage.getItem('wecan_admin_notif_read')||'[]'); }catch(e){ return []; } }
 function _saveNotifRead(a){ try{ localStorage.setItem('wecan_admin_notif_read', JSON.stringify(a.slice(-800))); }catch(e){} }
+// Notifs supprimees / archivees du centre (masquees meme si la donnee reelle existe encore).
+function _getNotifDismissed(){ try{ return JSON.parse(localStorage.getItem('wecan_admin_notif_dismissed')||'[]'); }catch(e){ return []; } }
+function _saveNotifDismissed(a){ try{ localStorage.setItem('wecan_admin_notif_dismissed', JSON.stringify(a.slice(-800))); }catch(e){} }
 function _notifItems(){
   const read=_getNotifRead();
+  const dismissed=_getNotifDismissed();
   const seen={};
   return _rawNotifItems().map(function(it){
     let k=_notifKey(it);
@@ -7279,12 +7283,16 @@ function _notifItems(){
     if(n>1) k=k+'#'+n; // desambigue les doublons (meme employe/type sans id) -> chaque ligne unique et stable
     it.key=k; it.read=read.indexOf(k)!==-1;
     return it;
-  });
+  }).filter(function(it){ return dismissed.indexOf(it.key)===-1; });
 }
 function _notifItemByIdx(i){ const items=_notifItems(); return items[i]||null; }
 function markNotifReadByIdx(i){ const it=_notifItemByIdx(i); if(!it) return; const r=_getNotifRead(); if(r.indexOf(it.key)===-1){ r.push(it.key); _saveNotifRead(r); } try{ updateNotifBell(); }catch(e){} }
 function toggleNotifReadByIdx(i){ const it=_notifItemByIdx(i); if(!it) return; const r=_getNotifRead(); const p=r.indexOf(it.key); if(p===-1) r.push(it.key); else r.splice(p,1); _saveNotifRead(r); renderNotifCenter(); try{ updateNotifBell(); }catch(e){} }
 function markAllNotifs(read){ const items=_notifItems(); let r=_getNotifRead(); if(read){ items.forEach(function(it){ if(r.indexOf(it.key)===-1) r.push(it.key); }); } else { const keys=items.map(function(it){ return it.key; }); r=r.filter(function(k){ return keys.indexOf(k)===-1; }); } _saveNotifRead(r); renderNotifCenter(); try{ updateNotifBell(); }catch(e){} }
+// Supprime (archive) une notification precise du centre
+function deleteNotifByIdx(i){ const it=_notifItemByIdx(i); if(!it) return; const d=_getNotifDismissed(); if(d.indexOf(it.key)===-1){ d.push(it.key); _saveNotifDismissed(d); } renderNotifCenter(); try{ updateNotifBell(); }catch(e){} }
+// Vide tout le centre de notifications
+function clearAllNotifs(){ const items=_notifItems(); if(!items.length) return; if(!confirm('Supprimer toutes les notifications ?')) return; const d=_getNotifDismissed(); items.forEach(function(it){ if(d.indexOf(it.key)===-1) d.push(it.key); }); _saveNotifDismissed(d); renderNotifCenter(); try{ updateNotifBell(); }catch(e){} }
 function _rawNotifItems(){
   const items=[];
   try{
@@ -7342,20 +7350,24 @@ function renderNotifCenter(){
     const dot = it.read ? `<span style="width:8px;flex-shrink:0;"></span>` : `<span style="width:8px;height:8px;border-radius:50%;background:#C0392B;flex-shrink:0;margin-top:6px;"></span>`;
     return `<div style="padding:11px 12px;border-bottom:1px solid #f8fafc;display:flex;gap:8px;align-items:flex-start;background:${it.read?'#fff':'#FCF6F5'};opacity:${it.read?'0.6':'1'};">
       ${dot}
-      <div onclick="markNotifReadByIdx(${i});${act}" style="width:30px;height:30px;border-radius:8px;background:${it.color}18;color:${it.color};display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;cursor:pointer;">${it.icon}</div>
-      <div onclick="markNotifReadByIdx(${i});${act}" style="flex:1;min-width:0;cursor:pointer;">
+      <div onclick="deleteNotifByIdx(${i});${act}" style="width:30px;height:30px;border-radius:8px;background:${it.color}18;color:${it.color};display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;cursor:pointer;">${it.icon}</div>
+      <div onclick="deleteNotifByIdx(${i});${act}" style="flex:1;min-width:0;cursor:pointer;">
         <div style="font-size:12px;font-weight:${it.read?'500':'700'};color:#1e293b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${it.title}</div>
         <div style="font-size:11px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${it.sub}</div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;">
         ${it.date?`<span style="font-size:9px;color:#94a3b8;">${it.date}</span>`:''}
-        <button onclick="event.stopPropagation();toggleNotifReadByIdx(${i})" title="Basculer lu / non lu" style="font-size:9px;font-weight:700;color:${it.read?'#C0392B':'#64748b'};background:${it.read?'#FDEDEC':'#f1f5f9'};border:none;border-radius:6px;padding:2px 7px;cursor:pointer;white-space:nowrap;">${it.read?'Non lu':'Lu'}</button>
+        <div style="display:flex;gap:4px;align-items:center;">
+          <button onclick="event.stopPropagation();toggleNotifReadByIdx(${i})" title="Basculer lu / non lu" style="font-size:9px;font-weight:700;color:${it.read?'#C0392B':'#64748b'};background:${it.read?'#FDEDEC':'#f1f5f9'};border:none;border-radius:6px;padding:2px 7px;cursor:pointer;white-space:nowrap;">${it.read?'Non lu':'Lu'}</button>
+          <button onclick="event.stopPropagation();deleteNotifByIdx(${i})" title="Supprimer" style="font-size:13px;line-height:1;font-weight:700;color:#94a3b8;background:#f1f5f9;border:none;border-radius:6px;width:20px;height:20px;display:flex;align-items:center;justify-content:center;cursor:pointer;">&times;</button>
+        </div>
       </div>
     </div>`;
   }).join('');
   const allRead = unread===0;
-  const footer=`<div style="position:sticky;bottom:0;background:#fff;border-top:1px solid #f1f5f9;padding:8px 10px;">
-    <button onclick="markAllNotifs(${allRead?'0':'1'})" style="width:100%;padding:9px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;color:#1e293b;font-size:12px;font-weight:700;cursor:pointer;">${allRead?'Marquer tout comme non lu':'✓ Tout marquer comme lu'}</button>
+  const footer=`<div style="position:sticky;bottom:0;background:#fff;border-top:1px solid #f1f5f9;padding:8px 10px;display:flex;gap:8px;">
+    <button onclick="markAllNotifs(${allRead?'0':'1'})" style="flex:1;padding:9px;border:1px solid #e2e8f0;border-radius:8px;background:#f8fafc;color:#1e293b;font-size:12px;font-weight:700;cursor:pointer;">${allRead?'Marquer tout comme non lu':'✓ Tout marquer comme lu'}</button>
+    <button onclick="clearAllNotifs()" style="flex-shrink:0;padding:9px 12px;border:1px solid #F1948A;border-radius:8px;background:#FDEDEC;color:#C0392B;font-size:12px;font-weight:700;cursor:pointer;">Tout effacer</button>
   </div>`;
   panel.innerHTML=header+rows+footer;
 }
