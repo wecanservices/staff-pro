@@ -1999,20 +1999,22 @@ function fbEmpSync(){
   });
   db.ref('wecan/approbations').on('value', snap=>{
     const val = snap.val();
-    if(!val) return;
-    localStorage.setItem('wecan_approbations', JSON.stringify(val));
-    // Also sync to 'approbations' key so admin.html (same device) sees it
-    const arr = Array.isArray(val) ? val : Object.values(val);
-    const existing = JSON.parse(localStorage.getItem('approbations')||'[]');
-    let changed = false;
-    arr.filter(a=>a&&a.id).forEach(a=>{
-      const idx=existing.findIndex(x=>x.id===a.id);
-      if(idx===-1){existing.push(a);changed=true;}
-      else if(existing[idx].status!==a.status){existing[idx]=a;changed=true;}
+    // Firebase = source de vérité : on REMPLACE la liste locale (ne jamais fusionner en
+    // ajout seul, sinon une demande supprimée côté admin réapparaît / se ré-pousse).
+    const arr = (val==null) ? [] : (Array.isArray(val) ? val : Object.values(val));
+    // Dédupliquer par id (une demande postée en double = une seule), garder la décidée
+    const seen={}; const clean=[];
+    arr.filter(a=>a&&a.id!=null).forEach(a=>{
+      const id=String(a.id);
+      if(seen[id]===undefined){ seen[id]=clean.length; clean.push(a); }
+      else if(a.status==='approved'||a.status==='rejected'){ clean[seen[id]]=a; }
     });
-    if(changed) localStorage.setItem('approbations',JSON.stringify(existing));
+    localStorage.setItem('wecan_approbations', JSON.stringify(clean));
+    localStorage.setItem('approbations', JSON.stringify(clean));
     // Notifier l employe des changements de statut de ses demandes (Tache 3)
     try{ if(typeof watchApproNotifs==='function') watchApproNotifs(); }catch(e){}
+    try{ if(document.getElementById('mgr-content')) renderMgrList(); }catch(e){}
+    try{ if(document.getElementById('leaves-list')) renderLeaves(); }catch(e){}
   });
   // Sync tous les pointages depuis Firebase → localStorage (pour sous-admin et rapports cross-device)
   db.ref('wecan/pointages').on('value', snap=>{
@@ -4036,20 +4038,31 @@ function subRequest(){
   const req={id,type,empId:ME.id,empName:ME.prenom+' '+ME.nom,poste:ME.poste,status:'pending',date:tday(),detail};
   let reqs=getMgrRequests();reqs.push(req);sv('mgr_requests',reqs);
   leaves=ld('emp_leaves',[]);leaves.push(req);sv('emp_leaves',leaves);
-  // Sync approbations: save to 'approbations' key (read by admin.html) AND Firebase
-  const localAppros=ld('approbations',[]);
-  if(!localAppros.find(a=>a.id===req.id)){localAppros.push(req);sv('approbations',localAppros);}
-  try{
-    const allAppros=JSON.parse(localStorage.getItem('wecan_approbations')||'[]');
-    if(!Array.isArray(allAppros)) { const arr=Object.values(allAppros); arr.push(req); localStorage.setItem('wecan_approbations',JSON.stringify(arr)); db.ref('wecan/approbations').set(arr); } else { allAppros.push(req); localStorage.setItem('wecan_approbations',JSON.stringify(allAppros)); db.ref('wecan/approbations').set(allAppros); }
-  }catch(fbErr){}
+  // Sync approbations vers Firebase — SANS DOUBLON.
+  // (Bug corrigé : avant, req était ajouté à wecan_approbations PUIS re-poussé une 2e fois
+  //  → 2 copies identiques dans Firebase.)
+  let localAppros=ld('approbations',[]);
+  if(!Array.isArray(localAppros)) localAppros=Object.values(localAppros||{});
+  if(!localAppros.find(a=>a&&String(a.id)===String(req.id))){ localAppros.push(req); }
+  sv('approbations',localAppros);                 // écrit wecan_approbations (une seule fois)
+  try{ db.ref('wecan/approbations').set(localAppros); }catch(fbErr){}
   closeLF();showToast('✅ Demande envoyee');
   renderLeaves();renderHome();
   hsPhotoData=null;document.getElementById('hs-photo-preview').style.display='none';document.getElementById('hs-photo-btns').style.display='flex';
 }
 
 function renderLeaves(){
-  leaves=ld('emp_leaves',[]).filter(l=>l.empId===ME.id);
+  // Statut = source de vérité Firebase (wecan/approbations). emp_leaves ne garde qu'une
+  // copie locale figée à "pending" ; on la resynchronise avec le statut réel (approuvée/
+  // refusée) mis à jour par l'admin, sinon la demande reste "En attente" à tort.
+  const raw=ld('approbations',[]);
+  const apById={};
+  (Array.isArray(raw)?raw:Object.values(raw||{})).forEach(a=>{ if(a&&a.id!=null) apById[String(a.id)]=a; });
+  let stored=ld('emp_leaves',[]);
+  let changed=false;
+  stored.forEach(l=>{ const fb=apById[String(l.id)]; if(fb&&fb.status&&fb.status!==l.status){ l.status=fb.status; if(fb.heureSortieEffective) l.heureSortieEffective=fb.heureSortieEffective; changed=true; } });
+  if(changed) sv('emp_leaves',stored);
+  leaves=stored.filter(l=>l.empId===ME.id);
   const ll=document.getElementById('leaves-list');
   if(!leaves.length){ll.innerHTML='<div style="text-align:center;color:var(--gray);font-size:13px;padding:24px">Aucune demande</div>';return;}
   const icoMap={'conge':'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>','sortie':'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>','document':'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>','hsup':'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>'};
@@ -4898,26 +4911,20 @@ function openManagerSpace(){
 function closeMgrSpace(){document.getElementById('mgr-space').classList.remove('open');}
 
 function getMgrRequests(){
-  // Merge mgr_requests + wecan_approbations (from Firebase) for manager view
-  const local = ld('mgr_requests',[]);
-  const firebase_appros_raw = ld('approbations',[]);
-  const firebase_appros = Array.isArray(firebase_appros_raw) ? firebase_appros_raw : Object.values(firebase_appros_raw||{});
-  // Merge: add firebase items not already in local
-  const merged = [...local];
-  firebase_appros.filter(a=>a&&a.id).forEach(a=>{
-    if(!merged.find(r=>r.id===a.id)) merged.push(a);
-  });
-  // Filter: only show employees from same agency (if sous-admin) or all (if admin)
+  // Firebase = SOURCE DE VÉRITÉ. Les demandes des autres employés arrivent TOUJOURS via
+  // Firebase (wecan/approbations → ld('approbations')). On ne fusionne plus mgr_requests
+  // local (copie périmée) : cela réintroduisait des statuts obsolètes (approuvée montrée
+  // "en attente") et ressuscitait des demandes supprimées côté admin.
+  const raw = ld('approbations',[]);
+  const fb = (Array.isArray(raw) ? raw : Object.values(raw||{})).filter(a=>a&&a.id!=null);
   const myAgId = ME.agenceId;
   const emps = ld('employees',[]);
   const sameAgEmpIds = emps.filter(e=>String(e.agenceId)===String(myAgId)).map(e=>String(e.id));
-  // Admin sees all, sous-admin sees same agency, exclude own requests
-  const filtered = merged.filter(r=>{
-    if(String(r.empId) === String(ME.id)) return false; // exclude own requests
-    if(ME.role==='admin') return true;
-    return sameAgEmpIds.includes(String(r.empId));
+  return fb.filter(r=>{
+    if(String(r.empId) === String(ME.id)) return false; // pas ses propres demandes
+    if(ME.role==='admin') return true;                  // admin voit tout
+    return sameAgEmpIds.includes(String(r.empId));       // sous-admin : même agence
   });
-  return filtered.length ? filtered : merged.filter(r=>r.empId!==ME.id);
 }
 
 function switchMgrTab(tab,btn){
