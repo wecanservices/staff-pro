@@ -1970,11 +1970,25 @@ function fbEmpSync(){
     });
     if(changed) localStorage.setItem('wecan_all_pointages', JSON.stringify(existing));
   });
+  // ── TÂCHE 8 : charger les shifts pour connaitre l heure de fin (plafond h.sup) ──
+  db.ref('wecan/shifts').on('value', snap=>{
+    const val = snap.val();
+    if(!val) return;
+    const arr = Array.isArray(val) ? val : Object.values(val);
+    try{ localStorage.setItem('wecan_shifts', JSON.stringify(arr.filter(s=>s))); }catch(e){}
+  });
 }
 function now(){const n=new Date();return String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');}
 function tday(){const n=new Date();return String(n.getDate()).padStart(2,'0')+'/'+(String(n.getMonth()+1).padStart(2,'0'))+'/'+n.getFullYear();}
 function toMins2(t){const[h,m]=t.split(':').map(Number);return h*60+m;}
 function fromISO(v){if(!v)return'';const[y,m,d]=v.split('-');return d+'/'+m+'/'+y;}
+// ── TÂCHE 12 : date du jour au format ISO (yyyy-mm-dd), basee sur la date systeme ──
+function todayISO(){const n=new Date();return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0');}
+// Applique min=aujourd hui sur tous les champs date des formulaires de demande.
+function applyDemandeMinDates(){
+  const t=todayISO();
+  ['ld','lf','s-date','hs-date'].forEach(function(id){var el=document.getElementById(id);if(el)el.setAttribute('min',t);});
+}
 function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2500);}
 
 let agencies = ld('agencies',[]);
@@ -2077,6 +2091,7 @@ function doLogout(){
     db.ref('wecan/agencies').off();
     db.ref('wecan/approbations').off();
     db.ref('wecan/pointages').off();
+    db.ref('wecan/shifts').off();
     if(ME) db.ref('wecan/per_emp/'+ME.id+'/inbox').off();
     Object.keys(_convListeners).forEach(cid=>{
       db.ref('wecan/per_emp/'+(ME&&ME.id)+'/direct/'+cid).off();
@@ -2665,6 +2680,25 @@ function hideBlockedAlert(){
 function doPoint(ag,method,typeOvr,lat,lng){
   const type=typeOvr||'Entree';
   let pts=ld('pointages',[]);
+  // ── TÂCHE 1 : Anti-double pointage (1 entree + 1 sortie max par jour) ──
+  // Basé sur la date locale (tday) et l ID employe.
+  const _todayPts = pts.filter(function(p){return p.empId===ME.id && p.date===tday();});
+  const _hasEntreeToday = _todayPts.some(function(p){return p.type==='Entree';});
+  const _hasSortieToday = _todayPts.some(function(p){return p.type==='Sortie';});
+  if(type==='Entree' && _hasEntreeToday){
+    showToast('⛔ Vous avez deja pointe votre entree aujourd hui');
+    return;
+  }
+  if(type==='Sortie'){
+    if(!_hasEntreeToday){
+      showToast('⛔ Pointez d abord votre entree');
+      return;
+    }
+    if(_hasSortieToday){
+      showToast('⛔ Vous avez deja pointe votre sortie aujourd hui');
+      return;
+    }
+  }
   // Always use employee's assigned agency for name/id
   const agId = String(ME.agenceId||ME.agenceIds?.[0]||'');
   const assignedAg = agencies.find(a=>String(a.id)===agId) || ag;
@@ -2812,6 +2846,40 @@ function onQR(text){
   }else{showToast('QR invalide - format attendu: WECAN|code|nom|lat|lng|rayon');}
 }
 
+// ═══ TÂCHE 8 : plafond h.sup — helpers ═══════════════════════════════
+// Renvoie l heure de fin de shift de l employe (en minutes depuis minuit),
+// ou null si inconnue. Source : wecan_shifts (cache Firebase) via ME.shiftId,
+// sinon le champ shift porte par l employe si present.
+function _shiftEndMins(){
+  try{
+    const sid = ME && (ME.shiftId!=null?ME.shiftId:ME.shift_id);
+    if(sid==null) return null;
+    const shifts = JSON.parse(localStorage.getItem('wecan_shifts')||'[]');
+    const s = shifts.find(x=>x&&String(x.id)===String(sid));
+    if(s&&s.fin&&/^\d{1,2}:\d{2}$/.test(s.fin)) return toMins2(s.fin);
+  }catch(e){}
+  return null;
+}
+// Total d heures sup APPROUVEES (en minutes) pour un jour donne (date "dd/mm/yyyy").
+// Seules les demandes hsup au statut 'approved' comptent.
+function _approvedHsupMins(dateStr){
+  try{
+    const src = ld('approbations',[]).concat(ld('emp_leaves',[]));
+    const seen={}; let mins=0;
+    src.forEach(function(r){
+      if(!r||seen[r.id])return; seen[r.id]=1;
+      if(r.empId!==ME.id) return;
+      if(r.type!=='hsup') return;
+      if(r.status!=='approved') return;
+      const d=r.detail||{};
+      if(d.date_hsup!==dateStr) return;
+      const h=parseFloat(d.heures);
+      if(h>0) mins+=Math.round(h*60);
+    });
+    return mins;
+  }catch(e){ return 0; }
+}
+
 function renderPtSummary(){
   const pts=ld('pointages',[]).filter(p=>p.empId===ME.id&&p.date===tday());
   const entree=pts.find(p=>p.type==='Entree');
@@ -2821,7 +2889,24 @@ function renderPtSummary(){
   let totalPause=0;
   pbs.forEach((pb,i)=>{if(pes[i]){const d=toMins2(pes[i].time)-toMins2(pb.time);if(d>0)totalPause+=d;}});
   let netStr='-',pauseStr='-';
-  if(entree&&sortie){const b=Math.max(0,toMins2(sortie.time)-toMins2(entree.time)-totalPause);netStr=Math.floor(b/60)+'h'+(b%60?b%60+'m':'');}
+  if(entree&&sortie){
+    // ── TÂCHE 8 : les heures faites au-dela de l heure de fin de shift SANS
+    //    demande d h.sup approuvee ne comptent PAS. On plafonne l heure de
+    //    sortie a l heure de fin du shift, PUIS on ajoute les h.sup approuvees
+    //    du jour. Ex : shift finit 17h00, sortie 17h30 sans demande -> compte
+    //    jusqu a 17h00. Avec 30min d h.sup approuvees -> compte 17h30.
+    const sortieMins = toMins2(sortie.time);
+    const endMins = _shiftEndMins(); // heure de fin de shift (ou null si inconnue)
+    let effSortie = sortieMins;
+    if(endMins!=null && sortieMins>endMins){
+      const approved = _approvedHsupMins(tday()); // h.sup approuvees (minutes)
+      // On autorise le depassement seulement a hauteur des h.sup approuvees.
+      const cap = endMins + approved;
+      effSortie = Math.min(sortieMins, cap);
+    }
+    const b=Math.max(0,effSortie-toMins2(entree.time)-totalPause);
+    netStr=Math.floor(b/60)+'h'+(b%60?b%60+'m':'');
+  }
   pauseStr=totalPause?Math.floor(totalPause/60)+'h'+(totalPause%60?totalPause%60+'m':''):'-';
   // Update hero stats
   const statsEl=document.getElementById('pt-hero-stats');
@@ -3625,11 +3710,13 @@ function renderPostesDash(){
 function openLF(){
   selReqType('conge');
   document.getElementById('lf-modal').classList.add('open');
+  applyDemandeMinDates();
 }
 function openLFType(t){
   const m=document.getElementById('lf-modal');
   if(!m) return;
   m.classList.add('open');
+  applyDemandeMinDates();
   setTimeout(()=>{ try{ selReqType(t); }catch(e){} },30);
 }
 function openWhatsAppGroup(){
@@ -3700,6 +3787,20 @@ function updSubBtn(){
 }
 
 function subRequest(){
+  // ── TÂCHE 12 : interdire toute demande pour une date deja passee ──
+  // Compare la date ISO du champ concerne a la date du jour (systeme).
+  const _tISO=todayISO();
+  let _dateFields=[];
+  if(reqType==='conge'){_dateFields=['ld','lf'];}
+  else if(reqType==='sortie'){_dateFields=['s-date'];}
+  else if(reqType==='hsup'){_dateFields=['hs-date'];}
+  for(let i=0;i<_dateFields.length;i++){
+    const el=document.getElementById(_dateFields[i]);
+    if(el&&el.value&&el.value<_tISO){
+      showToast('⛔ Impossible de demander pour une date passee');
+      return;
+    }
+  }
   const id='req-'+Date.now();
   let detail={};
   let type=reqType;
