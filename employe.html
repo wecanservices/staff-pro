@@ -158,8 +158,12 @@ body.dark .notif-ico{background:rgba(255,255,255,.06)}
 body.dark .notif-title{color:#e2e8f0}
 .notif-text{font-size:12px;color:var(--gray,#64748B);line-height:1.35;word-break:break-word}
 .notif-time{font-size:10.5px;color:var(--gray,#94A3B8);margin-top:4px}
-.notif-unread-dot{position:absolute;top:14px;right:12px;width:8px;height:8px;border-radius:50%;background:var(--brand,#C0392B)}
+.notif-unread-dot{position:absolute;top:14px;right:30px;width:8px;height:8px;border-radius:50%;background:var(--brand,#C0392B)}
 .notif-empty{text-align:center;color:var(--gray,#94A3B8);font-size:13px;padding:60px 20px}
+.notif-del{position:absolute;top:8px;right:8px;width:22px;height:22px;border:none;border-radius:50%;background:rgba(0,0,0,.06);color:var(--gray,#94A3B8);font-size:14px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;font-family:inherit}
+.notif-del:active{background:rgba(192,57,43,.15);color:var(--brand,#C0392B)}
+body.dark .notif-del{background:rgba(255,255,255,.08)}
+.notif-clear-all{font-size:11px;font-weight:700;color:var(--gray,#94A3B8);background:none;border:none;cursor:pointer;font-family:inherit}
 
 /* ── PAGES ───────────────────────────────────────────────────── */
 .page{display:none;padding:18px 16px;padding-bottom:132px;min-height:calc(100vh - 56px);position:relative;z-index:1}
@@ -1337,6 +1341,7 @@ const db = firebase.database();
     <h3>Notifications</h3>
     <div class="notif-sheet-actions">
       <button class="notif-mark-all" onclick="markAllNotifsRead()">Tout lire</button>
+      <button class="notif-clear-all" onclick="clearAllNotifs()">Tout effacer</button>
       <button class="notif-close" onclick="closeNotifCenter()">&times;</button>
     </div>
   </div>
@@ -5158,12 +5163,14 @@ function renderNotifCenter(){
   if(!list.length){ el.innerHTML='<div class="notif-empty">Aucune notification</div>'; return; }
   el.innerHTML=list.map(n=>{
     const ico=_NOTIF_ICO[n.kind]||'🔔';
-    return '<div class="notif-item '+(n.read?'':'unread')+'" onclick="onNotifClick(\''+n.uid+'\')">'
+    const u=_esc(n.uid);
+    return '<div class="notif-item '+(n.read?'':'unread')+'" onclick="onNotifClick(\''+u+'\')">'
       +'<div class="notif-ico">'+ico+'</div>'
       +'<div class="notif-body"><div class="notif-title">'+_esc(n.title)+'</div>'
       +(n.text?'<div class="notif-text">'+_esc(n.text)+'</div>':'')
       +'<div class="notif-time">'+_notifRelTime(n.ts)+'</div></div>'
-      +(n.read?'':'<span class="notif-unread-dot"></span>')+'</div>';
+      +(n.read?'':'<span class="notif-unread-dot"></span>')
+      +'<button class="notif-del" title="Supprimer" onclick="event.stopPropagation();deleteNotif(\''+u+'\')">&times;</button></div>';
   }).join('');
 }
 function _esc(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
@@ -5180,11 +5187,23 @@ function markAllNotifsRead(){
   const list=_loadNotifs(); list.forEach(n=>n.read=true); _saveNotifs(list);
   updNotifBadge(); renderNotifCenter();
 }
+// Supprime une notification precise
+function deleteNotif(uid){
+  const list=_loadNotifs().filter(n=>n.uid!==uid);
+  _saveNotifs(list); updNotifBadge(); renderNotifCenter();
+}
+// Vide tout le centre de notifications
+function clearAllNotifs(){
+  if(!_loadNotifs().length) return;
+  if(!confirm('Supprimer toutes les notifications ?')) return;
+  _saveNotifs([]); updNotifBadge(); renderNotifCenter();
+}
 function onNotifClick(uid){
   const list=_loadNotifs();
   const n=list.find(x=>x.uid===uid); if(!n)return;
-  n.read=true; _saveNotifs(list); updNotifBadge(); renderNotifCenter();
   const d=n.data||{};
+  // Pas la peine de garder : une fois lue/ouverte, on la supprime du centre
+  _saveNotifs(list.filter(x=>x.uid!==uid)); updNotifBadge(); renderNotifCenter();
   closeNotifCenter();
   try{
     if(n.kind==='chat'){ showPage('chat'); if(d.convId&&typeof openConv==='function') openConv(d.convId); }
