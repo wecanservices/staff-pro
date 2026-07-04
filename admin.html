@@ -585,6 +585,14 @@ const db = firebase.database();
     <span id="admin-logged-name" style="font-size:11px;color:rgba(255,255,255,0.8);font-weight:600;margin-right:8px;"></span>
     <button onclick="logoutAdmin()" style="background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.3);color:#fff;font-size:11px;padding:4px 10px;border-radius:8px;cursor:pointer;margin-right:8px;">⏻ Déconnexion</button>
     <span id="fb-dot" title="Firebase déconnecté" style="width:10px;height:10px;border-radius:50%;background:#ef4444;display:inline-block;flex-shrink:0;box-shadow:0 0 4px rgba(0,0,0,.3);"></span>
+    <!-- CLOCHE NOTIFICATIONS (Tache 9) -->
+    <div id="notif-center-wrap" style="position:relative;">
+      <button id="notif-bell-btn" onclick="toggleNotifCenter(event)" title="Notifications" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);color:#fff;width:34px;height:34px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;position:relative;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
+        <span id="notif-bell-badge" style="display:none;position:absolute;top:-5px;right:-5px;background:#C0392B;color:#fff;font-size:9px;font-weight:700;min-width:16px;height:16px;line-height:16px;text-align:center;border-radius:8px;padding:0 3px;border:1px solid #fff;">0</span>
+      </button>
+      <div id="notif-center-panel" style="display:none;position:absolute;top:44px;right:0;width:340px;max-height:440px;overflow-y:auto;background:#fff;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,0.25);z-index:9500;"></div>
+    </div>
     <span class="topbar-clock" id="clock"></span>
     <!-- LANGUAGE SWITCHER -->
     <div class="lang-switcher" id="lang-switcher">
@@ -1171,6 +1179,7 @@ const db = firebase.database();
           <div style="margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
             <select id="tj-emp" onchange="renderTrajet()" style="padding:7px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;color:#1e293b;background:#fff;min-width:150px;"></select>
             <input type="date" id="tj-date" onchange="renderTrajet()" style="padding:7px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;color:#1e293b;background:#fff;">
+            <button id="tj-refresh-btn" onclick="refreshTrajet()" title="Recharger les points GPS depuis Firebase (ignore le cache)" style="padding:7px 12px;border:1px solid #C0392B;border-radius:8px;font-size:12px;color:#fff;background:#C0392B;cursor:pointer;font-weight:600;display:flex;align-items:center;gap:5px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> Rafraîchir</button>
           </div>
         </div>
 
@@ -1428,6 +1437,7 @@ const db = firebase.database();
           <button class="appro-tab active" onclick="switchAdjustTab('branches',this)">Nouvelle agence</button>
           <button class="appro-tab" onclick="switchAdjustTab('feries',this)">Jours fériés</button>
           <button class="appro-tab" onclick="switchAdjustTab('ramadan',this)">Ramadan</button>
+          <button class="appro-tab" onclick="switchAdjustTab('maintenance',this)">Maintenance</button>
         </div>
 
         <!-- ── SOUS-SECTION BRANCHES ── -->
@@ -1527,6 +1537,24 @@ const db = firebase.database();
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── SOUS-SECTION MAINTENANCE (Tache 7) ── -->
+        <div id="adjust-tab-maintenance" style="display:none;">
+          <div class="card" style="max-width:580px;">
+            <div class="card-header"><div class="card-title">Maintenance — Vider le cache</div></div>
+            <div class="card-body">
+              <p style="font-size:13px;color:#475569;line-height:1.7;margin-bottom:14px;">
+                Purge les donnees en cache sur cet appareil : <strong>messages du chat</strong>, <strong>conversations</strong> et <strong>demandes d'approbation</strong>.
+                Les employes, les agences et l'authentification ne sont pas touches. Les donnees Firebase se rechargeront automatiquement a la prochaine synchronisation.
+              </p>
+              <button class="btn btn-primary" onclick="viderCacheAdmin()" style="padding:10px 24px;background:#C0392B;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                Vider le cache (chat + approbations)
+              </button>
+              <div id="maintenance-feedback"></div>
             </div>
           </div>
         </div>
@@ -2305,7 +2333,7 @@ function _applyFbData(k, val){
     localStorage.setItem('wecan_'+k, JSON.stringify(arr !== null ? arr : val));
     if(k==='employees'       && arr){ employees          = arr; try{renderEmployees();populateEmpAgenceSelect();populateOrgFilter();renderOrganigramme();}catch(e){} try{if(document.getElementById('page-dashboard').classList.contains('active')){renderPanelEmpList();renderPanelStats();renderDashStats();}}catch(e){} }
     if(k==='agencies'        && arr){ agencies           = arr; try{renderStats();renderAgencies();populateBranchFilter();populateStatsBranchFilter();}catch(e){} try{if(document.getElementById('page-dashboard').classList.contains('active')){refreshMap();renderDashStats();}}catch(e){} }
-    if(k==='shifts'          && arr){ shifts             = arr; try{renderShifts();}catch(e){} }
+    if(k==='shifts'          && arr){ shifts             = arr; try{nextShiftId = shifts.length ? Math.max(...shifts.map(s=>Number(s.id)||0))+1 : 1;}catch(e){} try{renderShifts();}catch(e){} }
     if(k==='pushNotifications'&&arr){ pushNotifications  = arr; try{renderPushList();}catch(e){} }
     if(k==='feries'          && arr){ joursFeries        = arr; try{renderFeries();}catch(e){} }
     if(k==='ramadan'         && arr){ ramadanPeriodes    = arr; try{renderRamadan();}catch(e){} }
@@ -2389,12 +2417,20 @@ function fbInitSync(){
     const arr = Array.isArray(val) ? val : Object.values(val);
     const incoming = arr.filter(p=>p&&p.id&&p.empId);
     if(!incoming.length) return;
-    incoming.forEach(p=>{ if(!pointages.find(x=>String(x.id)===String(p.id))){ pointages.push(p); }});
+    // Firebase est la source de verite : reconcilier au lieu de seulement ajouter.
+    // On remplace les entrees existantes par leur version fraiche (evite le cache perime
+    // quand un pointage est modifie/supprime cote employe) tout en gardant les locales
+    // pas encore synchronisees.
+    const byId = {};
+    incoming.forEach(p=>{ byId[String(p.id)] = p; });
+    const localOnly = pointages.filter(p=>p&&p.id&&!byId[String(p.id)]);
+    pointages = incoming.concat(localOnly);
     saveData('pointages', pointages);
     try{
       if(document.getElementById('page-pointage').classList.contains('active')) renderPointageDetail();
       if(document.getElementById('page-reports').classList.contains('active')) renderPointages();
       if(document.getElementById('page-dashboard').classList.contains('active')) refreshMap();
+      if(document.getElementById('page-trajet').classList.contains('active')){ try{renderTrajet();}catch(e){} }
     }catch(e){} try{updateSidebarAlerts();}catch(e){}
   });
   // Écouter les messages des employés depuis employe.html
@@ -3273,6 +3309,108 @@ function populateFilterAgency(){
   sel.innerHTML=`<option value="">${t("all_branches")}</option>`+agencies.map(a=>`<option value="${a.id}">${a.name}</option>`).join('');
 }
 
+// ── Calcul centralise horaires / metriques journalieres ──
+// Un seul endroit pour : horaire theorique ajuste (shift employe + ramadan + ferie),
+// retard, travail net plafonne par sortie approuvee, heures sup (seulement si demande hsup approuvee).
+// Utilise par renderPointages (reports), buildDayRecords (detail pointage) et l'export.
+
+// Retourne l'horaire theorique du jour pour un employe : {debut, fin, pauseDebut, pauseFin, ferie, ramadan, dureeStd}
+function getEmpSchedule(empId, frDate){
+  const emp = employees.find(e=>String(e.id)===String(empId));
+  let debut='08:00', fin='16:00', pauseDebut='12:00', pauseFin='13:00';
+  const sh = emp && emp.shiftId ? shifts.find(s=>String(s.id)===String(emp.shiftId)) : null;
+  if(sh){
+    debut = sh.debut || debut;
+    fin   = sh.fin   || fin;
+    pauseDebut = sh.pauseDebut || pauseDebut;
+    pauseFin   = sh.pauseFin   || pauseFin;
+  }
+  // Pauses personnalisees employe (prioritaires)
+  if(emp){
+    if(emp.pauseDebutPerso) pauseDebut = emp.pauseDebutPerso;
+    if(emp.pauseFinPerso)   pauseFin   = emp.pauseFinPerso;
+  }
+  const ferie = isJourFerie(frDate);
+  const ram   = isRamadanDay(frDate);
+  // Ramadan : fin de journee reduite (heureFin) ou reduction d'heures
+  if(ram){
+    if(ram.heureFin){ fin = ram.heureFin; }
+    else if(ram.reduction){
+      const f = toMins(fin) - Math.round(ram.reduction*60);
+      fin = String(Math.floor(f/60)).padStart(2,'0')+':'+String(f%60).padStart(2,'0');
+    }
+  }
+  // Duree standard theorique (min) = fin - debut - pause
+  let dureeStd = toMins(fin) - toMins(debut);
+  if(dureeStd < 0) dureeStd += 24*60;
+  let pauseStd = (toMins(pauseFin)!==null && toMins(pauseDebut)!==null) ? (toMins(pauseFin)-toMins(pauseDebut)) : 60;
+  if(pauseStd < 0) pauseStd = 0;
+  dureeStd = Math.max(0, dureeStd - pauseStd);
+  return {debut, fin, pauseDebut, pauseFin, ferie, ramadan:!!ram, dureeStd};
+}
+
+// Sortie approuvee du jour → heure de sortie effective (plafond). "" si aucune.
+function getSortieEffective(empId, frDate){
+  const list = approbations.filter(a=>
+    a.type==='sortie' && String(a.empId)===String(empId) &&
+    a.status==='approved' &&
+    (a.date===frDate || (a.detail&&a.detail.date===frDate))
+  );
+  for(const a of list){
+    const h = (typeof _extractSortieHeure==='function') ? _extractSortieHeure(a) : (a.heureSortieEffective||(a.detail&&(a.detail.heureSortieEffective||a.detail.heure))||'');
+    if(h) return h;
+  }
+  return '';
+}
+
+// Demande d'heures sup approuvee du jour → minutes autorisees (0 si aucune).
+function getHsupApprouvees(empId, frDate){
+  const list = approbations.filter(a=>
+    a.type==='hsup' && String(a.empId)===String(empId) &&
+    a.status==='approved' &&
+    (a.detail && (a.detail.date_hsup===frDate || a.detail.date===frDate))
+  );
+  let mins=0;
+  list.forEach(a=>{
+    const hStr = String((a.detail&&(a.detail.heures))||'');
+    const m = hStr.match(/(\d+)\s*h\s*(\d+)?/i);
+    if(m){ mins += parseInt(m[1])*60 + (parseInt(m[2])||0); }
+    else { const num=parseFloat(hStr); if(!isNaN(num)) mins += Math.round(num*60); }
+  });
+  return mins;
+}
+
+// Metriques d'une journee (retard, pauses, travail net plafonne, hSup) — regles Taches 6 & 11.
+function computeDayMetrics(empId, frDate, entreeTime, sortieTime, pauses){
+  const sched = getEmpSchedule(empId, frDate);
+  // Retard vs horaire theorique ajuste (tolerance 5 min)
+  let retardMins = 0;
+  if(entreeTime){
+    const d = toMins(entreeTime) - toMins(sched.debut);
+    if(d > 5) retardMins = d;
+  }
+  const totalPauseMins = (pauses||[]).reduce((a,p)=>a+(p.dur||0),0);
+  // Sortie effective (plafond) si sortie anticipee approuvee
+  const sortieEff = getSortieEffective(empId, frDate);
+  let effSortieTime = sortieTime;
+  if(sortieEff){
+    // plafonner : on ne compte que jusqu'a l'heure approuvee
+    if(!effSortieTime || toMins(sortieEff) < toMins(effSortieTime)) effSortieTime = sortieEff;
+  }
+  let travailBrut=null, travailNet=null, hSup=0;
+  if(entreeTime && effSortieTime){
+    travailBrut = toMins(effSortieTime) - toMins(entreeTime);
+    if(travailBrut < 0) travailBrut += 24*60;
+    travailNet = travailBrut - totalPauseMins;
+    if(travailNet < 0) travailNet = 0;
+    // Heures sup : seulement au-dela de l'horaire theorique ET seulement si demande hsup approuvee
+    const brutSup = Math.max(0, travailNet - sched.dureeStd);
+    const hsupAutorisees = getHsupApprouvees(empId, frDate);
+    hSup = Math.min(brutSup, hsupAutorisees);
+  }
+  return {retardMins, totalPauseMins, travailBrut, travailNet, hSup, sortieEff, effSortieTime, sched};
+}
+
 function renderPointages(){
   const dtEl=document.getElementById('rpt-date');
 
@@ -3306,25 +3444,18 @@ function renderPointages(){
       }
       i++;
     }
-    const totalPauseMins=pauses.reduce((a,p)=>a+p.dur,0);
-    // Retard
-    let retardMins=0;
-    if(entree){const d=toMins(entree.time)-toMins('08:00');if(d>5)retardMins=d;}
-    // Brut / Net / H.Sup
-    let travailBrut=null,travailNet=null,hSup=0;
-    if(entree&&sortie){
-      travailBrut=toMins(sortie.time)-toMins(entree.time);
-      if(travailBrut<0)travailBrut+=24*60;
-      travailNet=travailBrut-totalPauseMins;
-      hSup=Math.max(0,travailNet-480);
-    }
+    // Metriques centralisees (retard vs horaire ajuste, plafond sortie approuvee, hSup approuvees)
+    const m = computeDayMetrics(rec.empId, rec.date, entree?entree.time:null, sortie?sortie.time:null, pauses);
+    const totalPauseMins=m.totalPauseMins;
+    const retardMins=m.retardMins;
+    const travailBrut=m.travailBrut, travailNet=m.travailNet, hSup=m.hSup;
     // Sorties approuvées du jour
     const sortieApprouvees=approbations.filter(a=>
-      a.type==='sortie'&&a.empId===rec.empId&&
+      a.type==='sortie'&&String(a.empId)===String(rec.empId)&&
       a.status==='approved'&&
-      (a.date===rec.date)
+      (a.date===rec.date||(a.detail&&a.detail.date===rec.date))
     );
-    return{...rec,entree,sortie,pauses,totalPauseMins,retardMins,travailBrut,travailNet,hSup,sortieApprouvees};
+    return{...rec,entree,sortie,pauses,totalPauseMins,retardMins,travailBrut,travailNet,hSup,sortieApprouvees,sortieEff:m.sortieEff,effSortieTime:m.effSortieTime};
   });
 
   // Filter by date
@@ -3532,12 +3663,15 @@ function exportReports(){
         if(fin){pauseMins+=toMins(fin.time)-toMins(pts[i].time);pauseCount++;}
       }
     }
-    let retardMins=0;if(entree){const d=toMins(entree.time)-toMins('08:00');if(d>5)retardMins=d;}
-    let travailNet=null,hSup=0;
-    if(entree&&sortie){const brut=toMins(sortie.time)-toMins(entree.time);travailNet=brut-pauseMins;hSup=Math.max(0,travailNet-480);}
-    const motif=approbations.filter(a=>a.type==='sortie'&&a.empId===rec.empId&&a.status==='approved'&&a.date===rec.date).map(s=>(s.detail?.heure||'')+'->'+' '+(s.detail?.motif||'')).join('; ');
+    // Metriques centralisees (horaire ajuste, plafond sortie approuvee, hSup approuvees)
+    const dm=computeDayMetrics(rec.empId,rec.date,entree?entree.time:null,sortie?sortie.time:null,[{dur:pauseMins}]);
+    const retardMins=dm.retardMins;
+    const travailNet=dm.travailNet;
+    const hSup=dm.hSup;
+    const sortieAffichee=dm.effSortieTime||(sortie?sortie.time:'');
+    const motif=approbations.filter(a=>a.type==='sortie'&&String(a.empId)===String(rec.empId)&&a.status==='approved'&&(a.date===rec.date||(a.detail&&a.detail.date===rec.date))).map(s=>(s.heureSortieEffective||s.detail?.heureSortieEffective||s.detail?.heure||'')+' -> '+(s.detail?.motif||'')).join('; ');
     const emp=employees.find(e=>e.id===rec.empId);
-    detail.push([rec.date,rec.empName,emp?.poste||'',rec.agenceName,entree?.time||'',sortie?.time||'',pauseCount,minsToStr(pauseMins),minsToStr(travailNet),minsToStr(retardMins),minsToStr(hSup),motif]);
+    detail.push([rec.date,rec.empName,emp?.poste||'',rec.agenceName,entree?.time||'',sortieAffichee||'',pauseCount,minsToStr(pauseMins),minsToStr(travailNet),minsToStr(retardMins),minsToStr(hSup),motif]);
     if(!synthMap[rec.empId])synthMap[rec.empId]={emp,name:rec.empName,agence:rec.agenceName,jours:0,retard:0,hSup:0,pause:0};
     synthMap[rec.empId].jours++;
     synthMap[rec.empId].retard+=retardMins;
@@ -3676,8 +3810,12 @@ function addShift(){
   if(!v.workDays.length){ showFeedback('sh-feedback','Choisissez au moins un jour de travail.','err'); return; }
   // Ensure no day is both work and rest
   v.restDays = v.restDays.filter(d=>!v.workDays.includes(d));
-  const color = SHIFT_COLORS[(nextShiftId-1) % SHIFT_COLORS.length];
-  shifts.push({id:nextShiftId++, ...v, color});
+  // Recompute nextShiftId depuis la liste courante pour eviter tout id en double
+  // (les shifts peuvent avoir ete recharges depuis Firebase apres init).
+  nextShiftId = shifts.length ? Math.max(...shifts.map(s=>Number(s.id)||0))+1 : 1;
+  const newId = nextShiftId++;
+  const color = SHIFT_COLORS[(newId-1) % SHIFT_COLORS.length];
+  shifts.push({id:newId, ...v, color});
   saveData('shifts', shifts);
   showFeedback('sh-feedback','Shift ajouté !','ok');
   renderShifts();
@@ -3741,10 +3879,22 @@ function renderShifts(){
   const gridEl  = document.getElementById('shifts-grid');
   if(!statsEl || !gridEl) return;
 
+  // Normaliser chaque shift : anciens enregistrements (ou donnees Firebase)
+  // peuvent manquer workDays/restDays/debut/fin. Sans ca, un seul record
+  // malforme fait planter tout le .map et la grille reste vide.
+  shifts.forEach(s=>{
+    if(!Array.isArray(s.workDays)) s.workDays = [];
+    if(!Array.isArray(s.restDays)) s.restDays = [];
+    if(!s.debut) s.debut = '08:00';
+    if(!s.fin)   s.fin   = '16:00';
+    if(!s.nom)   s.nom   = 'Shift';
+    if(!s.fonction) s.fonction = '';
+  });
+
   statsEl.innerHTML = [
     [t('shifts_title'), shifts.length, '#C0392B'],
-    [t('shift_work_days'), shifts.length ? Math.round(shifts.reduce((a,s)=>a+s.workDays.length,0)/shifts.length) : 0, '#3B6D11'],
-    [t('shift_rest_days'), shifts.length ? Math.round(shifts.reduce((a,s)=>a+s.restDays.length,0)/shifts.length) : 0, '#A32D2D'],
+    [t('shift_work_days'), shifts.length ? Math.round(shifts.reduce((a,s)=>a+(s.workDays?s.workDays.length:0),0)/shifts.length) : 0, '#3B6D11'],
+    [t('shift_rest_days'), shifts.length ? Math.round(shifts.reduce((a,s)=>a+(s.restDays?s.restDays.length:0),0)/shifts.length) : 0, '#A32D2D'],
   ].map(([l,v,c])=>`<div class="stat-card"><div class="stat-val" style="color:${c};">${v}</div><div class="stat-lbl">${l}</div></div>`).join('');
 
   gridEl.innerHTML = shifts.map(s => {
@@ -3995,46 +4145,25 @@ function buildDayRecords(){
     const pDebTime   = pauseDeb?.time || null;
     const pFinTime   = pauseFin?.time || null;
 
-    // Find expected shift hours for this employee
-    const emp = employees.find(e=>e.id===rec.empId);
-    let expectedDebut = '08:00'; // default
-    if(emp){
-      const sh = shifts.find(s=>s.workDays && s.workDays.length);
-      if(sh){ expectedDebut = sh.debut; }
-    }
-
-    // Retard = entrée - heure théorique shift (si > 0)
-    let retardMins = null;
-    if(entreeTime){
-      const diff = toMins(entreeTime) - toMins(expectedDebut);
-      retardMins = diff > 0 ? diff : 0;
-    }
-
     // Pause duration
     let pauseMins = null;
     if(pDebTime && pFinTime){
       pauseMins = toMins(pFinTime) - toMins(pDebTime);
       if(pauseMins < 0) pauseMins = 0;
     }
+    const pausesArr = (pauseMins!==null) ? [{dur:pauseMins}] : [];
 
-    // Travail brut
-    let travailBrut = null;
-    if(entreeTime && sortieTime){
-      travailBrut = toMins(sortieTime) - toMins(entreeTime);
-      if(travailBrut < 0) travailBrut += 24*60;
-    }
+    // Metriques centralisees : horaire ajuste (shift emp + ramadan + ferie),
+    // retard, travail net plafonne par sortie approuvee, hSup seulement si demande approuvee.
+    const m = computeDayMetrics(rec.empId, rec.date, entreeTime, sortieTime, pausesArr);
+    const expectedDebut = m.sched.debut;
+    const retardMins = entreeTime ? m.retardMins : null;
+    const travailNet = m.travailNet;
+    const hSup = (travailNet!==null) ? m.hSup : null;
+    // Heure de sortie affichee : plafonnee a la sortie approuvee si applicable
+    const effSortieTime = m.effSortieTime || sortieTime;
 
-    // Travail net = brut - pause
-    let travailNet = travailBrut !== null ? travailBrut - (pauseMins||0) : null;
-
-    // Heures sup = travail net - 8h standard (480 min)
-    let hSup = null;
-    if(travailNet !== null){
-      hSup = travailNet - 480;
-      if(hSup < 0) hSup = 0;
-    }
-
-    return {...rec, entreeTime, sortieTime, pDebTime, pFinTime, retardMins, pauseMins, travailNet, hSup, expectedDebut};
+    return {...rec, entreeTime, sortieTime, effSortieTime, sortieEff:m.sortieEff, pDebTime, pFinTime, retardMins, pauseMins, travailNet, hSup, expectedDebut};
   });
 }
 
@@ -4184,9 +4313,11 @@ function renderPointageDetail(){
       ? `<span style="background:#EAF3DE;color:#3B6D11;padding:3px 10px;border-radius:20px;font-weight:600;font-family:monospace;">${r.entreeTime}</span>`
       : `<span style="color:#94a3b8;">—</span>`;
 
-    const sortieCell = r.sortieTime
-      ? `<span style="background:#FCEBEB;color:#A32D2D;padding:3px 10px;border-radius:20px;font-weight:600;font-family:monospace;">${r.sortieTime}</span>`
-      : `<span style="color:#94a3b8;">—</span>`;
+    const sortieCell = r.sortieEff
+      ? `<span style="background:#FAEEDA;color:#854F0B;padding:3px 10px;border-radius:20px;font-weight:600;font-family:monospace;" title="Sortie anticipee approuvee">${r.sortieEff}<br><span style="font-size:9px;font-weight:600;">sortie approuvee</span></span>`
+      : (r.sortieTime
+        ? `<span style="background:#FCEBEB;color:#A32D2D;padding:3px 10px;border-radius:20px;font-weight:600;font-family:monospace;">${r.sortieTime}</span>`
+        : `<span style="color:#94a3b8;">—</span>`);
 
     const pauseCell = (r.pDebTime && r.pFinTime)
       ? `<span style="background:#FEF9C3;color:#92400E;padding:3px 8px;border-radius:20px;font-size:10px;font-weight:600;">${r.pDebTime}→${r.pFinTime}<br><span style="font-size:9px;">(${minsToStr(r.pauseMins)})</span></span>`
@@ -4300,6 +4431,27 @@ function initTrajet(){
 function clearTrajetLayers(){
   trajetLayers.forEach(l=>{try{trajetMap.removeLayer(l);}catch(e){}});
   trajetLayers=[];
+}
+
+// Tache 5 : recharge les points GPS reels depuis Firebase (ignore le cache local perime)
+// puis re-render le trajet. Vide le cache pointages/sorties avant de repull.
+function refreshTrajet(){
+  const btn=document.getElementById('tj-refresh-btn');
+  if(btn){ btn.disabled=true; btn.style.opacity='0.6'; }
+  try{ showToast('Rechargement GPS...',1500); }catch(e){}
+  let done=0; const finish=()=>{ done++; if(done>=2){ try{renderTrajet();}catch(e){} if(btn){btn.disabled=false;btn.style.opacity='1';} try{showToast('Trajet a jour');}catch(e){} } };
+  try{
+    db.ref('wecan/pointages').once('value').then(function(snap){
+      const val=snap.val();
+      if(val){ const arr=Array.isArray(val)?val:Object.values(val); pointages=arr.filter(p=>p&&p.id&&p.empId); saveData('pointages',pointages); }
+      finish();
+    }).catch(finish);
+    db.ref('wecan/sorties').once('value').then(function(snap){
+      const val=snap.val();
+      if(val){ const arr=Array.isArray(val)?val:Object.values(val); sorties_data=arr.filter(s=>s&&s.id); localStorage.setItem('wecan_sorties',JSON.stringify(sorties_data)); }
+      finish();
+    }).catch(finish);
+  }catch(e){ if(btn){btn.disabled=false;btn.style.opacity='1';} try{renderTrajet();}catch(e2){} }
 }
 
 function renderTrajet(){
@@ -4569,14 +4721,35 @@ function switchApproTab(tab, el){
   renderApprobations();
 }
 
+// Normalise l'heure de sortie approuvee au format "HH:MM" (24h).
+// Contrat partage avec l'agent employe : a l'approbation d'une demande "sortie",
+// le record DOIT porter heureSortieEffective = heure de sortie approuvee.
+function _extractSortieHeure(a){
+  const d = a.detail || {};
+  let h = a.heureSortieEffective || d.heureSortieEffective || d.heure || d.heureSortie || d.heure_sortie || '';
+  if(typeof h !== 'string') h = String(h||'');
+  // Garder seulement HH:MM si un format plus long arrive
+  const m = h.match(/(\d{1,2}):(\d{2})/);
+  if(m){ return String(m[1]).padStart(2,'0')+':'+m[2]; }
+  return '';
+}
+function _applySortieContract(a){
+  if(a && a.type==='sortie'){
+    const h = _extractSortieHeure(a);
+    if(h){
+      a.heureSortieEffective = h;
+      if(a.detail) a.detail.heureSortieEffective = h;
+    }
+  }
+}
 function approveRequest(id){
-  const a = approbations.find(x=>x.id===id);
-  if(a){ a.status='approved'; saveData('approbations',approbations); try{db.ref('wecan/approbations').set(approbations);}catch(e){} renderApprobations(); updateApproBadge(); updateChatBadge();
+  const a = approbations.find(x=>String(x.id)===String(id));
+  if(a){ a.status='approved'; _applySortieContract(a); saveData('approbations',approbations); try{db.ref('wecan/approbations').set(approbations);}catch(e){} renderApprobations(); updateApproBadge(); updateChatBadge();
   if(document.getElementById('page-adjust').classList.contains('active')) updateRamadanStatus(); }
 }
 
 function rejectRequest(id){
-  const a = approbations.find(x=>x.id===id);
+  const a = approbations.find(x=>String(x.id)===String(id));
   if(a){ a.status='rejected'; saveData('approbations',approbations); try{db.ref('wecan/approbations').set(approbations);}catch(e){} renderApprobations(); updateApproBadge(); updateChatBadge();
   if(document.getElementById('page-adjust').classList.contains('active')) updateRamadanStatus(); }
 }
@@ -4585,8 +4758,9 @@ function approveAll(){
   const pending = getFiltered().filter(a=>a.status==='pending');
   if(!pending.length) return;
   if(!confirm(`Approuver les ${pending.length} demandes en attente ?`)) return;
-  pending.forEach(a=>a.status='approved');
+  pending.forEach(a=>{ a.status='approved'; _applySortieContract(a); });
   saveData('approbations',approbations);
+  try{db.ref('wecan/approbations').set(approbations);}catch(e){}
   renderApprobations(); updateApproBadge(); updateChatBadge();
   if(document.getElementById('page-adjust').classList.contains('active')) updateRamadanStatus();
 }
@@ -4597,6 +4771,7 @@ function rejectAll(){
   if(!confirm(`Rejeter les ${pending.length} demandes en attente ?`)) return;
   pending.forEach(a=>a.status='rejected');
   saveData('approbations',approbations);
+  try{db.ref('wecan/approbations').set(approbations);}catch(e){}
   renderApprobations(); updateApproBadge(); updateChatBadge();
   if(document.getElementById('page-adjust').classList.contains('active')) updateRamadanStatus();
 }
@@ -4612,6 +4787,7 @@ function updateApproBadge(){
     badge.style.display = pending>0 ? 'inline' : 'none';
     badge.textContent = pending;
   }
+  try{ updateNotifBell(); }catch(e){}
 }
 
 function renderApprobations(){
@@ -4670,15 +4846,16 @@ function renderApprobations(){
     }
 
     const canEdit = isPending && (a.type==='conge' || a.type==='sortie' || a.type==='pret' || a.type==='recuperation');
+    const jid = JSON.stringify(String(a.id));
     const statusHtml = isPending
       ? `<div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;">
-          <button style="padding:4px 10px;border-radius:8px;border:1px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:11px;cursor:pointer;" onclick="openApproDetail(${a.id})">Voir</button>
-          ${canEdit ? `<button class="btn-edit-appro" onclick="editApproRequest(${a.id})">Modifier</button>` : ''}
-          <button class="btn-approve" onclick="approveRequest(${a.id})"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Approuver</button>
-          <button class="btn-reject"  onclick="rejectRequest(${a.id})"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Rejeter</button>
+          <button style="padding:4px 10px;border-radius:8px;border:1px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:11px;cursor:pointer;" onclick='openApproDetail(${jid})'>Voir</button>
+          ${canEdit ? `<button class="btn-edit-appro" onclick='editApproRequest(${jid})'>Modifier</button>` : ''}
+          <button class="btn-approve" onclick='approveRequest(${jid})'><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Approuver</button>
+          <button class="btn-reject"  onclick='rejectRequest(${jid})'><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Rejeter</button>
         </div>`
       : `<div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;">
-          <button style="padding:4px 10px;border-radius:8px;border:1px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:11px;cursor:pointer;" onclick="openApproDetail(${a.id})">Voir</button>
+          <button style="padding:4px 10px;border-radius:8px;border:1px solid #e2e8f0;background:#f8fafc;color:#475569;font-size:11px;cursor:pointer;" onclick='openApproDetail(${jid})'>Voir</button>
           <span class="appro-status ${a.status}">${a.status==='approved'?t('status_approved'):t('status_rejected')}</span>
         </div>`;
 
@@ -4706,13 +4883,14 @@ function renderApprobations(){
 
 
 function openApproDetail(id){
-  const a = approbations.find(x=>x.id===id);
+  const a = approbations.find(x=>String(x.id)===String(id));
   if(!a) return;
   const cfg = APPRO_CONFIG[a.type]||{icon:'',label:a.type,bg:'#f8fafc',color:'#475569'};
   let rows = [];
   if(a.type==='conge'){ rows=[['Du',a.detail.debut],['Au',a.detail.fin],['Jours',a.detail.jours],['Motif',a.detail.motif]]; }
-  else if(a.type==='hsup'){ rows=[['Date',a.detail.date_hsup],['Heures',a.detail.heures],['Majoration',a.detail.majoration],['Motif',a.detail.motif]]; }
-  else if(a.type==='sortie'){ rows=[['Heure sortie',a.detail.heure],['Retour',a.detail.retour],['Duree',a.detail.duree],['Motif',a.detail.motif]]; }
+  else if(a.type==='hsup'){ rows=[['Date',a.detail.date_hsup||a.detail.date],['Heures',a.detail.heures],['Majoration',a.detail.majoration],['Motif',a.detail.motif]]; }
+  else if(a.type==='sortie'){ rows=[['Heure sortie',a.detail.heure],['Retour',a.detail.retour],['Duree',a.detail.duree],['Motif',a.detail.motif]];
+    if(a.status==='approved' && (a.heureSortieEffective||a.detail.heureSortieEffective)) rows.push(['Sortie approuvee', a.heureSortieEffective||a.detail.heureSortieEffective]); }
   else if(a.type==='document'){ rows=[['Document',a.detail.docType],['Usage',a.detail.usage],['Urgent',a.detail.urgent?'Oui':'Non']]; }
   else if(a.type==='pret'){ rows=[['Montant',fmtDA(a.detail.montant)],['Mensualites',a.detail.mensualites],['Mensuel',fmtDA(a.detail.montantMensuel)],['Motif',a.detail.motif]]; }
   else if(a.type==='recuperation'){ rows=[['Absence',a.detail.dateAbsence],['Recup',a.detail.dateRecup],['Heures',a.detail.heures],['Motif',a.detail.motif]]; }
@@ -4729,7 +4907,7 @@ function openApproDetail(id){
     </div>
     <div style="border-radius:10px;border:1px solid #e2e8f0;padding:0 12px;">${rowsHtml}</div>
     <div style="display:flex;gap:8px;margin-top:16px;justify-content:flex-end;">
-      ${a.status==='pending'?`<button onclick="approveRequest(${a.id});this.closest('.appro-detail-modal').remove()" style="padding:8px 16px;border-radius:8px;border:none;background:#EAF3DE;color:#3B6D11;font-weight:600;cursor:pointer;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Approuver</button><button onclick="rejectRequest(${a.id});this.closest('.appro-detail-modal').remove()" style="padding:8px 16px;border-radius:8px;border:none;background:#FCEBEB;color:#A32D2D;font-weight:600;cursor:pointer;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Rejeter</button>`:''}
+      ${a.status==='pending'?`<button onclick='approveRequest(${JSON.stringify(String(a.id))});this.closest(".appro-detail-modal").remove()' style="padding:8px 16px;border-radius:8px;border:none;background:#EAF3DE;color:#3B6D11;font-weight:600;cursor:pointer;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Approuver</button><button onclick='rejectRequest(${JSON.stringify(String(a.id))});this.closest(".appro-detail-modal").remove()' style="padding:8px 16px;border-radius:8px;border:none;background:#FCEBEB;color:#A32D2D;font-weight:600;cursor:pointer;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> Rejeter</button>`:''}
       <button onclick="this.closest('[style*=fixed]').remove()" style="padding:8px 16px;border-radius:8px;border:none;background:#f1f5f9;color:#475569;font-weight:600;cursor:pointer;">Fermer</button>
     </div>
   </div>`;
@@ -4739,10 +4917,10 @@ function openApproDetail(id){
 }
 
 function editApproRequest(id){
-  const a = approbations.find(x=>x.id===id);
+  const a = approbations.find(x=>String(x.id)===String(id));
   if(!a) return;
 
-  document.getElementById('edit-appro-id').value = id;
+  document.getElementById('edit-appro-id').value = String(a.id);
   document.getElementById('edit-appro-feedback').innerHTML = '';
 
   // Employee info
@@ -4842,8 +5020,8 @@ function updateSortieDuree(){
 }
 
 function saveEditAppro(){
-  const id = parseInt(document.getElementById('edit-appro-id').value);
-  const a  = approbations.find(x=>x.id===id);
+  const id = document.getElementById('edit-appro-id').value;
+  const a  = approbations.find(x=>String(x.id)===String(id));
   if(!a) return;
 
   const toFR = d => { if(!d) return ''; const[y,m,day]=d.split('-'); return day+'/'+m+'/'+y; };
@@ -5379,13 +5557,41 @@ td.neg{color:#A32D2D;}
 
 // ── ADJUST TABS ──
 function switchAdjustTab(tab, el){
-  ['branches','feries','ramadan'].forEach(t=>{
-    document.getElementById('adjust-tab-'+t).style.display = t===tab?'block':'none';
+  ['branches','feries','ramadan','maintenance'].forEach(t=>{
+    const elt=document.getElementById('adjust-tab-'+t);
+    if(elt) elt.style.display = t===tab?'block':'none';
   });
   document.querySelectorAll('#page-adjust .appro-tab').forEach(b=>b.classList.remove('active'));
   el.classList.add('active');
   if(tab==='feries') renderFeries();
   if(tab==='ramadan'){renderRamadan();updateRamadanStatus();}
+}
+
+// ── Tache 7 : Vider le cache (chat + approbations) ──
+// Purge messages chat + conversations + approbations/demandes de localStorage ET memoire.
+// NE PURGE PAS auth / employees / agencies.
+function viderCacheAdmin(){
+  if(!confirm("Vider le cache ?\n\nCela supprime de cet appareil :\n- les messages du chat et conversations\n- les demandes d'approbation en cache\n\nLes employes, agences et l'authentification ne sont PAS touches. Continuer ?")) return;
+  try{
+    // Vider la memoire
+    try{ chatMessages = {}; }catch(e){}
+    try{ conversations = []; }catch(e){}
+    try{ approbations = []; }catch(e){}
+    try{ activeConvId = null; }catch(e){}
+    // Vider localStorage (cache uniquement — pas auth/employees/agencies)
+    ['chatMessages','conversations','approbations'].forEach(k=>{ try{ localStorage.removeItem('wecan_'+k); }catch(e){} });
+    // Re-render
+    try{ renderApprobations(); }catch(e){}
+    try{ updateApproBadge(); }catch(e){}
+    try{ updateChatBadge(); }catch(e){}
+    try{ if(typeof renderConvList==='function') renderConvList(); }catch(e){}
+    try{ updateNotifBell(); }catch(e){}
+    try{ updateSidebarAlerts(); }catch(e){}
+    try{ showToast('Cache vide'); }catch(e){}
+    showFeedback('maintenance-feedback','Cache vide (chat + approbations). Les donnees Firebase se rechargeront a la prochaine synchro.','ok');
+  }catch(e){
+    showFeedback('maintenance-feedback','Erreur lors du vidage : '+e.message,'err');
+  }
 }
 
 // ── JOURS FÉRIÉS ──
@@ -5966,9 +6172,9 @@ function renderDashStats(){
   let retardsToday = 0;
   const byDateEmp = {};
   todayPts.forEach(p=>{ if(!byDateEmp[p.empId]) byDateEmp[p.empId]=[]; byDateEmp[p.empId].push(p); });
-  Object.values(byDateEmp).forEach(pts=>{
+  Object.entries(byDateEmp).forEach(([empId,pts])=>{
     const entree=pts.find(p=>p.type==='Entrée');
-    if(entree && toMins(entree.time)-toMins('08:00')>5) retardsToday++;
+    if(entree){ const sched=getEmpSchedule(empId, todayStr2); if(toMins(entree.time)-toMins(sched.debut)>5) retardsToday++; }
   });
 
   // H.Sup aujourd'hui
@@ -6387,13 +6593,13 @@ function renderDashStats(){
         const sortie = empTodayPts.find(p=>p.type==='Sortie');
         const pauses = empTodayPts.filter(p=>p.type==='Début pause');
         let retardMins=0, hSupMins=0, travailNet='—';
-        if(entree){ const d=toMins(entree.time)-toMins('08:00'); if(d>5) retardMins=d; }
+        let pm=0;
+        empTodayPts.forEach((p,i)=>{ if(p.type==='Début pause'){const f=empTodayPts.find((x,j)=>j>i&&x.type==='Fin pause');if(f)pm+=toMins(f.time)-toMins(p.time);} });
+        const dmT=computeDayMetrics(emp.id, todayStr2, entree?entree.time:null, sortie?sortie.time:null, [{dur:pm}]);
+        retardMins=dmT.retardMins;
         if(entree&&sortie){
-          let pm=0;
-          empTodayPts.forEach((p,i)=>{ if(p.type==='Début pause'){const f=empTodayPts.find((x,j)=>j>i&&x.type==='Fin pause');if(f)pm+=toMins(f.time)-toMins(p.time);} });
-          const net=toMins(sortie.time)-toMins(entree.time)-pm;
-          hSupMins=Math.max(0,net-480);
-          travailNet=minsToStr(net);
+          hSupMins=dmT.hSup;
+          travailNet=minsToStr(dmT.travailNet);
         }
         const isPresent = !!entree;
         const ag = agencies.find(a=>a.id===emp.agenceId);
@@ -6723,6 +6929,7 @@ function updateChatBadge(){
     badge.style.display = total>0 ? 'flex' : 'none';
     badge.textContent = total;
   }
+  try{ updateNotifBell(); }catch(e){}
 }
 
 function renderConvList(){
@@ -7057,6 +7264,92 @@ function createConversation(){
 }
 
 // ── NOTIFICATIONS PUSH ──
+// ── CENTRE DE NOTIFICATIONS (Tache 9) ──
+// Agrege les demandes d'approbation en attente + les messages chat non lus.
+function _notifItems(){
+  const items=[];
+  try{
+    approbations.filter(a=>a.status==='pending').forEach(a=>{
+      const cfg=(typeof APPRO_CONFIG!=='undefined'&&APPRO_CONFIG[a.type])||{label:a.type,icon:'',color:'#C0392B'};
+      items.push({
+        kind:'appro', id:a.id,
+        icon:cfg.icon||'&#128203;', color:cfg.color||'#C0392B',
+        title:(a.empName||'Employe')+' - '+(cfg.label||a.type),
+        sub:'Demande en attente', date:a.date||''
+      });
+    });
+  }catch(e){}
+  try{
+    conversations.filter(c=>(c.unread||0)>0).forEach(c=>{
+      items.push({
+        kind:'chat', id:c.id,
+        icon:'&#128172;', color:'#2563EB',
+        title:c.name||'Conversation',
+        sub:(c.unread||0)+' nouveau(x) message(s)'+(c.lastMsg?' - '+c.lastMsg:''), date:c.lastTime||''
+      });
+    });
+  }catch(e){}
+  return items;
+}
+
+function updateNotifBell(){
+  const badge=document.getElementById('notif-bell-badge');
+  if(!badge) return;
+  let count=0;
+  try{ count=_notifItems().length; }catch(e){ count=0; }
+  badge.style.display=count>0?'block':'none';
+  badge.textContent=count>9?'9+':count;
+  // Si le panneau est ouvert, le rafraichir
+  const panel=document.getElementById('notif-center-panel');
+  if(panel&&panel.style.display==='block') renderNotifCenter();
+}
+
+function renderNotifCenter(){
+  const panel=document.getElementById('notif-center-panel');
+  if(!panel) return;
+  const items=_notifItems();
+  const header=`<div style="padding:12px 14px;border-bottom:1px solid #f1f5f9;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#fff;">
+    <span style="font-size:13px;font-weight:700;color:#1e293b;">Notifications</span>
+    <span style="font-size:11px;color:#fff;background:#C0392B;border-radius:20px;padding:1px 8px;font-weight:600;">${items.length}</span>
+  </div>`;
+  if(!items.length){
+    panel.innerHTML=header+`<div style="padding:28px 16px;text-align:center;color:#94a3b8;font-size:12px;">Aucune nouvelle notification</div>`;
+    return;
+  }
+  const rows=items.map(it=>{
+    const act = it.kind==='appro' ? `showPage('approbations',document.querySelector('.nav-item[onclick*=approbations]'));closeNotifCenter();`
+                                  : `showPage('chat',document.querySelector('.nav-item[onclick*=chat]'));closeNotifCenter();`;
+    return `<div onclick="${act}" style="padding:11px 14px;border-bottom:1px solid #f8fafc;display:flex;gap:10px;align-items:flex-start;cursor:pointer;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='#fff'">
+      <div style="width:30px;height:30px;border-radius:8px;background:${it.color}18;color:${it.color};display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0;">${it.icon}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="font-size:12px;font-weight:600;color:#1e293b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${it.title}</div>
+        <div style="font-size:11px;color:#64748b;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${it.sub}</div>
+      </div>
+      ${it.date?`<span style="font-size:9px;color:#94a3b8;flex-shrink:0;">${it.date}</span>`:''}
+    </div>`;
+  }).join('');
+  panel.innerHTML=header+rows;
+}
+
+function toggleNotifCenter(ev){
+  if(ev) ev.stopPropagation();
+  const panel=document.getElementById('notif-center-panel');
+  if(!panel) return;
+  if(panel.style.display==='block'){ closeNotifCenter(); return; }
+  renderNotifCenter();
+  panel.style.display='block';
+  setTimeout(()=>{ document.addEventListener('click', _notifOutside); },0);
+}
+function closeNotifCenter(){
+  const panel=document.getElementById('notif-center-panel');
+  if(panel) panel.style.display='none';
+  document.removeEventListener('click', _notifOutside);
+}
+function _notifOutside(e){
+  const wrap=document.getElementById('notif-center-wrap');
+  if(wrap && !wrap.contains(e.target)) closeNotifCenter();
+}
+
 function openNotifPush(){
   document.getElementById('notif-push-modal').classList.add('open');
   setNotifTarget('all');
