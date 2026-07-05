@@ -1188,6 +1188,7 @@ const db = firebase.database();
             <select id="tj-emp" onchange="renderTrajet()" style="padding:7px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;color:#1e293b;background:#fff;min-width:150px;"></select>
             <input type="date" id="tj-date" onchange="renderTrajet()" style="padding:7px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;color:#1e293b;background:#fff;">
             <button id="tj-refresh-btn" onclick="refreshTrajet()" title="Recharger les points GPS depuis Firebase (ignore le cache)" style="padding:7px 12px;border:1px solid #C0392B;border-radius:8px;font-size:12px;color:#fff;background:#C0392B;cursor:pointer;font-weight:600;display:flex;align-items:center;gap:5px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg> Rafraîchir</button>
+            <button id="tj-clear-btn" onclick="clearTrajetHistory()" title="Effacer les points GPS de la date selectionnee" style="padding:7px 12px;border:1px solid #ef4444;border-radius:8px;font-size:12px;color:#ef4444;background:#fff;cursor:pointer;font-weight:600;display:flex;align-items:center;gap:5px;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-2 14a2 2 0 0 1-2 2H9a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg> Effacer l'historique</button>
           </div>
         </div>
 
@@ -1197,12 +1198,13 @@ const db = firebase.database();
           <div style="flex:1;position:relative;">
             <div id="trajet-map" style="width:100%;height:100%;"></div>
             <!-- map legend -->
-            <div style="position:absolute;top:12px;left:12px;background:rgba(255,255,255,0.96);border-radius:10px;padding:10px 14px;font-size:11px;border:1px solid #e2e8f0;z-index:1000;pointer-events:none;min-width:160px;">
+            <div style="position:absolute;top:12px;left:12px;background:rgba(255,255,255,0.96);border-radius:10px;padding:10px 14px;font-size:11px;border:1px solid #e2e8f0;z-index:1000;pointer-events:none;min-width:170px;">
               <div style="font-weight:700;color:#1e293b;margin-bottom:6px;">Légende</div>
-              <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#22c55e;display:inline-block;"></span> Domicile (départ)</div>
-              <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#C0392B;display:inline-block;"></span> Agence (arrivée)</div>
-              <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;"><span style="width:22px;height:3px;background:#C0392B;border-radius:2px;display:inline-block;"></span> Aller (matin)</div>
-              <div style="display:flex;align-items:center;gap:6px;"><span style="width:22px;height:3px;background:#ef4444;border-radius:2px;border-top:2px dashed #ef4444;display:inline-block;"></span> Retour (soir)</div>
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#22c55e;display:inline-block;"></span> Entrée pointage</div>
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#ef4444;display:inline-block;"></span> Sortie pointage</div>
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#C0392B;display:inline-block;"></span> Agence</div>
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;"><span style="width:22px;height:3px;background:#C0392B;border-radius:2px;display:inline-block;"></span> Trajet pointages GPS</div>
+              <div style="display:flex;align-items:center;gap:6px;"><span style="width:22px;height:3px;background:#7c3aed;border-radius:2px;background-image:linear-gradient(90deg,#7c3aed 60%,transparent 60%);background-size:6px 3px;display:inline-block;"></span> Mission GPS (temps réel)</div>
             </div>
           </div>
 
@@ -1336,10 +1338,11 @@ const db = firebase.database();
           <!-- Header -->
           <div style="padding:14px 16px;border-bottom:1px solid #e2e8f0;background:linear-gradient(135deg,#8B1A1A,#C0392B);">
             <div style="font-size:14px;font-weight:700;color:#fff;margin-bottom:8px;">Chat interne</div>
-            <div style="display:flex;gap:6px;">
-              <button data-mode="direct" class="new-conv-btn" style="flex:1;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);color:#fff;padding:6px 4px;border-radius:8px;font-size:10px;font-weight:600;cursor:pointer;">Direct</button>
-              <button data-mode="groupe" class="new-conv-btn" style="flex:1;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);color:#fff;padding:6px 4px;border-radius:8px;font-size:10px;font-weight:600;cursor:pointer;">Groupe</button>
-              <button data-mode="reunion" class="new-conv-btn" style="flex:1;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);color:#fff;padding:6px 4px;border-radius:8px;font-size:10px;font-weight:600;cursor:pointer;">RDV</button>
+            <div style="display:flex;gap:5px;flex-wrap:wrap;">
+              <button data-mode="direct" class="new-conv-btn" style="flex:1;min-width:52px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);color:#fff;padding:6px 4px;border-radius:8px;font-size:10px;font-weight:600;cursor:pointer;">Direct</button>
+              <button data-mode="groupe" class="new-conv-btn" style="flex:1;min-width:52px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);color:#fff;padding:6px 4px;border-radius:8px;font-size:10px;font-weight:600;cursor:pointer;">Groupe</button>
+              <button data-mode="reunion" class="new-conv-btn" style="flex:1;min-width:52px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);color:#fff;padding:6px 4px;border-radius:8px;font-size:10px;font-weight:600;cursor:pointer;">RDV</button>
+              <button onclick="openEmpChatsModal()" title="Conversations entre employés (lecture seule)" style="flex:1;min-width:78px;background:rgba(255,255,255,0.28);border:1px solid rgba(255,255,255,0.45);color:#fff;padding:6px 4px;border-radius:8px;font-size:10px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:3px;">👥 Entre emp.</button>
             </div>
           </div>
           <!-- Search -->
@@ -1386,6 +1389,41 @@ const db = firebase.database();
               <textarea id="chat-msg-input" placeholder="Écrire un message..." rows="1" onkeydown="handleChatKey(event)" oninput="autoResizeTA(this)" style="flex:1;padding:8px 12px;border:1px solid #e2e8f0;border-radius:8px;font-size:13px;resize:none;font-family:inherit;max-height:100px;overflow-y:auto;color:#1e293b;background:#fff;"></textarea>
               <button onclick="sendChatMsg()" style="background:#C0392B;border:none;color:#fff;width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:16px;flex-shrink:0;display:flex;align-items:center;justify-content:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></button>
             </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ENTRE EMPLOYES MODAL (lecture seule) -->
+    <div class="modal-backdrop" id="empchats-modal">
+      <div class="modal-box" style="width:min(880px,94vw);max-height:88vh;display:flex;flex-direction:column;padding:0;overflow:hidden;">
+        <div class="modal-head" style="background:linear-gradient(135deg,#374151,#64748b);color:#fff;">
+          <div class="modal-head-title" style="color:#fff;">👥 Conversations entre employés <span style="font-size:11px;font-weight:400;opacity:0.85;margin-left:8px;">Supervision · lecture seule</span></div>
+          <button class="modal-close-btn" style="color:#fff;" onclick="closeEmpChatsModal()">✕</button>
+        </div>
+        <div style="display:flex;flex:1;min-height:0;">
+          <!-- Liste conversations -->
+          <div style="width:280px;border-right:1px solid #e2e8f0;display:flex;flex-direction:column;background:#f8fafc;">
+            <div style="padding:10px 12px;border-bottom:1px solid #e2e8f0;">
+              <input type="text" id="empchat-search" placeholder="Rechercher un employé..." oninput="renderEmpChatsList()" style="width:100%;padding:7px 10px;border:1px solid #e2e8f0;border-radius:8px;font-size:12px;color:#1e293b;background:#fff;">
+            </div>
+            <div id="empchat-list" style="flex:1;overflow-y:auto;"></div>
+          </div>
+          <!-- Messages (lecture seule) -->
+          <div style="flex:1;display:flex;flex-direction:column;background:#fff;min-width:0;">
+            <div id="empchat-header" style="display:none;padding:12px 16px;border-bottom:1px solid #e2e8f0;align-items:center;gap:10px;background:#f8fafc;">
+              <div id="empchat-header-av" style="width:36px;height:36px;border-radius:50%;background:#E5E7EB;color:#374151;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex-shrink:0;">👥</div>
+              <div style="flex:1;min-width:0;">
+                <div id="empchat-header-name" style="font-size:14px;font-weight:700;color:#1e293b;"></div>
+                <div style="font-size:11px;color:#64748b;"><span style="background:#F3F4F6;color:#374151;padding:2px 7px;border-radius:8px;font-size:10px;font-weight:700;">Lecture seule</span></div>
+              </div>
+            </div>
+            <div id="empchat-empty" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#94a3b8;padding:40px 20px;text-align:center;">
+              <div style="font-size:36px;margin-bottom:10px;">👥</div>
+              <div style="font-size:13px;font-weight:600;">Sélectionnez une conversation</div>
+              <div style="font-size:11px;margin-top:4px;">Les échanges entre employés apparaissent ici</div>
+            </div>
+            <div id="empchat-messages" style="display:none;flex:1;overflow-y:auto;padding:16px;flex-direction:column;gap:10px;background:#f8fafc;"></div>
           </div>
         </div>
       </div>
@@ -2381,22 +2419,24 @@ function fbInitSync(){
       _applyFbData('employees', val);
     }
   });
+  // Firebase = source de verite absolue. Pas de merge back : une agence
+  // supprimee dans Firebase doit disparaitre partout, sinon un vieux cache
+  // localStorage la reinjecte a chaque sync.
+  var _fbAgenciesInit = false;
   db.ref('wecan/agencies').on('value', snap=>{
     const val = snap.val();
     if(val !== null && val !== undefined){
-      // Fusionner Firebase + localStorage : garder les bureaux locaux non encore synchronisés
       const fbArr = Array.isArray(val) ? val : Object.values(val);
-      let localArr = [];
-      try{ const s=localStorage.getItem('wecan_agencies'); if(s) localArr=JSON.parse(s); if(!Array.isArray(localArr)) localArr=[]; }catch(e){}
-      // Ajouter à Firebase les bureaux locaux absents (écriture Firebase incomplète)
-      const toAdd = localArr.filter(la=>!fbArr.find(a=>String(a.id)===String(la.id)));
-      const merged = toAdd.length ? [...fbArr,...toAdd] : fbArr;
-      if(toAdd.length){ try{ db.ref('wecan/agencies').set(merged); }catch(e){} }
-      _applyFbData('agencies', merged);
-    } else {
-      // Firebase vide : pousser les données locales
+      _applyFbData('agencies', fbArr);
+      _fbAgenciesInit = true;
+    } else if(!_fbAgenciesInit){
+      // Premier evenement seulement : Firebase vide → pousser le local une fois
       const local = localStorage.getItem('wecan_agencies');
       if(local){ try{ db.ref('wecan/agencies').set(JSON.parse(local)); }catch(e){} }
+      _fbAgenciesInit = true;
+    } else {
+      // Deja initialise et Firebase vide → l'admin a tout supprime, on garde vide
+      _applyFbData('agencies', []);
     }
   });
   // Shifts, feries, ramadan, pushNotifications : listener temps reel
@@ -2479,6 +2519,23 @@ function fbInitSync(){
       if(document.getElementById('page-trajet').classList.contains('active')){ try{renderTrajet();}catch(e){} }
     }catch(e){} try{updateSidebarAlerts();}catch(e){}
   });
+  // Ecouter les sorties de zone (motifs choisis par l employe quand il quitte la zone).
+  // Chargees en global pour que le Registre de pointage puisse les afficher meme si la
+  // page "Sorties Territoire" n a pas ete ouverte.
+  try{
+    if(typeof sorties_data==='undefined'){ window.sorties_data = []; }
+    try{ const _s = localStorage.getItem('wecan_sorties'); if(_s){ sorties_data = JSON.parse(_s)||[]; } }catch(e){}
+    db.ref('wecan/sorties').on('value', function(snap){
+      const val = snap.val(); if(val==null){ sorties_data=[]; localStorage.setItem('wecan_sorties','[]'); return; }
+      const arr = Array.isArray(val) ? val : Object.values(val);
+      sorties_data = arr.filter(function(s){ return s&&s.id; });
+      localStorage.setItem('wecan_sorties', JSON.stringify(sorties_data));
+      try{
+        if(document.getElementById('page-reports') && document.getElementById('page-reports').classList.contains('active')) renderPointages();
+        if(document.getElementById('page-sorties') && document.getElementById('page-sorties').classList.contains('active')){ renderSortiesToday(); renderSortiesHistory(); }
+      }catch(e){}
+    });
+  }catch(e){}
   // Écouter les messages des employés depuis employe.html
   let _knownOutbox = {};
   db.ref('wecan/emp_outbox').on('value', snap=>{
@@ -2514,7 +2571,8 @@ function fbInitSync(){
     if(changed){
       saveData('conversations', conversations);
       saveData('chatMessages', chatMessages);
-      try{ renderConversations&&renderConversations(); updateChatBadge&&updateChatBadge(); }catch(e){}
+      try{ if(typeof renderConvList==='function') renderConvList(); }catch(e){}
+      try{ updateChatBadge&&updateChatBadge(); }catch(e){}
     }
   });
 }
@@ -3501,7 +3559,14 @@ function renderPointages(){
       a.status==='approved'&&
       (a.date===rec.date||(a.detail&&a.detail.date===rec.date))
     );
-    return{...rec,entree,sortie,pauses,totalPauseMins,retardMins,travailBrut,travailNet,hSup,sortieApprouvees,sortieEff:m.sortieEff,effSortieTime:m.effSortieTime};
+    // Sorties de zone (motif choisi par l employe quand il quitte le perimetre)
+    const _srcSorties = (typeof sorties_data!=='undefined' && Array.isArray(sorties_data))
+      ? sorties_data
+      : (function(){ try{return JSON.parse(localStorage.getItem('wecan_sorties')||'[]');}catch(e){return [];} })();
+    const zoneSorties = _srcSorties
+      .filter(s=>s&&String(s.empId)===String(rec.empId)&&s.dateStr===rec.date)
+      .sort((a,b)=>String(a.heureDepart||'').localeCompare(String(b.heureDepart||'')));
+    return{...rec,entree,sortie,pauses,totalPauseMins,retardMins,travailBrut,travailNet,hSup,sortieApprouvees,zoneSorties,sortieEff:m.sortieEff,effSortieTime:m.effSortieTime};
   });
 
   // Filter by date
@@ -3560,6 +3625,7 @@ function renderPointages(){
         if(r.retardMins>0) tags.push(`<span style="background:#FCEBEB;color:#DC2626;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;">Retard +${minsToStr(r.retardMins)}</span>`);
         if(r.hSup>0)       tags.push(`<span style="background:#EDE9FE;color:#7C3AED;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;">H.Sup +${minsToStr(r.hSup)}</span>`);
         r.sortieApprouvees.forEach(s=>tags.push(`<span style="background:#FAEEDA;color:#854F0B;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;">Sortie ${s.detail.heure}→${s.detail.retour} · ${s.detail.motif}</span>`));
+        (r.zoneSorties||[]).forEach(s=>tags.push(`<span style="background:#EDE9FE;color:#6d28d9;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;">Hors zone ${s.heureDepart||''}${s.heureRetour?'→'+s.heureRetour:''} · ${s.motif||''}</span>`));
         if(!tags.length)   tags.push(`<span style="background:#EAF3DE;color:#3B6D11;padding:2px 8px;border-radius:12px;font-size:10px;font-weight:600;">Journée normale</span>`);
 
         // Pauses detail
@@ -3601,12 +3667,24 @@ function renderPointages(){
               :`<span style="color:#94a3b8;font-size:11px;">—</span>`}
           </td>
           <td style="padding:10px 14px;">
-            ${r.sortieApprouvees.length>0
-              ?r.sortieApprouvees.map(s=>`
-                <div style="background:#FAEEDA;border-radius:8px;padding:4px 8px;margin-bottom:3px;">
-                  <div style="font-size:11px;font-weight:600;color:#854F0B;">${s.detail.heure} → ${s.detail.retour} <span style="font-weight:400;">(${s.detail.duree})</span></div>
-                  <div style="font-size:10px;color:#92400E;">${s.detail.motif}</div>
-                </div>`).join('')
+            ${(r.sortieApprouvees.length>0 || (r.zoneSorties&&r.zoneSorties.length>0))
+              ? (
+                  r.sortieApprouvees.map(s=>`
+                    <div style="background:#FAEEDA;border-radius:8px;padding:4px 8px;margin-bottom:3px;">
+                      <div style="font-size:11px;font-weight:600;color:#854F0B;">${s.detail.heure} → ${s.detail.retour} <span style="font-weight:400;">(${s.detail.duree})</span> <span style="background:#fff;color:#854F0B;padding:1px 5px;border-radius:6px;font-size:9px;font-weight:700;margin-left:3px;">Approuvée</span></div>
+                      <div style="font-size:10px;color:#92400E;">${s.detail.motif}</div>
+                    </div>`).join('')
+                  +
+                  (r.zoneSorties||[]).map(s=>{
+                    const dep = s.heureDepart||'—';
+                    const ret = s.heureRetour?('→ '+s.heureRetour):'<span style="color:#f59e0b">En cours</span>';
+                    const missionTag = s.isMission?'<span style="background:#7c3aed;color:#fff;padding:1px 5px;border-radius:6px;font-size:9px;font-weight:700;margin-left:3px;">GPS</span>':'';
+                    return `<div style="background:#EDE9FE;border-radius:8px;padding:4px 8px;margin-bottom:3px;border-left:2px solid #7c3aed;">
+                      <div style="font-size:11px;font-weight:600;color:#5b21b6;">${dep} ${ret} ${missionTag} <span style="background:#fff;color:#5b21b6;padding:1px 5px;border-radius:6px;font-size:9px;font-weight:700;margin-left:3px;">Hors zone</span></div>
+                      <div style="font-size:10px;color:#6d28d9;">${s.motif||'—'}</div>
+                    </div>`;
+                  }).join('')
+                )
               :`<span style="color:#94a3b8;font-size:11px;">—</span>`}
           </td>
           <td style="padding:10px 14px;">
@@ -4479,6 +4557,45 @@ function clearTrajetLayers(){
   trajetLayers=[];
 }
 
+// Efface l'historique des trajets (points GPS des pointages + positions mission)
+// pour la date selectionnee. Filtre par employe si un est choisi.
+function clearTrajetHistory(){
+  const dateVal = document.getElementById('tj-date')?.value || '';
+  const empVal  = parseInt(document.getElementById('tj-emp')?.value)||0;
+  if(!dateVal){ try{showToast('Choisir une date');}catch(e){}; return; }
+  const [y,m,d] = dateVal.split('-'); const frDate = d+'/'+m+'/'+y;
+  const empLabel = empVal ? ' pour cet employe' : ' pour TOUS les employes';
+  if(!confirm('Effacer les traces GPS du '+frDate+empLabel+' ?\n(Points GPS des pointages + positions mission)')) return;
+
+  // 1) Reset lat/lng sur les pointages de la date (garde le pointage, retire les coords)
+  let ptChanged = 0;
+  pointages.forEach(p=>{
+    if(p && p.date===frDate && (!empVal || Number(p.empId)===empVal) && (p.lat||p.lng)){
+      delete p.lat; delete p.lng; ptChanged++;
+    }
+  });
+  if(ptChanged){ try{ saveData('pointages', pointages); }catch(e){} }
+
+  // 2) Vider les positions mission des sorties du jour
+  const src = (typeof sorties_data!=='undefined' && Array.isArray(sorties_data)) ? sorties_data : [];
+  let srChanged = 0;
+  src.forEach(s=>{
+    if(!s || s.dateStr!==frDate) return;
+    if(empVal && Number(s.empId)!==empVal) return;
+    if(s.missionPositions){
+      s.missionPositions = [];
+      try{ db.ref('wecan/sorties/'+s.id+'/missionPositions').set([]); }catch(e){}
+      srChanged++;
+    }
+  });
+  if(srChanged){
+    try{ localStorage.setItem('wecan_sorties', JSON.stringify(sorties_data)); }catch(e){}
+  }
+
+  try{ renderTrajet(); }catch(e){}
+  try{ showToast('Historique efface : '+ptChanged+' pointages, '+srChanged+' missions'); }catch(e){}
+}
+
 // Tache 5 : recharge les points GPS reels depuis Firebase (ignore le cache local perime)
 // puis re-render le trajet. Vide le cache pointages/sorties avant de repull.
 function refreshTrajet(){
@@ -4512,6 +4629,11 @@ function renderTrajet(){
   const empList=empFilter?employees.filter(e=>e.id===empFilter):employees;
   const bounds=[];
 
+  // Sorties de zone (missions GPS trackees en temps reel) pour la date filtree
+  const _allSorties = (typeof sorties_data!=='undefined' && Array.isArray(sorties_data))
+    ? sorties_data
+    : (function(){ try{return JSON.parse(localStorage.getItem('wecan_sorties')||'[]');}catch(e){return [];} })();
+
   empList.forEach((emp,i)=>{
     const gIdx=employees.indexOf(emp);
     const ag=agencies.find(a=>a.id===emp.agenceId)||agencies[0];
@@ -4521,6 +4643,22 @@ function renderTrajet(){
     // Get GPS pointages for this employee+date with coords
     const empPts=pointages.filter(p=>p.empId===emp.id&&(!frDate||p.date===frDate)&&p.lat&&p.lng)
                           .sort((a,b)=>a.time.localeCompare(b.time));
+
+    // Positions GPS des missions du jour (trackees en arriere plan par employe.html)
+    const missionPts = [];
+    _allSorties.forEach(s=>{
+      if(!s || String(s.empId)!==String(emp.id)) return;
+      if(frDate && s.dateStr!==frDate) return;
+      const positions = s.missionPositions;
+      if(!positions) return;
+      const arr = Array.isArray(positions) ? positions : Object.values(positions);
+      arr.forEach(p=>{
+        if(p && typeof p.lat==='number' && typeof p.lng==='number'){
+          missionPts.push({lat:p.lat, lng:p.lng, time:p.time||'', ts:p.ts||0, motif:s.motif||'Mission', sortieId:s.id});
+        }
+      });
+    });
+    missionPts.sort((a,b)=>(a.ts||0)-(b.ts||0));
 
     if(empPts.length>=2){
       // TERRAIN employee — has GPS coords on each point
@@ -4571,27 +4709,35 @@ function renderTrajet(){
         bounds.push([p.lat,p.lng]);
       });
 
-    } else {
-      // Bureau employee — no GPS coords, show home→agence path
-      const home=getHomeCoords(emp,gIdx);
-      const offsets=FIXED_WAYPOINTS[emp.id]||[[0.01,-0.01],[0.005,0.005]];
-      const pts=[home];
-      offsets.forEach((off,i)=>{
-        const t=(i+1)/(offsets.length+1);
-        pts.push([home[0]+(ag.lat-home[0])*t+off[0],home[1]+(ag.lng-home[1])*t+off[1]]);
-      });
-      pts.push([ag.lat,ag.lng]);
-
-      const aller=L.polyline(pts,{color,weight:3,opacity:0.7}).addTo(trajetMap);
-      const retour=L.polyline([...pts].reverse(),{color:'#ef4444',weight:2,opacity:0.6,dashArray:'8,5'}).addTo(trajetMap);
-      trajetLayers.push(aller,retour);
-
-      // Home marker
-      const homeIcon=L.divIcon({html:`<div style="background:#22c55e;border:2px solid #fff;border-radius:50%;width:26px;height:26px;box-shadow:0 2px 6px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:13px;"></div>`,iconSize:[26,26],iconAnchor:[13,13],className:''});
-      const agIcon=L.divIcon({html:`<div style="background:${color};border:2px solid #fff;border-radius:50% 50% 50% 0;width:30px;height:30px;transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;overflow:hidden;"><span style="transform:rotate(45deg);font-size:14px;"></span></div>`,iconSize:[30,30],iconAnchor:[15,30],className:''});
-      trajetLayers.push(L.marker(home,{icon:homeIcon}).bindPopup(`<b>Domicile</b><br>${emp.prenom} ${emp.nom}`).addTo(trajetMap));
+    } else if(missionPts.length>=2){
+      // GPS mission tracke (background) — pas de pointages GPS mais on a des positions mission
+      const coords = missionPts.map(p=>[p.lat,p.lng]);
+      const line = L.polyline(coords,{color,weight:4,opacity:0.85,dashArray:'6,4'}).addTo(trajetMap);
+      trajetLayers.push(line);
+      // Depart et arrivee
+      const startIcon = L.divIcon({html:`<div style="background:#7c3aed;border:2px solid #fff;border-radius:50%;width:26px;height:26px;box-shadow:0 2px 6px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-weight:700;">D</div>`,iconSize:[26,26],iconAnchor:[13,13],className:''});
+      const endIcon = L.divIcon({html:`<div style="background:${color};border:2px solid #fff;border-radius:50%;width:26px;height:26px;box-shadow:0 2px 6px rgba(0,0,0,0.3);display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;font-weight:700;">A</div>`,iconSize:[26,26],iconAnchor:[13,13],className:''});
+      const first = missionPts[0], last = missionPts[missionPts.length-1];
+      trajetLayers.push(L.marker([first.lat,first.lng],{icon:startIcon}).bindPopup(`<b>Depart mission</b><br><small>${first.time||''} — ${first.motif}</small>`).addTo(trajetMap));
+      trajetLayers.push(L.marker([last.lat,last.lng],{icon:endIcon}).bindPopup(`<b>Derniere position</b><br><small>${last.time||''} — ${last.motif}</small>`).addTo(trajetMap));
+      // Reference agence
+      const agIcon=L.divIcon({html:`<div style="background:${color};border:2px solid #fff;border-radius:50% 50% 50% 0;width:26px;height:26px;transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>`,iconSize:[26,26],iconAnchor:[13,26],className:''});
       trajetLayers.push(L.marker([ag.lat,ag.lng],{icon:agIcon}).bindPopup(`<b>${ag.name||ag.nom||ag.id}</b>`).addTo(trajetMap));
-      bounds.push(home,[ag.lat,ag.lng]);
+      missionPts.forEach(p=>bounds.push([p.lat,p.lng]));
+      bounds.push([ag.lat,ag.lng]);
+    } else {
+      // Aucun GPS reel pour cet employe/date : montrer juste l agence (pas de faux trajet)
+      const agIcon=L.divIcon({html:`<div style="background:${color};border:2px solid #fff;border-radius:50% 50% 50% 0;width:30px;height:30px;transform:rotate(-45deg);box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>`,iconSize:[30,30],iconAnchor:[15,30],className:''});
+      trajetLayers.push(L.marker([ag.lat,ag.lng],{icon:agIcon}).bindPopup(`<b>${ag.name||ag.nom||ag.id}</b><br><small>${emp.prenom} ${emp.nom} — aucun GPS pour ce jour</small>`).addTo(trajetMap));
+      bounds.push([ag.lat,ag.lng]);
+    }
+
+    // Superposer les missions GPS quand il y a AUSSI des pointages GPS
+    if(empPts.length>=2 && missionPts.length>=2){
+      const mCoords = missionPts.map(p=>[p.lat,p.lng]);
+      const mLine = L.polyline(mCoords,{color:'#7c3aed',weight:3,opacity:0.75,dashArray:'6,4'}).addTo(trajetMap);
+      trajetLayers.push(mLine);
+      missionPts.forEach(p=>bounds.push([p.lat,p.lng]));
     }
   });
 
@@ -6992,6 +7138,156 @@ let activeConvId = null;
 let newConvMode = '';
 let notifTarget = 'all';
 
+// ── EMPCHATS : conversations entre employes (admin observe en lecture seule) ──
+// Structure : { convId: { convId, empIds:Set, empNames:{}, lastMsg, lastTime, ts, messages:[] } }
+let empChats = {};
+let activeEmpChatId = null;
+
+function startEmpChatsListener(){
+  if(window._empChatsListenerReady) return;
+  window._empChatsListenerReady = true;
+  try{
+    // Ecouter tous les employes
+    db.ref('wecan/per_emp').on('value', function(snap){
+      const val = snap.val(); if(!val) return;
+      const newChats = {};
+      Object.keys(val).forEach(function(empId){
+        const perEmp = val[empId];
+        if(!perEmp || !perEmp.direct) return;
+        Object.keys(perEmp.direct).forEach(function(convId){
+          // Filtrer : uniquement les conversations entre employes (id commence par 'emp_')
+          if(!String(convId).startsWith('emp_')) return;
+          const msgs = perEmp.direct[convId];
+          if(!msgs) return;
+          const msgArr = Array.isArray(msgs) ? msgs : Object.values(msgs);
+          if(!newChats[convId]){
+            newChats[convId] = { convId:convId, empIds:new Set(), empNames:{}, messages:[], lastMsg:'', lastTime:'', ts:0 };
+          }
+          const chat = newChats[convId];
+          msgArr.forEach(function(m){
+            if(!m || !m.text) return;
+            const senderId = m.from||m.empId;
+            if(senderId){ chat.empIds.add(Number(senderId)); chat.empNames[senderId] = m.name || ('Employé '+senderId); }
+            // Dedup par ts+from
+            const dupKey = String(m.ts||m.time)+'|'+String(senderId);
+            if(!chat.messages.find(function(x){ return String(x.ts||x.time)+'|'+String(x.from||x.empId)===dupKey; })){
+              chat.messages.push(m);
+              if((m.ts||0) > chat.ts){ chat.ts = m.ts||0; chat.lastMsg = m.text; chat.lastTime = m.time||''; }
+            }
+          });
+          // Aussi ajouter le destinataire (l'employe dont on lit l'inbox)
+          chat.empIds.add(Number(empId));
+        });
+      });
+      // Compléter les noms manquants depuis employees
+      Object.values(newChats).forEach(function(chat){
+        chat.empIds.forEach(function(eid){
+          if(!chat.empNames[eid]){
+            const e = employees.find(function(x){ return Number(x.id)===Number(eid); });
+            chat.empNames[eid] = e ? (e.prenom+' '+e.nom) : ('Employé '+eid);
+          }
+        });
+        chat.messages.sort(function(a,b){ return (a.ts||0)-(b.ts||0); });
+      });
+      empChats = newChats;
+      renderEmpChatsList();
+      if(activeEmpChatId && empChats[activeEmpChatId]) renderEmpChatMessages(activeEmpChatId);
+    });
+  }catch(e){ console.warn('empChats listener', e); }
+}
+
+function renderEmpChatsList(){
+  const el = document.getElementById('empchat-list');
+  if(!el) return;
+  const search = (document.getElementById('empchat-search')?.value||'').toLowerCase();
+  const arr = Object.values(empChats).sort(function(a,b){ return (b.ts||0)-(a.ts||0); });
+  const filtered = arr.filter(function(c){
+    if(!search) return true;
+    const names = Object.values(c.empNames).join(' ').toLowerCase();
+    return names.includes(search) || (c.lastMsg||'').toLowerCase().includes(search);
+  });
+  if(!filtered.length){
+    el.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;font-size:12px;">Aucune conversation entre employés</div>';
+    return;
+  }
+  el.innerHTML = filtered.map(function(c){
+    const ids = Array.from(c.empIds);
+    const names = ids.map(function(id){ return c.empNames[id]||'#'+id; });
+    const title = names.slice(0,2).join(' ↔ ') || 'Conversation';
+    const av = names.slice(0,2).map(function(n){ return (n[0]||'?').toUpperCase(); }).join('');
+    const isActive = c.convId===activeEmpChatId;
+    return `<div onclick="openEmpChat('${c.convId}')" style="display:flex;align-items:center;gap:10px;padding:10px 12px;cursor:pointer;background:${isActive?'#F3F4F6':'#fff'};border-left:${isActive?'3px solid #64748b':'3px solid transparent'};border-bottom:1px solid #f1f5f9;">
+      <div style="width:36px;height:36px;border-radius:50%;background:#E5E7EB;color:#374151;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;">${av||'??'}</div>
+      <div style="flex:1;min-width:0;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
+          <span style="font-size:12px;font-weight:700;color:#1e293b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:130px;">${title}</span>
+          <span style="font-size:10px;color:#94a3b8;flex-shrink:0;margin-left:4px;">${c.lastTime||''}</span>
+        </div>
+        <div style="font-size:11px;color:#64748b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${(c.lastMsg||'').slice(0,40)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openEmpChatsModal(){
+  const m = document.getElementById('empchats-modal');
+  if(m) m.classList.add('open');
+  try{ startEmpChatsListener(); }catch(e){}
+  renderEmpChatsList();
+}
+function closeEmpChatsModal(){
+  const m = document.getElementById('empchats-modal');
+  if(m) m.classList.remove('open');
+  activeEmpChatId = null;
+  // Reset zone messages
+  const empty = document.getElementById('empchat-empty');
+  const msgs  = document.getElementById('empchat-messages');
+  const hdr   = document.getElementById('empchat-header');
+  if(empty) empty.style.display = 'flex';
+  if(msgs){ msgs.style.display = 'none'; msgs.innerHTML=''; }
+  if(hdr) hdr.style.display = 'none';
+}
+
+function openEmpChat(convId){
+  activeEmpChatId = convId;
+  const chat = empChats[convId];
+  if(!chat) return;
+  renderEmpChatsList();
+  const ids = Array.from(chat.empIds);
+  const names = ids.map(function(id){ return chat.empNames[id]||'#'+id; });
+  const nameEl = document.getElementById('empchat-header-name');
+  const avEl   = document.getElementById('empchat-header-av');
+  const hdrEl  = document.getElementById('empchat-header');
+  const empty  = document.getElementById('empchat-empty');
+  const msgs   = document.getElementById('empchat-messages');
+  if(nameEl) nameEl.textContent = names.slice(0,4).join(' ↔ ') || 'Conversation';
+  if(avEl){
+    const av = names.slice(0,2).map(function(n){ return (n[0]||'?').toUpperCase(); }).join('');
+    avEl.textContent = av || '👥';
+  }
+  if(hdrEl) hdrEl.style.display = 'flex';
+  if(empty) empty.style.display = 'none';
+  if(msgs){ msgs.style.display = 'flex'; }
+  renderEmpChatMessages(convId);
+}
+
+function renderEmpChatMessages(convId){
+  const chat = empChats[convId]; if(!chat) return;
+  const el = document.getElementById('empchat-messages');
+  if(!el) return;
+  el.innerHTML = chat.messages.map(function(m){
+    const senderId = m.from||m.empId;
+    const senderName = chat.empNames[senderId] || m.name || 'Employé';
+    const safe = (m.text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return `<div style="display:flex;flex-direction:column;gap:2px;max-width:75%;">
+      <div style="font-size:10px;color:#64748b;font-weight:600;">${senderName}</div>
+      <div style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:8px 12px;font-size:13px;color:#1e293b;box-shadow:0 1px 2px rgba(0,0,0,0.04);">${safe}</div>
+      <div style="font-size:10px;color:#94a3b8;">${m.time||''}</div>
+    </div>`;
+  }).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
 function initChat(){
   // Charger depuis Firebase pour sync multi-appareils
   try{
@@ -7056,6 +7352,9 @@ function initChat(){
   startEmpOutboxListener();
   // ← Listener temps réel: nouveaux messages pour conversations déjà ouvertes
   startChatMessagesListener();
+  // ← Listener temps reel : conversations entre employes (colonne 2)
+  startEmpChatsListener();
+  renderEmpChatsList();
 }
 function handleNewConvBtn(e){
   const mode = e.currentTarget.getAttribute('data-mode');
@@ -7200,6 +7499,7 @@ function filterConvList(){ renderConvList(); }
 
 function openConv(id){
   activeConvId = id;
+  activeEmpChatId = null; // deselectionner colonne "entre employes"
   const conv = conversations.find(c=>c.id===id);
   if(!conv) return;
   // Clear unread
@@ -7207,6 +7507,7 @@ function openConv(id){
   saveData('conversations', conversations);
   updateChatBadge();
   renderConvList();
+  try{ renderEmpChatsList(); }catch(e){}
 
   // Show header
   const hdr = document.getElementById('chat-header');
