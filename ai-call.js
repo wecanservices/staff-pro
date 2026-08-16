@@ -190,6 +190,9 @@
       }
       .aic-in-btn.hangup { background: #e74c3c; width: 68px; height: 68px; font-size: 26px; }
       .aic-in-btn.muted { background: white; color: #333; }
+      /* Bouton speaker : le mode 'earpiece' est l'état passif, les 2 autres sont visuellement actifs */
+      .aic-in-btn.speaker.speaker-speaker   { background: white; color: #333; }
+      .aic-in-btn.speaker.speaker-bluetooth { background: #3498db; color: white; }
 
       .aic-toast {
         position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
@@ -489,7 +492,24 @@
     vibrateTimer: null,
     startTs: null,
     timerInt: null,
-    autoMissTimeout: null
+    autoMissTimeout: null,
+    // ─── Speaker / audio-routing state ────────────────────────
+    // 'earpiece' (défaut, écouteur d'oreille) | 'speaker' (haut-parleur mains libres) | 'bluetooth'
+    speakerMode: 'earpiece',
+    sinkAvailable: false,       // setSinkId supporté par ce navigateur ?
+    audioSink: null,            // HTMLAudioElement caché pour setSinkId
+    audioSinkDest: null,        // MediaStreamAudioDestinationNode connecté à l'élément
+    audioDevices: null,         // { earpiece: id|null, speaker: id|null, bluetooth: id|null }
+    nativeRouterOk: false       // plugin natif Capacitor AudioRouter détecté ?
+  };
+
+  // Cycle des modes speaker (order = cycle du bouton)
+  var SPEAKER_MODES = ['earpiece', 'speaker', 'bluetooth'];
+  var SPEAKER_ICONS = { earpiece: '🎧', speaker: '🔊', bluetooth: '🔵' };
+  var SPEAKER_LABELS = {
+    earpiece:  '🎧 Écouteur',
+    speaker:   '🔊 Haut-parleur',
+    bluetooth: '🔵 Bluetooth'
   };
 
   function initEmploye() {
@@ -512,6 +532,12 @@
       if (empId && empId !== employe.empId) {
         employe.empId = empId;
         startEmployeListener();
+        // APK Capacitor : démarre le listener natif (foreground service) pour
+        // recevoir les appels IA même téléphone verrouillé. No-op côté web.
+        try {
+          var ics = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.IncomingCallService;
+          if (ics && ics.startListening) ics.startListening({ empId: String(empId) });
+        } catch (e) { /* silent */ }
       }
       // Ré-attache si l'employé change (re-login)
       if (tries > 600) clearInterval(chk);   // stop après 10 min
@@ -522,6 +548,7 @@
     window._aicReject = employeReject;
     window._aicHangup = employeHangup;
     window._aicToggleMute = employeToggleMute;
+    window._aicToggleSpeaker = employeToggleSpeaker;
   }
 
   function getLoggedEmpId() {
@@ -572,7 +599,7 @@
       '<div class="aic-in-actions">' +
         '<button class="aic-in-btn" id="aicMuteBtn" onclick="window._aicToggleMute()">🎤</button>' +
         '<button class="aic-in-btn hangup" onclick="window._aicHangup()">📵</button>' +
-        '<button class="aic-in-btn" style="opacity:0.3;">🔊</button>' +
+        '<button class="aic-in-btn speaker speaker-earpiece" id="aicSpeakerBtn" onclick="window._aicToggleSpeaker()" title="Basculer écouteur / haut-parleur / bluetooth">🎧</button>' +
       '</div>';
     document.body.appendChild(inCall);
   }
@@ -677,27 +704,178 @@
     toast(employe.isMuted ? '🔇 Micro coupé' : '🎤 Micro activé', 1500);
   }
 
-  // ─── Sonnerie ────────────────────────────────────────────────
-  function startRing() {
+  // ─── Speaker routing (écouteur / haut-parleur / bluetooth) ───
+  //
+  // Stratégie hybride (voir doc en bas du fichier) :
+  //  1. Si plugin natif Capacitor AudioRouter dispo → délègue à Android AudioManager
+  //     (setMode(MODE_IN_COMMUNICATION) + setSpeakerphoneOn / startBluetoothSco).
+  //     C'est la seule vraie solution "façon WhatsApp" sur téléphone Android.
+  //  2. Sinon (navigateur desktop, ou APK sans plugin) → tente setSinkId sur un
+  //     <audio> caché branché à un MediaStreamAudioDestinationNode. Marche sur
+  //     Chrome desktop récent, no-op silencieux ailleurs.
+  //  3. Dans tous les cas le bouton cycle correctement (icône, toast, état visuel)
+  //     pour que l'UX reste cohérente en attendant le plugin natif.
+  //
+  // TODO_NATIVE : créer un plugin Capacitor `AudioRouter` avec :
+  //   - setMode({ mode: 'earpiece'|'speaker'|'bluetooth' }) → AudioManager
+  //   - getAvailableDevices() → liste réelle (permet d'afficher "🔵 Bluetooth" grisé si absent)
+  //   - isBluetoothConnected() → boolean
+  //   Enregistrer via registerPlugin(AudioRouterPlugin.class) dans MainActivity.
+  //   Permissions à ajouter : MODIFY_AUDIO_SETTINGS + BLUETOOTH_CONNECT.
+
+  function setupAudioSink() {
+    // Crée le pipeline MediaStreamDestination -> <audio> (une seule fois par appel).
+    // Retourne le AudioNode où connecter les buffers TTS, ou null si non dispo.
+    if (employe.audioSinkDest) return employe.audioSinkDest;
+    if (!employe.outCtx) return null;
     try {
-      var ctx = new (window.AudioContext || window.webkitAudioContext)();
-      employe.ringCtx = ctx;
-      function playBeep() {
-        [800, 1000].forEach(function(freq, i) {
-          var osc = ctx.createOscillator();
-          var g = ctx.createGain();
-          osc.frequency.value = freq;
-          var t0 = ctx.currentTime + i * 0.5;
-          g.gain.setValueAtTime(0, t0);
-          g.gain.linearRampToValueAtTime(0.3, t0 + 0.05);
-          g.gain.linearRampToValueAtTime(0, t0 + 0.4);
-          osc.connect(g).connect(ctx.destination);
-          osc.start(t0);
-          osc.stop(t0 + 0.4);
+      var dest = employe.outCtx.createMediaStreamDestination();
+      var audio = document.createElement('audio');
+      audio.autoplay = true;
+      audio.playsInline = true;
+      audio.setAttribute('playsinline', '');
+      audio.style.display = 'none';
+      audio.srcObject = dest.stream;
+      document.body.appendChild(audio);
+      var p = audio.play();
+      if (p && typeof p.catch === 'function') p.catch(function(){});
+      employe.audioSink = audio;
+      employe.audioSinkDest = dest;
+      employe.sinkAvailable = typeof audio.setSinkId === 'function';
+      return dest;
+    } catch (e) {
+      console.warn('[ai-call] setupAudioSink failed:', e);
+      return null;
+    }
+  }
+
+  function enumerateOutputDevices() {
+    // Récupère la map earpiece/speaker/bluetooth depuis enumerateDevices().
+    // ATTENTION : sur Android WebView, cette API renvoie souvent une liste vide
+    // ou sans labels (permissions), d'où le fallback natif recommandé.
+    if (employe.audioDevices) return Promise.resolve(employe.audioDevices);
+    if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+      employe.audioDevices = { earpiece: null, speaker: null, bluetooth: null };
+      return Promise.resolve(employe.audioDevices);
+    }
+    return navigator.mediaDevices.enumerateDevices().then(function(list) {
+      var outs = list.filter(function(d) { return d.kind === 'audiooutput'; });
+      var map = { earpiece: null, speaker: null, bluetooth: null };
+      outs.forEach(function(d) {
+        var l = (d.label || '').toLowerCase();
+        if (l.indexOf('bluetooth') !== -1 || l.indexOf('bt ') !== -1 || l.indexOf('a2dp') !== -1 || l.indexOf('sco') !== -1) {
+          if (!map.bluetooth) map.bluetooth = d.deviceId;
+        } else if (l.indexOf('earpiece') !== -1 || l.indexOf('receiver') !== -1 || l.indexOf('handset') !== -1) {
+          if (!map.earpiece) map.earpiece = d.deviceId;
+        } else if (l.indexOf('speaker') !== -1 || l.indexOf('haut-parleur') !== -1) {
+          if (!map.speaker) map.speaker = d.deviceId;
+        } else {
+          // device sans label utile → prend le premier comme fallback speaker
+          if (!map.speaker) map.speaker = d.deviceId;
+        }
+      });
+      employe.audioDevices = map;
+      return map;
+    }).catch(function() {
+      employe.audioDevices = { earpiece: null, speaker: null, bluetooth: null };
+      return employe.audioDevices;
+    });
+  }
+
+  function applyWebSink(mode) {
+    // Tente setSinkId sur l'élément audio caché. Marche sur Chrome desktop récent.
+    // Sur Android WebView : silencieux (setSinkId absent) → le mode change visuellement
+    // mais le routing réel reste dépendant du plugin natif.
+    if (!employe.audioSink) setupAudioSink();
+    if (!employe.audioSink || typeof employe.audioSink.setSinkId !== 'function') {
+      return Promise.resolve(false);
+    }
+    return enumerateOutputDevices().then(function(map) {
+      var deviceId = map[mode];
+      // Mode earpiece = default output (vide "") pour laisser l'OS décider
+      if (mode === 'earpiece') deviceId = '';
+      // Si bluetooth demandé mais aucun device détecté → refuse (le caller gère le toast)
+      if (mode === 'bluetooth' && !deviceId) return false;
+      return employe.audioSink.setSinkId(deviceId || '').then(function() { return true; }).catch(function(e) {
+        console.warn('[ai-call] setSinkId(' + mode + ') failed:', e);
+        return false;
+      });
+    });
+  }
+
+  function tryNativeRouter(mode) {
+    // Approche B (native plugin) — pas encore livrée. Voir TODO_NATIVE ci-dessus.
+    try {
+      var ar = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AudioRouter;
+      if (ar && typeof ar.setMode === 'function') {
+        return Promise.resolve(ar.setMode({ mode: mode })).then(function() {
+          employe.nativeRouterOk = true;
+          return true;
+        }).catch(function(e) {
+          console.warn('[ai-call] native AudioRouter.setMode failed:', e);
+          return false;
         });
       }
-      playBeep();
-      employe.ringTimer = setInterval(playBeep, 1500);
+    } catch (e) { /* silent */ }
+    return Promise.resolve(false);
+  }
+
+  function updateSpeakerBtn() {
+    var btn = document.getElementById('aicSpeakerBtn');
+    if (!btn) return;
+    btn.textContent = SPEAKER_ICONS[employe.speakerMode] || '🔊';
+    btn.classList.remove('speaker-earpiece', 'speaker-speaker', 'speaker-bluetooth');
+    btn.classList.add('speaker-' + employe.speakerMode);
+    btn.style.opacity = '1';
+  }
+
+  function employeToggleSpeaker() {
+    // Cycle : earpiece → speaker → bluetooth → earpiece
+    var idx = SPEAKER_MODES.indexOf(employe.speakerMode || 'earpiece');
+    var nextMode = SPEAKER_MODES[(idx + 1) % SPEAKER_MODES.length];
+
+    // 1) Essaie le plugin natif d'abord (vrai routing OS)
+    tryNativeRouter(nextMode).then(function(nativeOk) {
+      if (nativeOk) {
+        employe.speakerMode = nextMode;
+        updateSpeakerBtn();
+        toast(SPEAKER_LABELS[nextMode] + ' activé (natif)', 1500);
+        return;
+      }
+      // 2) Fallback web setSinkId (Chrome desktop)
+      return applyWebSink(nextMode).then(function(webOk) {
+        if (nextMode === 'bluetooth' && !webOk && !employe.nativeRouterOk) {
+          // Aucun device BT détecté ET pas de plugin natif → skip vers earpiece
+          toast('🔵 Bluetooth indisponible', 1500);
+          employe.speakerMode = 'earpiece';
+          updateSpeakerBtn();
+          // reroute vers earpiece proprement
+          applyWebSink('earpiece');
+          return;
+        }
+        employe.speakerMode = nextMode;
+        updateSpeakerBtn();
+        // Sur APK sans plugin natif : le bouton cycle mais le son ne bouge pas.
+        // On informe l'utilisateur pour éviter la confusion.
+        var suffix = (webOk || employe.sinkAvailable) ? '' : ' (visuel — routing natif requis)';
+        toast(SPEAKER_LABELS[nextMode] + ' activé' + suffix, 1500);
+      });
+    });
+  }
+
+  // ─── Sonnerie ────────────────────────────────────────────────
+  // Fichier MP3 loopable (10s, mono 96kbps ~118KB) servi à la racine
+  // du site (poussé par push_github.command). GRIFFA 3ASSIMIA - USMA.
+  var RING_SRC = 'ringtone.mp3';
+  function startRing() {
+    try {
+      var a = new Audio(RING_SRC);
+      a.loop = true;
+      a.volume = 0.7;
+      a.preload = 'auto';
+      employe.ringAudio = a;
+      var p = a.play();
+      if (p && typeof p.catch === 'function') p.catch(function(){});
     } catch (e) {}
     if (navigator.vibrate) {
       try {
@@ -707,9 +885,11 @@
     }
   }
   function stopRing() {
-    if (employe.ringTimer) { clearInterval(employe.ringTimer); employe.ringTimer = null; }
+    if (employe.ringAudio) {
+      try { employe.ringAudio.pause(); employe.ringAudio.currentTime = 0; } catch(e){}
+      employe.ringAudio = null;
+    }
     if (employe.vibrateTimer) { clearInterval(employe.vibrateTimer); employe.vibrateTimer = null; }
-    if (employe.ringCtx) { try { employe.ringCtx.close(); } catch(e){} employe.ringCtx = null; }
     if (navigator.vibrate) { try { navigator.vibrate(0); } catch(e){} }
   }
 
@@ -819,7 +999,15 @@
     buf.getChannelData(0).set(f32);
     var src = employe.outCtx.createBufferSource();
     src.buffer = buf;
-    src.connect(employe.outCtx.destination);
+    // Routing : si un mode speaker/bluetooth est actif ET le sink est prêt,
+    // on route via MediaStreamDestination (contrôlé par setSinkId). Sinon
+    // sortie par défaut de l'OS = comportement historique = écouteur/défaut.
+    var outNode = employe.outCtx.destination;
+    if (employe.speakerMode && employe.speakerMode !== 'earpiece') {
+      var sink = employe.audioSinkDest || setupAudioSink();
+      if (sink) outNode = sink;
+    }
+    src.connect(outNode);
     var now = employe.outCtx.currentTime;
     if (employe.nextPlay < now) employe.nextPlay = now;
     src.start(employe.nextPlay);
@@ -842,12 +1030,28 @@
     if (employe.processor) { employe.processor.disconnect(); employe.processor.onaudioprocess = null; employe.processor = null; }
     if (employe.source) { employe.source.disconnect(); employe.source = null; }
     if (employe.stream) { employe.stream.getTracks().forEach(function(t){ t.stop(); }); employe.stream = null; }
+    // Nettoyage du sink audio (routing speaker/BT)
+    if (employe.audioSink) {
+      try { employe.audioSink.pause(); employe.audioSink.srcObject = null; employe.audioSink.remove(); } catch(e){}
+      employe.audioSink = null;
+    }
+    employe.audioSinkDest = null;
+    employe.audioDevices = null;
+    // Reset natif si dispo, pour rendre la main à l'OS (mode normal, plus in-call)
+    try {
+      var ar = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AudioRouter;
+      if (ar && typeof ar.setMode === 'function') { ar.setMode({ mode: 'earpiece' }); }
+    } catch(e) {}
     if (employe.audioCtx) { try{ employe.audioCtx.close(); }catch(e){} employe.audioCtx = null; }
     if (employe.outCtx) { try{ employe.outCtx.close(); }catch(e){} employe.outCtx = null; }
     if (employe.ws) { try{ employe.ws.close(); }catch(e){} employe.ws = null; }
     employe.nextPlay = 0;
     employe.isPlaying = false;
     employe.isMuted = false;
+    // Reset UI speaker pour le prochain appel
+    employe.speakerMode = 'earpiece';
+    employe.nativeRouterOk = false;
+    updateSpeakerBtn();
   }
 
 })();
