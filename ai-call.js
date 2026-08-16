@@ -263,13 +263,15 @@
         '</div>' +
         '<div class="aic-modal-content">' +
           '<div class="aic-field">' +
-            '<label>ID de l\'employé</label>' +
-            '<input type="text" id="aicEmpId" placeholder="ex: 12 ou emp_ahmed_001" />' +
-            '<div class="aic-hint">ID employé tel que défini dans STAFF PRO (window.currentEmp.id chez l\'employé).</div>' +
+            '<label>Employé à appeler</label>' +
+            '<select id="aicEmpSelect" onchange="window._aicOnEmpChange()">' +
+              '<option value="">— Sélectionne un employé —</option>' +
+            '</select>' +
+            '<div class="aic-hint">Liste chargée depuis tes employés STAFF PRO. Employé connecté = ✅.</div>' +
           '</div>' +
-          '<div class="aic-field">' +
-            '<label>Nom (affiché à l\'écran)</label>' +
-            '<input type="text" id="aicEmpName" placeholder="ex: Ahmed Bensalem" />' +
+          '<div class="aic-field" style="display:none;">' +
+            '<input type="hidden" id="aicEmpId" />' +
+            '<input type="hidden" id="aicEmpName" />' +
           '</div>' +
           '<div class="aic-field">' +
             '<label>Motif / Contexte pour l\'IA</label>' +
@@ -315,6 +317,7 @@
     // Handlers globaux
     window._aicSaveConfig = adminSaveConfig;
     window._aicTriggerCall = adminTriggerCall;
+    window._aicOnEmpChange = adminOnEmpChange;
   }
 
   function openAdminModal() {
@@ -327,6 +330,52 @@
       }
       if (cfg.voice) document.getElementById('aicVoice').value = cfg.voice;
     }).catch(function(){});
+    // Remplir la liste des employés depuis STAFF PRO (localStorage wecan_employees)
+    populateEmpSelect();
+  }
+
+  function populateEmpSelect() {
+    var sel = document.getElementById('aicEmpSelect');
+    if (!sel) return;
+    var emps = [];
+    try {
+      var raw = localStorage.getItem('wecan_employees');
+      if (raw) {
+        var parsed = JSON.parse(raw);
+        emps = Array.isArray(parsed) ? parsed : Object.values(parsed || {});
+      }
+    } catch(e) {}
+    // Charger aussi les IDs actuellement connectés depuis Firebase pour badge ✅
+    firebase.database().ref(CALL_PATH).once('value').then(function(snap) {
+      var activeCalls = snap.val() || {};
+      sel.innerHTML = '<option value="">— Sélectionne un employé —</option>';
+      // Trier par prénom+nom
+      emps.sort(function(a, b) {
+        var na = ((a.prenom||'') + ' ' + (a.nom||'')).trim().toLowerCase();
+        var nb = ((b.prenom||'') + ' ' + (b.nom||'')).trim().toLowerCase();
+        return na.localeCompare(nb);
+      });
+      emps.forEach(function(e) {
+        if (!e || e.id === undefined || e.id === null) return;
+        var id = String(e.id);
+        var name = ((e.prenom||'') + ' ' + (e.nom||'')).trim() || ('Employé ' + id);
+        var poste = e.poste ? ' — ' + e.poste : '';
+        var opt = document.createElement('option');
+        opt.value = id;
+        opt.setAttribute('data-name', name);
+        opt.textContent = '#' + id + ' — ' + name + poste;
+        sel.appendChild(opt);
+      });
+    }).catch(function(e) {
+      console.warn('[ai-call] Firebase check failed:', e);
+    });
+  }
+
+  function adminOnEmpChange() {
+    var sel = document.getElementById('aicEmpSelect');
+    var opt = sel.options[sel.selectedIndex];
+    document.getElementById('aicEmpId').value = sel.value;
+    document.getElementById('aicEmpName').value = opt ? (opt.getAttribute('data-name') || '') : '';
   }
 
   function adminSaveConfig() {
@@ -444,6 +493,13 @@
   };
 
   function initEmploye() {
+    // Empêcher double init si le script est chargé plusieurs fois
+    if (window._aiCallEmployeInit) {
+      console.log('[ai-call] Mode EMPLOYE déjà initialisé, skip');
+      return;
+    }
+    window._aiCallEmployeInit = true;
+
     console.log('[ai-call] Mode EMPLOYE activé — attente identification');
     injectCSS();
     buildEmployeScreens();
