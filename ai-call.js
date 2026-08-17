@@ -21,6 +21,7 @@
   const OUTPUT_SR = 24000;
   const CALL_PATH = 'wecan/aiCalls';
   const CONFIG_PATH = 'wecan/aiConfig';
+  const TEMPLATES_PATH = 'wecan/aiTemplates';
   const CALL_TIMEOUT_MS = 30000;
 
   // ─── Attendre que Firebase soit prêt ──────────────────────────
@@ -243,19 +244,25 @@
   // ═════════════════════════════════════════════════════════════
   //  ADMIN MODE : bouton flottant + modal
   // ═════════════════════════════════════════════════════════════
+  // Cache config admin (rechargée à l'ouverture de la modale)
+  var _aicCfg = { enabled: null, geminiKey: '', voice: 'Algieba', globalContext: '' };
+  var _aicTemplates = [];
+
   function initAdmin() {
-    console.log('[ai-call] Mode ADMIN activé');
+    console.log('[ai-call] Mode ADMIN — attente config wecan/aiConfig.enabled');
     injectCSS();
 
-    // Bouton flottant
-    var fab = document.createElement('button');
-    fab.id = 'aiCallFab';
-    fab.title = 'Appel IA';
-    fab.innerHTML = '📞';
-    fab.onclick = openAdminModal;
-    document.body.appendChild(fab);
+    // Décide affichage du FAB à partir du flag Firebase (Paramètres → Appel IA)
+    firebase.database().ref(CONFIG_PATH).on('value', function(snap) {
+      var cfg = snap.val() || {};
+      _aicCfg.enabled       = cfg.enabled !== false; // activé par défaut
+      _aicCfg.geminiKey     = cfg.geminiKey || '';
+      _aicCfg.voice         = cfg.voice || 'Algieba';
+      _aicCfg.globalContext = cfg.globalContext || '';
+      applyAdminEnabled();
+    });
 
-    // Modal
+    // Modal (créée une fois, réutilisée) — les paramètres sont sur la page Paramètres
     var modal = document.createElement('div');
     modal.id = 'aiCallModal';
     modal.innerHTML =
@@ -270,71 +277,95 @@
             '<select id="aicEmpSelect" onchange="window._aicOnEmpChange()">' +
               '<option value="">— Sélectionne un employé —</option>' +
             '</select>' +
-            '<div class="aic-hint">Liste chargée depuis tes employés STAFF PRO. Employé connecté = ✅.</div>' +
+            '<div class="aic-hint">Liste chargée depuis tes employés STAFF PRO.</div>' +
           '</div>' +
           '<div class="aic-field" style="display:none;">' +
             '<input type="hidden" id="aicEmpId" />' +
             '<input type="hidden" id="aicEmpName" />' +
           '</div>' +
           '<div class="aic-field">' +
-            '<label>Motif / Contexte pour l\'IA</label>' +
-            '<textarea id="aicMotif">Tu appelles cet employé qui est en retard de 15 minutes ce matin. Demande-lui poliment mais fermement la raison de son retard. Sois compréhensif si c\'est justifié. Reste court : 2-3 échanges maximum.</textarea>' +
+            '<label>Template d\'appel</label>' +
+            '<select id="aicTplSelect" onchange="window._aicOnTplChange()">' +
+              '<option value="">— Aucun (motif libre) —</option>' +
+            '</select>' +
+            '<div class="aic-hint">Depuis Paramètres → Appel IA. Le contexte du template + la base globale sont envoyés à l\'IA.</div>' +
+          '</div>' +
+          '<div class="aic-field">' +
+            '<label>Motif / Contexte additionnel</label>' +
+            '<textarea id="aicMotif" placeholder="Ajoute une précision (ex : « retard de 22 min ce matin »). Facultatif si un template est choisi."></textarea>' +
           '</div>' +
           '<button class="aic-btn primary" id="aicCallBtn" onclick="window._aicTriggerCall()">📞 Déclencher l\'appel IA</button>' +
           '<div class="aic-status" id="aicStatus"></div>' +
-          '<div class="aic-settings-toggle" onclick="document.getElementById(\'aicSettings\').classList.toggle(\'open\')">' +
-            '⚙️ Paramètres (clé API + voix)' +
-          '</div>' +
-          '<div class="aic-settings" id="aicSettings">' +
-            '<div class="aic-field">' +
-              '<label>Clé API Google Gemini</label>' +
-              '<input type="password" id="aicKey" placeholder="AIza..." />' +
-              '<div class="aic-hint">Sauvegardée dans Firebase, utilisée par tous les employés.</div>' +
-            '</div>' +
-            '<div class="aic-field">' +
-              '<label>Voix de l\'assistant</label>' +
-              '<select id="aicVoice">' +
-                '<optgroup label="⭐ Recommandées">' +
-                  '<option value="Algieba" selected>Algieba — naturelle</option>' +
-                  '<option value="Despina">Despina — lisse jeune</option>' +
-                  '<option value="Sulafat">Sulafat — chaleureuse</option>' +
-                '</optgroup>' +
-                '<optgroup label="Fermes">' +
-                  '<option value="Alnilam">Alnilam — ferme</option>' +
-                  '<option value="Kore">Kore — ferme</option>' +
-                  '<option value="Gacrux">Gacrux — mature</option>' +
-                '</optgroup>' +
-                '<optgroup label="Douces">' +
-                  '<option value="Achernar">Achernar — douce</option>' +
-                  '<option value="Vindemiatrix">Vindemiatrix — douce</option>' +
-                  '<option value="Achird">Achird — amicale</option>' +
-                '</optgroup>' +
-              '</select>' +
-            '</div>' +
-            '<button class="aic-btn secondary" id="aicSaveBtn" onclick="window._aicSaveConfig()">💾 Sauvegarder</button>' +
+          '<div class="aic-settings-toggle" onclick="location.hash=\'\';document.querySelectorAll(\'.appro-tab\').forEach(function(b){if(b.textContent.indexOf(\'Appel IA\')!==-1)b.click();});document.getElementById(\'aiCallModal\').classList.remove(\'open\');">' +
+            '⚙️ Ouvrir Paramètres → Appel IA' +
           '</div>' +
         '</div>' +
       '</div>';
     document.body.appendChild(modal);
 
     // Handlers globaux
-    window._aicSaveConfig = adminSaveConfig;
     window._aicTriggerCall = adminTriggerCall;
     window._aicOnEmpChange = adminOnEmpChange;
+    window._aicOnTplChange = adminOnTplChange;
+    window._aicOpenModal   = openAdminModal;
+  }
+
+  function applyAdminEnabled() {
+    var fab = document.getElementById('aiCallFab');
+    if (_aicCfg.enabled === false) {
+      if (fab) fab.remove();
+      // Ne pas fermer la modale si l'admin l'a ouverte via Paramètres pour tester
+      return;
+    }
+    // Enabled : injecter le FAB si absent
+    if (!fab) {
+      var b = document.createElement('button');
+      b.id = 'aiCallFab';
+      b.title = 'Appel IA';
+      b.innerHTML = '📞';
+      b.onclick = openAdminModal;
+      document.body.appendChild(b);
+    }
   }
 
   function openAdminModal() {
     document.getElementById('aiCallModal').classList.add('open');
-    // Charger la config depuis Firebase pour préremplir
+    // Rafraîchir la config (au cas où l'admin vient de la modifier dans Paramètres)
     firebase.database().ref(CONFIG_PATH).once('value').then(function(snap) {
       var cfg = snap.val() || {};
-      if (cfg.geminiKey && !document.getElementById('aicKey').value) {
-        document.getElementById('aicKey').value = cfg.geminiKey;
-      }
-      if (cfg.voice) document.getElementById('aicVoice').value = cfg.voice;
+      _aicCfg.enabled       = cfg.enabled !== false;
+      _aicCfg.geminiKey     = cfg.geminiKey || '';
+      _aicCfg.voice         = cfg.voice || 'Algieba';
+      _aicCfg.globalContext = cfg.globalContext || '';
     }).catch(function(){});
-    // Remplir la liste des employés depuis STAFF PRO (localStorage wecan_employees)
     populateEmpSelect();
+    populateTemplateSelect();
+  }
+
+  function populateTemplateSelect() {
+    var sel = document.getElementById('aicTplSelect');
+    if (!sel) return;
+    firebase.database().ref(TEMPLATES_PATH).once('value').then(function(snap) {
+      var data = snap.val() || {};
+      _aicTemplates = Object.keys(data).map(function(k){ var t = data[k]||{}; t.id = k; return t; });
+      _aicTemplates.sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
+      sel.innerHTML = '<option value="">— Aucun (motif libre) —</option>';
+      _aicTemplates.forEach(function(t) {
+        var opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = (t.icon || '📞') + ' ' + (t.name || 'Sans nom');
+        sel.appendChild(opt);
+      });
+    }).catch(function(e){ console.warn('[ai-call] templates load failed:', e); });
+  }
+
+  function adminOnTplChange() {
+    var sel = document.getElementById('aicTplSelect');
+    var t = _aicTemplates.find(function(x){ return x.id === sel.value; });
+    var motifEl = document.getElementById('aicMotif');
+    if (t && motifEl && !motifEl.value.trim()) {
+      motifEl.value = t.motif || '';
+    }
   }
 
   function populateEmpSelect() {
@@ -381,43 +412,21 @@
     document.getElementById('aicEmpName').value = opt ? (opt.getAttribute('data-name') || '') : '';
   }
 
-  function adminSaveConfig() {
-    var key = document.getElementById('aicKey').value.trim();
-    var voice = document.getElementById('aicVoice').value;
-    if (!key) { toast('❌ Colle une clé API Gemini'); return; }
-
-    var btn = document.getElementById('aicSaveBtn');
-    btn.disabled = true;
-    btn.textContent = '⏳ Sauvegarde...';
-
-    firebase.database().ref(CONFIG_PATH).set({
-      geminiKey: key,
-      voice: voice,
-      updatedAt: firebase.database.ServerValue.TIMESTAMP
-    }).then(function() {
-      btn.textContent = '✅ Sauvegardé';
-      setTimeout(function() {
-        btn.textContent = '💾 Sauvegarder';
-        btn.disabled = false;
-      }, 2000);
-      toast('✅ Config sauvegardée pour tous les employés');
-    }).catch(function(e) {
-      toast('❌ ' + e.message);
-      btn.disabled = false;
-      btn.textContent = '💾 Sauvegarder';
-    });
-  }
-
   function adminTriggerCall() {
     var empId = document.getElementById('aicEmpId').value.trim();
     var empNom = document.getElementById('aicEmpName').value.trim() || 'Employé ' + empId;
     var motif = document.getElementById('aicMotif').value.trim();
-    var key = document.getElementById('aicKey').value.trim();
-    var voice = document.getElementById('aicVoice').value;
+    var tplId = document.getElementById('aicTplSelect').value;
+    var tpl = _aicTemplates.find(function(x){ return x.id === tplId; }) || null;
 
-    if (!empId) { toast('❌ Saisis un ID employé'); return; }
-    if (!motif) { toast('❌ Saisis un motif'); return; }
-    if (!key) { toast('❌ Configure d\'abord la clé Gemini (⚙️ Paramètres)'); return; }
+    var key   = _aicCfg.geminiKey;
+    var voice = _aicCfg.voice || 'Algieba';
+    var globalContext = _aicCfg.globalContext || '';
+    var tplContext = tpl ? (tpl.context || '') : '';
+
+    if (!empId) { toast('❌ Sélectionne un employé'); return; }
+    if (!motif && !tplContext) { toast('❌ Choisis un template ou saisis un motif'); return; }
+    if (!key) { toast('❌ Configure la clé Gemini dans Paramètres → Appel IA'); return; }
 
     var status = document.getElementById('aicStatus');
     var btn = document.getElementById('aicCallBtn');
@@ -429,6 +438,10 @@
       empId: empId,
       empNom: empNom,
       motif: motif,
+      templateId: tpl ? tpl.id : '',
+      templateName: tpl ? (tpl.name || '') : '',
+      templateContext: tplContext,
+      globalContext: globalContext,
       geminiKey: key,
       voice: voice,
       from: 'admin',
@@ -524,12 +537,25 @@
     injectCSS();
     buildEmployeScreens();
 
+    // Suivre le flag d'activation. Si désactivé → détacher le listener.
+    var moduleEnabled = true;
+    firebase.database().ref(CONFIG_PATH + '/enabled').on('value', function(snap) {
+      moduleEnabled = snap.val() !== false;
+      if (!moduleEnabled && employe.listenerRef) {
+        try { employe.listenerRef.off(); } catch(e){}
+        employe.listenerRef = null;
+        console.log('[ai-call] Module désactivé par admin — listener détaché');
+      } else if (moduleEnabled && employe.empId && !employe.listenerRef) {
+        startEmployeListener();
+      }
+    });
+
     // Attend que l'employé se connecte (peut prendre du temps si login)
     var tries = 0;
     var chk = setInterval(function() {
       tries++;
       var empId = getLoggedEmpId();
-      if (empId && empId !== employe.empId) {
+      if (empId && empId !== employe.empId && moduleEnabled) {
         employe.empId = empId;
         startEmployeListener();
         // APK Capacitor : démarre le listener natif (foreground service) pour
@@ -668,7 +694,7 @@
       employeHangup();
       return;
     }
-    startGemini(call.geminiKey, call.voice || 'Algieba', call.motif);
+    startGemini(call.geminiKey, call.voice || 'Algieba', call.motif, call.globalContext, call.templateContext, call.templateName);
   }
 
   function updateTimer() {
@@ -894,7 +920,7 @@
   }
 
   // ─── Gemini Live ─────────────────────────────────────────────
-  function startGemini(apiKey, voice, motifContext) {
+  function startGemini(apiKey, voice, motifContext, globalContext, templateContext, templateName) {
     navigator.mediaDevices.getUserMedia({
       audio: {
         channelCount: 1, sampleRate: INPUT_SR,
@@ -909,12 +935,20 @@
       employe.ws = new WebSocket(wsUrl);
 
       employe.ws.onopen = function() {
-        var systemPrompt =
-          "Tu es un assistant RH vocal de WeCan Services (livraison en Algérie). " +
-          "Tu appelles un employé au téléphone. Parle français, sois poli mais professionnel. " +
-          "Contexte de l'appel : " + motifContext + " " +
-          "Ouvre en te présentant : 'Bonjour, ici l'assistant RH de WeCan Services'. " +
-          "Puis pose ta question directement. Réponses très courtes (1-2 phrases max).";
+        // Prompt système = [base globale] + [contexte template] + [motif libre] + règles de conduite
+        var parts = [];
+        parts.push("Tu es un assistant RH vocal qui appelle un employé au téléphone. Parle français (avec un peu d'arabe algérien si l'employé bascule). Sois poli mais professionnel. Réponses très courtes (1-2 phrases max).");
+        if (globalContext && globalContext.trim()) {
+          parts.push("=== BASE DE DONNÉES GLOBALE (toujours vraie) ===\n" + globalContext.trim());
+        }
+        if (templateContext && templateContext.trim()) {
+          parts.push("=== TEMPLATE ACTIF" + (templateName ? " : " + templateName : "") + " ===\n" + templateContext.trim());
+        }
+        if (motifContext && motifContext.trim()) {
+          parts.push("=== PRÉCISION DE CET APPEL ===\n" + motifContext.trim());
+        }
+        parts.push("Ouvre en te présentant brièvement, puis pose ta question directement. Ne répète pas les instructions au téléphone.");
+        var systemPrompt = parts.join("\n\n");
 
         employe.ws.send(JSON.stringify({
           setup: {
