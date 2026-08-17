@@ -21,8 +21,21 @@
   const OUTPUT_SR = 24000;
   const CALL_PATH = 'wecan/aiCalls';
   const CONFIG_PATH = 'wecan/aiConfig';
-  const TEMPLATES_PATH = 'wecan/aiTemplates';
   const CALL_TIMEOUT_MS = 30000;
+  const DEFAULT_COUNTRY_CODE = '213';   // Algérie
+
+  // Normalise un numéro : enlève espaces / marks / caractères spéciaux, ajoute +213 si local
+  function normalizePhone(p) {
+    if (!p) return '';
+    p = String(p)
+      .replace(/[‎‏‪‫‬‭‮]/g, '')  // bidi marks
+      .replace(/\s+/g, '')
+      .replace(/[-().]/g, '');
+    if (p.indexOf('00') === 0) p = '+' + p.slice(2);
+    if (p.indexOf('0') === 0 && p.length === 10) p = '+' + DEFAULT_COUNTRY_CODE + p.slice(1);
+    if (p.indexOf('+') !== 0 && p.length >= 8 && p.length <= 14) p = '+' + p;
+    return p;
+  }
 
   // ─── Attendre que Firebase soit prêt ──────────────────────────
   function waitForFirebase(cb, retries) {
@@ -191,9 +204,6 @@
       }
       .aic-in-btn.hangup { background: #e74c3c; width: 68px; height: 68px; font-size: 26px; }
       .aic-in-btn.muted { background: white; color: #333; }
-      /* Bouton speaker : le mode 'earpiece' est l'état passif, les 2 autres sont visuellement actifs */
-      .aic-in-btn.speaker.speaker-speaker   { background: white; color: #333; }
-      .aic-in-btn.speaker.speaker-bluetooth { background: #3498db; color: white; }
 
       .aic-toast {
         position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
@@ -244,25 +254,19 @@
   // ═════════════════════════════════════════════════════════════
   //  ADMIN MODE : bouton flottant + modal
   // ═════════════════════════════════════════════════════════════
-  // Cache config admin (rechargée à l'ouverture de la modale)
-  var _aicCfg = { enabled: null, geminiKey: '', voice: 'Algieba', globalContext: '' };
-  var _aicTemplates = [];
-
   function initAdmin() {
-    console.log('[ai-call] Mode ADMIN — attente config wecan/aiConfig.enabled');
+    console.log('[ai-call] Mode ADMIN activé');
     injectCSS();
 
-    // Décide affichage du FAB à partir du flag Firebase (Paramètres → Appel IA)
-    firebase.database().ref(CONFIG_PATH).on('value', function(snap) {
-      var cfg = snap.val() || {};
-      _aicCfg.enabled       = cfg.enabled !== false; // activé par défaut
-      _aicCfg.geminiKey     = cfg.geminiKey || '';
-      _aicCfg.voice         = cfg.voice || 'Algieba';
-      _aicCfg.globalContext = cfg.globalContext || '';
-      applyAdminEnabled();
-    });
+    // Bouton flottant
+    var fab = document.createElement('button');
+    fab.id = 'aiCallFab';
+    fab.title = 'Appel IA';
+    fab.innerHTML = '📞';
+    fab.onclick = openAdminModal;
+    document.body.appendChild(fab);
 
-    // Modal (créée une fois, réutilisée) — les paramètres sont sur la page Paramètres
+    // Modal
     var modal = document.createElement('div');
     modal.id = 'aiCallModal';
     modal.innerHTML =
@@ -279,93 +283,109 @@
             '</select>' +
             '<div class="aic-hint">Liste chargée depuis tes employés STAFF PRO.</div>' +
           '</div>' +
+          '<div class="aic-field">' +
+            '<label>Numéro à composer <span id="aicPhoneMode" style="font-size:10px; color:#888;"></span></label>' +
+            '<input type="text" id="aicEmpPhone" placeholder="+213 770 12 34 56" />' +
+            '<div class="aic-hint">Auto-rempli depuis l\'employé. Modifie si besoin. Le mode GSM utilisera ce numéro.</div>' +
+          '</div>' +
           '<div class="aic-field" style="display:none;">' +
             '<input type="hidden" id="aicEmpId" />' +
             '<input type="hidden" id="aicEmpName" />' +
           '</div>' +
           '<div class="aic-field">' +
-            '<label>Template d\'appel</label>' +
-            '<select id="aicTplSelect" onchange="window._aicOnTplChange()">' +
-              '<option value="">— Aucun (motif libre) —</option>' +
-            '</select>' +
-            '<div class="aic-hint">Depuis Paramètres → Appel IA. Le contexte du template + la base globale sont envoyés à l\'IA.</div>' +
-          '</div>' +
-          '<div class="aic-field">' +
-            '<label>Motif / Contexte additionnel</label>' +
-            '<textarea id="aicMotif" placeholder="Ajoute une précision (ex : « retard de 22 min ce matin »). Facultatif si un template est choisi."></textarea>' +
+            '<label>Motif / Contexte pour l\'IA</label>' +
+            '<textarea id="aicMotif">Tu appelles cet employé qui est en retard de 15 minutes ce matin. Demande-lui poliment mais fermement la raison de son retard. Sois compréhensif si c\'est justifié. Reste court : 2-3 échanges maximum.</textarea>' +
           '</div>' +
           '<button class="aic-btn primary" id="aicCallBtn" onclick="window._aicTriggerCall()">📞 Déclencher l\'appel IA</button>' +
           '<div class="aic-status" id="aicStatus"></div>' +
-          '<div class="aic-settings-toggle" onclick="location.hash=\'\';document.querySelectorAll(\'.appro-tab\').forEach(function(b){if(b.textContent.indexOf(\'Appel IA\')!==-1)b.click();});document.getElementById(\'aiCallModal\').classList.remove(\'open\');">' +
-            '⚙️ Ouvrir Paramètres → Appel IA' +
+          '<div class="aic-settings-toggle" onclick="document.getElementById(\'aicSettings\').classList.toggle(\'open\')">' +
+            '⚙️ Paramètres (clé API + voix)' +
+          '</div>' +
+          '<div class="aic-settings" id="aicSettings">' +
+            '<div class="aic-field">' +
+              '<label>Mode d\'appel</label>' +
+              '<select id="aicMode" onchange="window._aicOnModeChange()">' +
+                '<option value="inapp" selected>📱 In-app (sonnerie dans l\'app STAFF PRO)</option>' +
+                '<option value="gsm">☎️ GSM (webhook vers Call App + modem GSM)</option>' +
+              '</select>' +
+              '<div class="aic-hint">GSM = vrai appel téléphonique sur le numéro de l\'employé.</div>' +
+            '</div>' +
+            '<div class="aic-field aic-gsm-only" style="display:none;">' +
+              '<label>URL du tunnel Call App (base, sans /dial)</label>' +
+              '<input type="url" id="aicWebhookUrl" placeholder="https://xxx.trycloudflare.com" />' +
+              '<div class="aic-hint">URL Cloudflare/ngrok qui route vers <code>localhost:8767</code>. Le module ajoute automatiquement <code>/dial?number=…</code>.</div>' +
+            '</div>' +
+            '<div class="aic-field aic-gsm-only" style="display:none;">' +
+              '<label>Bearer token (optionnel, si tunnel protégé)</label>' +
+              '<input type="password" id="aicWebhookToken" placeholder="laisser vide si pas d\'auth" />' +
+              '<div class="aic-hint">Envoyé en header <code>Authorization: Bearer &lt;token&gt;</code> si rempli.</div>' +
+            '</div>' +
+            '<div class="aic-field">' +
+              '<label>Clé API Google Gemini</label>' +
+              '<input type="password" id="aicKey" placeholder="AIza..." />' +
+              '<div class="aic-hint">Sauvegardée dans Firebase, envoyée à la Call App pour chaque appel.</div>' +
+            '</div>' +
+            '<div class="aic-field">' +
+              '<label>Voix de l\'assistant</label>' +
+              '<select id="aicVoice">' +
+                '<optgroup label="⭐ Recommandées">' +
+                  '<option value="Algieba" selected>Algieba — naturelle</option>' +
+                  '<option value="Despina">Despina — lisse jeune</option>' +
+                  '<option value="Sulafat">Sulafat — chaleureuse</option>' +
+                '</optgroup>' +
+                '<optgroup label="Fermes">' +
+                  '<option value="Alnilam">Alnilam — ferme</option>' +
+                  '<option value="Kore">Kore — ferme</option>' +
+                  '<option value="Gacrux">Gacrux — mature</option>' +
+                '</optgroup>' +
+                '<optgroup label="Douces">' +
+                  '<option value="Achernar">Achernar — douce</option>' +
+                  '<option value="Vindemiatrix">Vindemiatrix — douce</option>' +
+                  '<option value="Achird">Achird — amicale</option>' +
+                '</optgroup>' +
+              '</select>' +
+            '</div>' +
+            '<button class="aic-btn secondary" id="aicSaveBtn" onclick="window._aicSaveConfig()">💾 Sauvegarder</button>' +
           '</div>' +
         '</div>' +
       '</div>';
     document.body.appendChild(modal);
 
     // Handlers globaux
+    window._aicSaveConfig = adminSaveConfig;
     window._aicTriggerCall = adminTriggerCall;
     window._aicOnEmpChange = adminOnEmpChange;
-    window._aicOnTplChange = adminOnTplChange;
-    window._aicOpenModal   = openAdminModal;
+    window._aicOnModeChange = adminOnModeChange;
   }
 
-  function applyAdminEnabled() {
-    var fab = document.getElementById('aiCallFab');
-    if (_aicCfg.enabled === false) {
-      if (fab) fab.remove();
-      // Ne pas fermer la modale si l'admin l'a ouverte via Paramètres pour tester
-      return;
-    }
-    // Enabled : injecter le FAB si absent
-    if (!fab) {
-      var b = document.createElement('button');
-      b.id = 'aiCallFab';
-      b.title = 'Appel IA';
-      b.innerHTML = '📞';
-      b.onclick = openAdminModal;
-      document.body.appendChild(b);
-    }
+  function adminOnModeChange() {
+    var mode = document.getElementById('aicMode').value;
+    var isGsm = (mode === 'gsm');
+    document.querySelectorAll('.aic-gsm-only').forEach(function(el) {
+      el.style.display = isGsm ? '' : 'none';
+    });
+    var btn = document.getElementById('aicCallBtn');
+    if (btn) btn.textContent = isGsm ? '☎️ Appeler via GSM (webhook)' : '📞 Déclencher l\'appel IA';
+    var phoneMode = document.getElementById('aicPhoneMode');
+    if (phoneMode) phoneMode.textContent = isGsm ? '(utilisé par le modem GSM)' : '(non utilisé en mode in-app)';
   }
 
   function openAdminModal() {
     document.getElementById('aiCallModal').classList.add('open');
-    // Rafraîchir la config (au cas où l'admin vient de la modifier dans Paramètres)
+    // Charger la config depuis Firebase pour préremplir
     firebase.database().ref(CONFIG_PATH).once('value').then(function(snap) {
       var cfg = snap.val() || {};
-      _aicCfg.enabled       = cfg.enabled !== false;
-      _aicCfg.geminiKey     = cfg.geminiKey || '';
-      _aicCfg.voice         = cfg.voice || 'Algieba';
-      _aicCfg.globalContext = cfg.globalContext || '';
+      if (cfg.geminiKey && !document.getElementById('aicKey').value) {
+        document.getElementById('aicKey').value = cfg.geminiKey;
+      }
+      if (cfg.voice) document.getElementById('aicVoice').value = cfg.voice;
+      if (cfg.mode) document.getElementById('aicMode').value = cfg.mode;
+      if (cfg.webhookUrl) document.getElementById('aicWebhookUrl').value = cfg.webhookUrl;
+      if (cfg.webhookToken) document.getElementById('aicWebhookToken').value = cfg.webhookToken;
+      adminOnModeChange();  // Applique l'affichage selon le mode
     }).catch(function(){});
+    // Remplir la liste des employés depuis STAFF PRO (localStorage wecan_employees)
     populateEmpSelect();
-    populateTemplateSelect();
-  }
-
-  function populateTemplateSelect() {
-    var sel = document.getElementById('aicTplSelect');
-    if (!sel) return;
-    firebase.database().ref(TEMPLATES_PATH).once('value').then(function(snap) {
-      var data = snap.val() || {};
-      _aicTemplates = Object.keys(data).map(function(k){ var t = data[k]||{}; t.id = k; return t; });
-      _aicTemplates.sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
-      sel.innerHTML = '<option value="">— Aucun (motif libre) —</option>';
-      _aicTemplates.forEach(function(t) {
-        var opt = document.createElement('option');
-        opt.value = t.id;
-        opt.textContent = (t.icon || '📞') + ' ' + (t.name || 'Sans nom');
-        sel.appendChild(opt);
-      });
-    }).catch(function(e){ console.warn('[ai-call] templates load failed:', e); });
-  }
-
-  function adminOnTplChange() {
-    var sel = document.getElementById('aicTplSelect');
-    var t = _aicTemplates.find(function(x){ return x.id === sel.value; });
-    var motifEl = document.getElementById('aicMotif');
-    if (t && motifEl && !motifEl.value.trim()) {
-      motifEl.value = t.motif || '';
-    }
   }
 
   function populateEmpSelect() {
@@ -394,10 +414,12 @@
         var id = String(e.id);
         var name = ((e.prenom||'') + ' ' + (e.nom||'')).trim() || ('Employé ' + id);
         var poste = e.poste ? ' — ' + e.poste : '';
+        var phone = normalizePhone(e.tel || e.telephone || e.phone || '');
         var opt = document.createElement('option');
         opt.value = id;
         opt.setAttribute('data-name', name);
-        opt.textContent = '#' + id + ' — ' + name + poste;
+        opt.setAttribute('data-phone', phone);
+        opt.textContent = '#' + id + ' — ' + name + poste + (phone ? ' 📞' : '');
         sel.appendChild(opt);
       });
     }).catch(function(e) {
@@ -410,24 +432,70 @@
     var opt = sel.options[sel.selectedIndex];
     document.getElementById('aicEmpId').value = sel.value;
     document.getElementById('aicEmpName').value = opt ? (opt.getAttribute('data-name') || '') : '';
+    var phone = opt ? (opt.getAttribute('data-phone') || '') : '';
+    document.getElementById('aicEmpPhone').value = phone;
+  }
+
+  function adminSaveConfig() {
+    var key = document.getElementById('aicKey').value.trim();
+    var voice = document.getElementById('aicVoice').value;
+    var mode = document.getElementById('aicMode').value;
+    var webhookUrl = document.getElementById('aicWebhookUrl').value.trim();
+    var webhookToken = document.getElementById('aicWebhookToken').value.trim();
+
+    if (!key) { toast('❌ Colle une clé API Gemini'); return; }
+    if (mode === 'gsm' && !webhookUrl) { toast('❌ URL webhook requise en mode GSM'); return; }
+
+    var btn = document.getElementById('aicSaveBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Sauvegarde...';
+
+    firebase.database().ref(CONFIG_PATH).set({
+      geminiKey: key,
+      voice: voice,
+      mode: mode,
+      webhookUrl: webhookUrl,
+      webhookToken: webhookToken,
+      updatedAt: firebase.database.ServerValue.TIMESTAMP
+    }).then(function() {
+      btn.textContent = '✅ Sauvegardé';
+      setTimeout(function() {
+        btn.textContent = '💾 Sauvegarder';
+        btn.disabled = false;
+      }, 2000);
+      toast('✅ Config sauvegardée (mode ' + mode + ')');
+    }).catch(function(e) {
+      toast('❌ ' + e.message);
+      btn.disabled = false;
+      btn.textContent = '💾 Sauvegarder';
+    });
   }
 
   function adminTriggerCall() {
     var empId = document.getElementById('aicEmpId').value.trim();
     var empNom = document.getElementById('aicEmpName').value.trim() || 'Employé ' + empId;
+    var empPhone = normalizePhone(document.getElementById('aicEmpPhone').value.trim());
     var motif = document.getElementById('aicMotif').value.trim();
-    var tplId = document.getElementById('aicTplSelect').value;
-    var tpl = _aicTemplates.find(function(x){ return x.id === tplId; }) || null;
-
-    var key   = _aicCfg.geminiKey;
-    var voice = _aicCfg.voice || 'Algieba';
-    var globalContext = _aicCfg.globalContext || '';
-    var tplContext = tpl ? (tpl.context || '') : '';
+    var key = document.getElementById('aicKey').value.trim();
+    var voice = document.getElementById('aicVoice').value;
+    var mode = document.getElementById('aicMode').value;
+    var webhookUrl = document.getElementById('aicWebhookUrl').value.trim();
+    var webhookToken = document.getElementById('aicWebhookToken').value.trim();
 
     if (!empId) { toast('❌ Sélectionne un employé'); return; }
-    if (!motif && !tplContext) { toast('❌ Choisis un template ou saisis un motif'); return; }
-    if (!key) { toast('❌ Configure la clé Gemini dans Paramètres → Appel IA'); return; }
+    if (!motif) { toast('❌ Saisis un motif'); return; }
+    if (!key) { toast('❌ Configure d\'abord la clé Gemini (⚙️ Paramètres)'); return; }
 
+    if (mode === 'gsm') {
+      if (!webhookUrl) { toast('❌ URL webhook non configurée (⚙️ Paramètres)'); return; }
+      if (!empPhone) { toast('❌ Numéro de téléphone requis en mode GSM'); return; }
+      triggerGsmCall(empId, empNom, empPhone, motif, key, voice, webhookUrl, webhookToken);
+    } else {
+      triggerInAppCall(empId, empNom, motif, key, voice);
+    }
+  }
+
+  function triggerInAppCall(empId, empNom, motif, key, voice) {
     var status = document.getElementById('aicStatus');
     var btn = document.getElementById('aicCallBtn');
     btn.disabled = true;
@@ -438,10 +506,6 @@
       empId: empId,
       empNom: empNom,
       motif: motif,
-      templateId: tpl ? tpl.id : '',
-      templateName: tpl ? (tpl.name || '') : '',
-      templateContext: tplContext,
-      globalContext: globalContext,
       geminiKey: key,
       voice: voice,
       from: 'admin',
@@ -451,7 +515,7 @@
 
     firebase.database().ref(CALL_PATH + '/' + empId).set(call).then(function() {
       status.className = 'aic-status on ringing';
-      status.innerHTML = '📞 Sonnerie en cours vers ' + empNom + '...';
+      status.innerHTML = '📞 Sonnerie in-app vers ' + empNom + '...';
       btn.textContent = '🔄 Nouvel appel';
       btn.disabled = false;
 
@@ -483,6 +547,85 @@
     });
   }
 
+  function triggerGsmCall(empId, empNom, empPhone, motif, key, voice, webhookUrl, webhookToken) {
+    var status = document.getElementById('aicStatus');
+    var btn = document.getElementById('aicCallBtn');
+    btn.disabled = true;
+    btn.textContent = '⏳ Envoi au tunnel...';
+
+    var callId = Math.random().toString(36).slice(2, 10);
+
+    // Nettoie l'URL : enlève trailing slash + /dial si l'user l'a inclus
+    var baseUrl = webhookUrl.replace(/\/+$/, '').replace(/\/dial$/, '');
+    var dialUrl = baseUrl + '/dial?number=' + encodeURIComponent(empPhone);
+
+    // Log dans Firebase pour l'historique + status updates
+    firebase.database().ref(CALL_PATH + '/' + empId).set({
+      status: 'dispatching',
+      empId: empId,
+      empNom: empNom,
+      empPhone: empPhone,
+      motif: motif,
+      voice: voice,
+      mode: 'gsm',
+      from: 'admin',
+      ts: firebase.database.ServerValue.TIMESTAMP,
+      id: callId
+    }).catch(function(){});
+
+    var headers = {};
+    if (webhookToken) headers['Authorization'] = 'Bearer ' + webhookToken;
+
+    fetch(dialUrl, { method: 'GET', headers: headers, mode: 'cors' })
+      .then(function(res) {
+        if (!res.ok && res.status !== 0) throw new Error('HTTP ' + res.status + ' ' + res.statusText);
+        return res.text().then(function(t) { try { return JSON.parse(t); } catch(e) { return { raw: t.slice(0,120) }; } });
+      })
+      .then(function(data) {
+      status.className = 'aic-status on ringing';
+      status.innerHTML = '☎️ <b>Ordre envoyé à la Call App</b><br>' +
+                        'Dial vers ' + empPhone + ' (' + empNom + ')<br>' +
+                        '<span style="font-size:10px;">Réponse: ' + (data.status || data.raw || 'OK') + '</span>';
+      btn.textContent = '🔄 Nouvel appel';
+      btn.disabled = false;
+      firebase.database().ref(CALL_PATH + '/' + empId + '/status').set('ringing').catch(function(){});
+
+      // Listener pour les updates de statut (la Call App écrira dans Firebase)
+      var ref = firebase.database().ref(CALL_PATH + '/' + empId);
+      var handler = ref.on('value', function(snap) {
+        var c = snap.val();
+        if (!c || c.id !== callId) return;
+        if (c.status === 'accepted') {
+          status.className = 'aic-status on accepted';
+          status.innerHTML = '✅ Décroché — Gemini parle avec ' + empNom;
+        } else if (c.status === 'completed') {
+          status.className = 'aic-status on completed';
+          status.innerHTML = '☎️ Terminé (' + (c.duration || '?') + 's)';
+          ref.off('value', handler);
+        } else if (c.status === 'no_answer' || c.status === 'missed') {
+          status.className = 'aic-status on rejected';
+          status.innerHTML = '📵 Pas de réponse';
+          ref.off('value', handler);
+        } else if (c.status === 'busy') {
+          status.className = 'aic-status on rejected';
+          status.innerHTML = '📵 Ligne occupée';
+          ref.off('value', handler);
+        } else if (c.status === 'failed') {
+          status.className = 'aic-status on rejected';
+          status.innerHTML = '❌ Échec appel: ' + (c.error || 'raison inconnue');
+          ref.off('value', handler);
+        }
+      });
+    }).catch(function(e) {
+      status.className = 'aic-status on rejected';
+      status.innerHTML = '❌ Tunnel/Call App a échoué : ' + e.message + '<br>' +
+                        '<span style="font-size:10px;">Vérifie : Call App tourne, cloudflared/ngrok actif, URL correcte.</span>';
+      btn.disabled = false;
+      btn.textContent = '☎️ Appeler via GSM (webhook)';
+      firebase.database().ref(CALL_PATH + '/' + empId + '/status').set('failed').catch(function(){});
+    });
+  }
+
   // ═════════════════════════════════════════════════════════════
   //  EMPLOYE MODE : listener + UI d'appel entrant + Gemini Live
   // ═════════════════════════════════════════════════════════════
@@ -505,24 +648,7 @@
     vibrateTimer: null,
     startTs: null,
     timerInt: null,
-    autoMissTimeout: null,
-    // ─── Speaker / audio-routing state ────────────────────────
-    // 'earpiece' (défaut, écouteur d'oreille) | 'speaker' (haut-parleur mains libres) | 'bluetooth'
-    speakerMode: 'earpiece',
-    sinkAvailable: false,       // setSinkId supporté par ce navigateur ?
-    audioSink: null,            // HTMLAudioElement caché pour setSinkId
-    audioSinkDest: null,        // MediaStreamAudioDestinationNode connecté à l'élément
-    audioDevices: null,         // { earpiece: id|null, speaker: id|null, bluetooth: id|null }
-    nativeRouterOk: false       // plugin natif Capacitor AudioRouter détecté ?
-  };
-
-  // Cycle des modes speaker (order = cycle du bouton)
-  var SPEAKER_MODES = ['earpiece', 'speaker', 'bluetooth'];
-  var SPEAKER_ICONS = { earpiece: '🎧', speaker: '🔊', bluetooth: '🔵' };
-  var SPEAKER_LABELS = {
-    earpiece:  '🎧 Écouteur',
-    speaker:   '🔊 Haut-parleur',
-    bluetooth: '🔵 Bluetooth'
+    autoMissTimeout: null
   };
 
   function initEmploye() {
@@ -537,33 +663,14 @@
     injectCSS();
     buildEmployeScreens();
 
-    // Suivre le flag d'activation. Si désactivé → détacher le listener.
-    var moduleEnabled = true;
-    firebase.database().ref(CONFIG_PATH + '/enabled').on('value', function(snap) {
-      moduleEnabled = snap.val() !== false;
-      if (!moduleEnabled && employe.listenerRef) {
-        try { employe.listenerRef.off(); } catch(e){}
-        employe.listenerRef = null;
-        console.log('[ai-call] Module désactivé par admin — listener détaché');
-      } else if (moduleEnabled && employe.empId && !employe.listenerRef) {
-        startEmployeListener();
-      }
-    });
-
     // Attend que l'employé se connecte (peut prendre du temps si login)
     var tries = 0;
     var chk = setInterval(function() {
       tries++;
       var empId = getLoggedEmpId();
-      if (empId && empId !== employe.empId && moduleEnabled) {
+      if (empId && empId !== employe.empId) {
         employe.empId = empId;
         startEmployeListener();
-        // APK Capacitor : démarre le listener natif (foreground service) pour
-        // recevoir les appels IA même téléphone verrouillé. No-op côté web.
-        try {
-          var ics = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.IncomingCallService;
-          if (ics && ics.startListening) ics.startListening({ empId: String(empId) });
-        } catch (e) { /* silent */ }
       }
       // Ré-attache si l'employé change (re-login)
       if (tries > 600) clearInterval(chk);   // stop après 10 min
@@ -574,7 +681,6 @@
     window._aicReject = employeReject;
     window._aicHangup = employeHangup;
     window._aicToggleMute = employeToggleMute;
-    window._aicToggleSpeaker = employeToggleSpeaker;
   }
 
   function getLoggedEmpId() {
@@ -625,7 +731,7 @@
       '<div class="aic-in-actions">' +
         '<button class="aic-in-btn" id="aicMuteBtn" onclick="window._aicToggleMute()">🎤</button>' +
         '<button class="aic-in-btn hangup" onclick="window._aicHangup()">📵</button>' +
-        '<button class="aic-in-btn speaker speaker-earpiece" id="aicSpeakerBtn" onclick="window._aicToggleSpeaker()" title="Basculer écouteur / haut-parleur / bluetooth">🎧</button>' +
+        '<button class="aic-in-btn" style="opacity:0.3;">🔊</button>' +
       '</div>';
     document.body.appendChild(inCall);
   }
@@ -694,7 +800,7 @@
       employeHangup();
       return;
     }
-    startGemini(call.geminiKey, call.voice || 'Algieba', call.motif, call.globalContext, call.templateContext, call.templateName);
+    startGemini(call.geminiKey, call.voice || 'Algieba', call.motif);
   }
 
   function updateTimer() {
@@ -730,178 +836,27 @@
     toast(employe.isMuted ? '🔇 Micro coupé' : '🎤 Micro activé', 1500);
   }
 
-  // ─── Speaker routing (écouteur / haut-parleur / bluetooth) ───
-  //
-  // Stratégie hybride (voir doc en bas du fichier) :
-  //  1. Si plugin natif Capacitor AudioRouter dispo → délègue à Android AudioManager
-  //     (setMode(MODE_IN_COMMUNICATION) + setSpeakerphoneOn / startBluetoothSco).
-  //     C'est la seule vraie solution "façon WhatsApp" sur téléphone Android.
-  //  2. Sinon (navigateur desktop, ou APK sans plugin) → tente setSinkId sur un
-  //     <audio> caché branché à un MediaStreamAudioDestinationNode. Marche sur
-  //     Chrome desktop récent, no-op silencieux ailleurs.
-  //  3. Dans tous les cas le bouton cycle correctement (icône, toast, état visuel)
-  //     pour que l'UX reste cohérente en attendant le plugin natif.
-  //
-  // TODO_NATIVE : créer un plugin Capacitor `AudioRouter` avec :
-  //   - setMode({ mode: 'earpiece'|'speaker'|'bluetooth' }) → AudioManager
-  //   - getAvailableDevices() → liste réelle (permet d'afficher "🔵 Bluetooth" grisé si absent)
-  //   - isBluetoothConnected() → boolean
-  //   Enregistrer via registerPlugin(AudioRouterPlugin.class) dans MainActivity.
-  //   Permissions à ajouter : MODIFY_AUDIO_SETTINGS + BLUETOOTH_CONNECT.
-
-  function setupAudioSink() {
-    // Crée le pipeline MediaStreamDestination -> <audio> (une seule fois par appel).
-    // Retourne le AudioNode où connecter les buffers TTS, ou null si non dispo.
-    if (employe.audioSinkDest) return employe.audioSinkDest;
-    if (!employe.outCtx) return null;
-    try {
-      var dest = employe.outCtx.createMediaStreamDestination();
-      var audio = document.createElement('audio');
-      audio.autoplay = true;
-      audio.playsInline = true;
-      audio.setAttribute('playsinline', '');
-      audio.style.display = 'none';
-      audio.srcObject = dest.stream;
-      document.body.appendChild(audio);
-      var p = audio.play();
-      if (p && typeof p.catch === 'function') p.catch(function(){});
-      employe.audioSink = audio;
-      employe.audioSinkDest = dest;
-      employe.sinkAvailable = typeof audio.setSinkId === 'function';
-      return dest;
-    } catch (e) {
-      console.warn('[ai-call] setupAudioSink failed:', e);
-      return null;
-    }
-  }
-
-  function enumerateOutputDevices() {
-    // Récupère la map earpiece/speaker/bluetooth depuis enumerateDevices().
-    // ATTENTION : sur Android WebView, cette API renvoie souvent une liste vide
-    // ou sans labels (permissions), d'où le fallback natif recommandé.
-    if (employe.audioDevices) return Promise.resolve(employe.audioDevices);
-    if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
-      employe.audioDevices = { earpiece: null, speaker: null, bluetooth: null };
-      return Promise.resolve(employe.audioDevices);
-    }
-    return navigator.mediaDevices.enumerateDevices().then(function(list) {
-      var outs = list.filter(function(d) { return d.kind === 'audiooutput'; });
-      var map = { earpiece: null, speaker: null, bluetooth: null };
-      outs.forEach(function(d) {
-        var l = (d.label || '').toLowerCase();
-        if (l.indexOf('bluetooth') !== -1 || l.indexOf('bt ') !== -1 || l.indexOf('a2dp') !== -1 || l.indexOf('sco') !== -1) {
-          if (!map.bluetooth) map.bluetooth = d.deviceId;
-        } else if (l.indexOf('earpiece') !== -1 || l.indexOf('receiver') !== -1 || l.indexOf('handset') !== -1) {
-          if (!map.earpiece) map.earpiece = d.deviceId;
-        } else if (l.indexOf('speaker') !== -1 || l.indexOf('haut-parleur') !== -1) {
-          if (!map.speaker) map.speaker = d.deviceId;
-        } else {
-          // device sans label utile → prend le premier comme fallback speaker
-          if (!map.speaker) map.speaker = d.deviceId;
-        }
-      });
-      employe.audioDevices = map;
-      return map;
-    }).catch(function() {
-      employe.audioDevices = { earpiece: null, speaker: null, bluetooth: null };
-      return employe.audioDevices;
-    });
-  }
-
-  function applyWebSink(mode) {
-    // Tente setSinkId sur l'élément audio caché. Marche sur Chrome desktop récent.
-    // Sur Android WebView : silencieux (setSinkId absent) → le mode change visuellement
-    // mais le routing réel reste dépendant du plugin natif.
-    if (!employe.audioSink) setupAudioSink();
-    if (!employe.audioSink || typeof employe.audioSink.setSinkId !== 'function') {
-      return Promise.resolve(false);
-    }
-    return enumerateOutputDevices().then(function(map) {
-      var deviceId = map[mode];
-      // Mode earpiece = default output (vide "") pour laisser l'OS décider
-      if (mode === 'earpiece') deviceId = '';
-      // Si bluetooth demandé mais aucun device détecté → refuse (le caller gère le toast)
-      if (mode === 'bluetooth' && !deviceId) return false;
-      return employe.audioSink.setSinkId(deviceId || '').then(function() { return true; }).catch(function(e) {
-        console.warn('[ai-call] setSinkId(' + mode + ') failed:', e);
-        return false;
-      });
-    });
-  }
-
-  function tryNativeRouter(mode) {
-    // Approche B (native plugin) — pas encore livrée. Voir TODO_NATIVE ci-dessus.
-    try {
-      var ar = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AudioRouter;
-      if (ar && typeof ar.setMode === 'function') {
-        return Promise.resolve(ar.setMode({ mode: mode })).then(function() {
-          employe.nativeRouterOk = true;
-          return true;
-        }).catch(function(e) {
-          console.warn('[ai-call] native AudioRouter.setMode failed:', e);
-          return false;
-        });
-      }
-    } catch (e) { /* silent */ }
-    return Promise.resolve(false);
-  }
-
-  function updateSpeakerBtn() {
-    var btn = document.getElementById('aicSpeakerBtn');
-    if (!btn) return;
-    btn.textContent = SPEAKER_ICONS[employe.speakerMode] || '🔊';
-    btn.classList.remove('speaker-earpiece', 'speaker-speaker', 'speaker-bluetooth');
-    btn.classList.add('speaker-' + employe.speakerMode);
-    btn.style.opacity = '1';
-  }
-
-  function employeToggleSpeaker() {
-    // Cycle : earpiece → speaker → bluetooth → earpiece
-    var idx = SPEAKER_MODES.indexOf(employe.speakerMode || 'earpiece');
-    var nextMode = SPEAKER_MODES[(idx + 1) % SPEAKER_MODES.length];
-
-    // 1) Essaie le plugin natif d'abord (vrai routing OS)
-    tryNativeRouter(nextMode).then(function(nativeOk) {
-      if (nativeOk) {
-        employe.speakerMode = nextMode;
-        updateSpeakerBtn();
-        toast(SPEAKER_LABELS[nextMode] + ' activé (natif)', 1500);
-        return;
-      }
-      // 2) Fallback web setSinkId (Chrome desktop)
-      return applyWebSink(nextMode).then(function(webOk) {
-        if (nextMode === 'bluetooth' && !webOk && !employe.nativeRouterOk) {
-          // Aucun device BT détecté ET pas de plugin natif → skip vers earpiece
-          toast('🔵 Bluetooth indisponible', 1500);
-          employe.speakerMode = 'earpiece';
-          updateSpeakerBtn();
-          // reroute vers earpiece proprement
-          applyWebSink('earpiece');
-          return;
-        }
-        employe.speakerMode = nextMode;
-        updateSpeakerBtn();
-        // Sur APK sans plugin natif : le bouton cycle mais le son ne bouge pas.
-        // On informe l'utilisateur pour éviter la confusion.
-        var suffix = (webOk || employe.sinkAvailable) ? '' : ' (visuel — routing natif requis)';
-        toast(SPEAKER_LABELS[nextMode] + ' activé' + suffix, 1500);
-      });
-    });
-  }
-
   // ─── Sonnerie ────────────────────────────────────────────────
-  // Fichier MP3 loopable (10s, mono 96kbps ~118KB) servi à la racine
-  // du site (poussé par push_github.command). GRIFFA 3ASSIMIA - USMA.
-  var RING_SRC = 'ringtone.mp3';
   function startRing() {
     try {
-      var a = new Audio(RING_SRC);
-      a.loop = true;
-      a.volume = 0.7;
-      a.preload = 'auto';
-      employe.ringAudio = a;
-      var p = a.play();
-      if (p && typeof p.catch === 'function') p.catch(function(){});
+      var ctx = new (window.AudioContext || window.webkitAudioContext)();
+      employe.ringCtx = ctx;
+      function playBeep() {
+        [800, 1000].forEach(function(freq, i) {
+          var osc = ctx.createOscillator();
+          var g = ctx.createGain();
+          osc.frequency.value = freq;
+          var t0 = ctx.currentTime + i * 0.5;
+          g.gain.setValueAtTime(0, t0);
+          g.gain.linearRampToValueAtTime(0.3, t0 + 0.05);
+          g.gain.linearRampToValueAtTime(0, t0 + 0.4);
+          osc.connect(g).connect(ctx.destination);
+          osc.start(t0);
+          osc.stop(t0 + 0.4);
+        });
+      }
+      playBeep();
+      employe.ringTimer = setInterval(playBeep, 1500);
     } catch (e) {}
     if (navigator.vibrate) {
       try {
@@ -911,16 +866,14 @@
     }
   }
   function stopRing() {
-    if (employe.ringAudio) {
-      try { employe.ringAudio.pause(); employe.ringAudio.currentTime = 0; } catch(e){}
-      employe.ringAudio = null;
-    }
+    if (employe.ringTimer) { clearInterval(employe.ringTimer); employe.ringTimer = null; }
     if (employe.vibrateTimer) { clearInterval(employe.vibrateTimer); employe.vibrateTimer = null; }
+    if (employe.ringCtx) { try { employe.ringCtx.close(); } catch(e){} employe.ringCtx = null; }
     if (navigator.vibrate) { try { navigator.vibrate(0); } catch(e){} }
   }
 
   // ─── Gemini Live ─────────────────────────────────────────────
-  function startGemini(apiKey, voice, motifContext, globalContext, templateContext, templateName) {
+  function startGemini(apiKey, voice, motifContext) {
     navigator.mediaDevices.getUserMedia({
       audio: {
         channelCount: 1, sampleRate: INPUT_SR,
@@ -935,20 +888,12 @@
       employe.ws = new WebSocket(wsUrl);
 
       employe.ws.onopen = function() {
-        // Prompt système = [base globale] + [contexte template] + [motif libre] + règles de conduite
-        var parts = [];
-        parts.push("Tu es un assistant RH vocal qui appelle un employé au téléphone. Parle français (avec un peu d'arabe algérien si l'employé bascule). Sois poli mais professionnel. Réponses très courtes (1-2 phrases max).");
-        if (globalContext && globalContext.trim()) {
-          parts.push("=== BASE DE DONNÉES GLOBALE (toujours vraie) ===\n" + globalContext.trim());
-        }
-        if (templateContext && templateContext.trim()) {
-          parts.push("=== TEMPLATE ACTIF" + (templateName ? " : " + templateName : "") + " ===\n" + templateContext.trim());
-        }
-        if (motifContext && motifContext.trim()) {
-          parts.push("=== PRÉCISION DE CET APPEL ===\n" + motifContext.trim());
-        }
-        parts.push("Ouvre en te présentant brièvement, puis pose ta question directement. Ne répète pas les instructions au téléphone.");
-        var systemPrompt = parts.join("\n\n");
+        var systemPrompt =
+          "Tu es un assistant RH vocal de WeCan Services (livraison en Algérie). " +
+          "Tu appelles un employé au téléphone. Parle français, sois poli mais professionnel. " +
+          "Contexte de l'appel : " + motifContext + " " +
+          "Ouvre en te présentant : 'Bonjour, ici l'assistant RH de WeCan Services'. " +
+          "Puis pose ta question directement. Réponses très courtes (1-2 phrases max).";
 
         employe.ws.send(JSON.stringify({
           setup: {
@@ -1033,15 +978,7 @@
     buf.getChannelData(0).set(f32);
     var src = employe.outCtx.createBufferSource();
     src.buffer = buf;
-    // Routing : si un mode speaker/bluetooth est actif ET le sink est prêt,
-    // on route via MediaStreamDestination (contrôlé par setSinkId). Sinon
-    // sortie par défaut de l'OS = comportement historique = écouteur/défaut.
-    var outNode = employe.outCtx.destination;
-    if (employe.speakerMode && employe.speakerMode !== 'earpiece') {
-      var sink = employe.audioSinkDest || setupAudioSink();
-      if (sink) outNode = sink;
-    }
-    src.connect(outNode);
+    src.connect(employe.outCtx.destination);
     var now = employe.outCtx.currentTime;
     if (employe.nextPlay < now) employe.nextPlay = now;
     src.start(employe.nextPlay);
@@ -1064,28 +1001,12 @@
     if (employe.processor) { employe.processor.disconnect(); employe.processor.onaudioprocess = null; employe.processor = null; }
     if (employe.source) { employe.source.disconnect(); employe.source = null; }
     if (employe.stream) { employe.stream.getTracks().forEach(function(t){ t.stop(); }); employe.stream = null; }
-    // Nettoyage du sink audio (routing speaker/BT)
-    if (employe.audioSink) {
-      try { employe.audioSink.pause(); employe.audioSink.srcObject = null; employe.audioSink.remove(); } catch(e){}
-      employe.audioSink = null;
-    }
-    employe.audioSinkDest = null;
-    employe.audioDevices = null;
-    // Reset natif si dispo, pour rendre la main à l'OS (mode normal, plus in-call)
-    try {
-      var ar = window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.AudioRouter;
-      if (ar && typeof ar.setMode === 'function') { ar.setMode({ mode: 'earpiece' }); }
-    } catch(e) {}
     if (employe.audioCtx) { try{ employe.audioCtx.close(); }catch(e){} employe.audioCtx = null; }
     if (employe.outCtx) { try{ employe.outCtx.close(); }catch(e){} employe.outCtx = null; }
     if (employe.ws) { try{ employe.ws.close(); }catch(e){} employe.ws = null; }
     employe.nextPlay = 0;
     employe.isPlaying = false;
     employe.isMuted = false;
-    // Reset UI speaker pour le prochain appel
-    employe.speakerMode = 'earpiece';
-    employe.nativeRouterOk = false;
-    updateSpeakerBtn();
   }
 
 })();
