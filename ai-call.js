@@ -24,6 +24,18 @@
   const CALL_TIMEOUT_MS = 30000;
   const DEFAULT_COUNTRY_CODE = '213';   // Algérie
 
+  // FIX fuite listeners : tracker le handler admin courant pour le detacher
+  // avant d'en rattacher un nouveau (evite accumulation de callbacks quand
+  // l'admin declenche plusieurs appels vers le meme empId sans attendre un
+  // statut terminal).
+  var _adminStatusRef = null;
+  var _adminStatusHandler = null;
+  function detachAdminStatus() {
+    try { if (_adminStatusRef && _adminStatusHandler) _adminStatusRef.off('value', _adminStatusHandler); } catch(e){}
+    _adminStatusRef = null;
+    _adminStatusHandler = null;
+  }
+
   // Normalise un numéro : enlève espaces / marks / caractères spéciaux, ajoute +213 si local
   function normalizePhone(p) {
     if (!p) return '';
@@ -513,6 +525,9 @@
       id: Math.random().toString(36).slice(2, 10)
     };
 
+    // FIX fuite listener : detacher un eventuel listener admin precedent
+    detachAdminStatus();
+
     firebase.database().ref(CALL_PATH + '/' + empId).set(call).then(function() {
       status.className = 'aic-status on ringing';
       status.innerHTML = '📞 Sonnerie in-app vers ' + empNom + '...';
@@ -529,19 +544,24 @@
         } else if (c.status === 'rejected') {
           status.className = 'aic-status on rejected';
           status.innerHTML = '❌ Appel refusé par ' + empNom;
-          ref.off('value', handler);
+          detachAdminStatus();
         } else if (c.status === 'completed') {
           status.className = 'aic-status on completed';
           status.innerHTML = '☎️ Appel terminé (' + (c.duration || '?') + 's)';
-          ref.off('value', handler);
+          detachAdminStatus();
         } else if (c.status === 'missed') {
           status.className = 'aic-status on rejected';
           status.innerHTML = '📵 Appel manqué — pas de réponse';
-          ref.off('value', handler);
+          detachAdminStatus();
         }
       });
+      _adminStatusRef = ref;
+      _adminStatusHandler = handler;
     }).catch(function(e) {
-      toast('❌ ' + e.message);
+      // FIX erreur muette : afficher l'erreur dans le status en plus du toast
+      status.className = 'aic-status on rejected';
+      status.innerHTML = '❌ Impossible d\'ecrire dans Firebase : ' + (e && e.message || e);
+      toast('❌ ' + (e && e.message || 'Erreur inconnue'));
       btn.disabled = false;
       btn.textContent = '📞 Déclencher l\'appel IA';
     });
@@ -554,6 +574,9 @@
     btn.textContent = '⏳ Envoi au tunnel...';
 
     var callId = Math.random().toString(36).slice(2, 10);
+
+    // FIX fuite listener : detacher un eventuel listener admin precedent
+    detachAdminStatus();
 
     // Nettoie l'URL : enlève trailing slash + /dial si l'user l'a inclus
     var baseUrl = webhookUrl.replace(/\/+$/, '').replace(/\/dial$/, '');
@@ -601,21 +624,23 @@
         } else if (c.status === 'completed') {
           status.className = 'aic-status on completed';
           status.innerHTML = '☎️ Terminé (' + (c.duration || '?') + 's)';
-          ref.off('value', handler);
+          detachAdminStatus();
         } else if (c.status === 'no_answer' || c.status === 'missed') {
           status.className = 'aic-status on rejected';
           status.innerHTML = '📵 Pas de réponse';
-          ref.off('value', handler);
+          detachAdminStatus();
         } else if (c.status === 'busy') {
           status.className = 'aic-status on rejected';
           status.innerHTML = '📵 Ligne occupée';
-          ref.off('value', handler);
+          detachAdminStatus();
         } else if (c.status === 'failed') {
           status.className = 'aic-status on rejected';
           status.innerHTML = '❌ Échec appel: ' + (c.error || 'raison inconnue');
-          ref.off('value', handler);
+          detachAdminStatus();
         }
       });
+      _adminStatusRef = ref;
+      _adminStatusHandler = handler;
     }).catch(function(e) {
       status.className = 'aic-status on rejected';
       status.innerHTML = '❌ Tunnel/Call App a échoué : ' + e.message + '<br>' +
@@ -758,10 +783,13 @@
     document.getElementById('aiIncoming').classList.add('open');
     startRing();
 
-    // Auto-manqué au bout de 30s
+    // Auto-manqué au bout de 30s (FIX: clear l'ancien timer si un appel arrivait avant que
+    // le precedent ne soit termine)
+    if (employe.autoMissTimeout) { clearTimeout(employe.autoMissTimeout); employe.autoMissTimeout = null; }
     employe.autoMissTimeout = setTimeout(function() {
       if (employe.currentCall && employe.currentCall.id === call.id) {
-        firebase.database().ref(CALL_PATH + '/' + call.empId + '/status').set('missed');
+        firebase.database().ref(CALL_PATH + '/' + call.empId + '/status').set('missed')
+          .catch(function(e){ console.warn('[ai-call] set missed failed:', e); });
         hideIncomingCall();
         employe.currentCall = null;
       }
@@ -776,7 +804,8 @@
 
   function employeReject() {
     if (!employe.currentCall) return;
-    firebase.database().ref(CALL_PATH + '/' + employe.currentCall.empId + '/status').set('rejected');
+    firebase.database().ref(CALL_PATH + '/' + employe.currentCall.empId + '/status').set('rejected')
+      .catch(function(e){ console.warn('[ai-call] set rejected failed:', e); });
     hideIncomingCall();
     employe.currentCall = null;
   }
@@ -786,7 +815,8 @@
     var call = employe.currentCall;
     hideIncomingCall();
 
-    firebase.database().ref(CALL_PATH + '/' + call.empId + '/status').set('accepted');
+    firebase.database().ref(CALL_PATH + '/' + call.empId + '/status').set('accepted')
+      .catch(function(e){ console.warn('[ai-call] set accepted failed:', e); });
 
     document.getElementById('aiInCall').classList.add('open');
     document.getElementById('aicCallStatus').textContent = '🎙️ Connexion...';
@@ -926,6 +956,14 @@
       var data;
       try { data = JSON.parse(text); } catch(e) { return; }
 
+      // FIX : remonter les erreurs Gemini (cle invalide, quota, modele inconnu) au lieu de les avaler
+      if (data.error) {
+        var _msg = (data.error.message || data.error.status || 'erreur inconnue');
+        console.warn('[ai-call] Gemini error frame:', data.error);
+        try { toast('❌ Gemini : ' + _msg); } catch(_) {}
+        try { employeHangup(); } catch(_) {}
+        return;
+      }
       if (data.setupComplete) { startCapture(); return; }
       if (data.serverContent) {
         if (data.serverContent.modelTurn && data.serverContent.modelTurn.parts) {
