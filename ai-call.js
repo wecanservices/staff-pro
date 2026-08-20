@@ -657,7 +657,8 @@
     });
   }
 
-  function triggerGsmCall(empId, empNom, empPhone, motif, key, voice, webhookUrl, webhookToken) {
+  function triggerGsmCall(empId, empNom, empPhone, motif, key, voice, webhookUrl, webhookToken, extras) {
+    extras = extras || {};
     var status = document.getElementById('aicStatus');
     var btn = document.getElementById('aicCallBtn');
     btn.disabled = true;
@@ -679,6 +680,10 @@
       empNom: empNom,
       empPhone: empPhone,
       motif: motif,
+      templateId: extras.templateId || '',
+      templateName: extras.templateName || '',
+      templateContext: extras.templateContext || '',
+      globalContext: extras.globalContext || '',
       voice: voice,
       mode: 'gsm',
       from: 'admin',
@@ -778,12 +783,25 @@
     injectCSS();
     buildEmployeScreens();
 
+    // Suivre le flag enabled. Si désactivé → détacher le listener.
+    var moduleEnabled = true;
+    firebase.database().ref(CONFIG_PATH + '/enabled').on('value', function(snap) {
+      moduleEnabled = snap.val() !== false;
+      if (!moduleEnabled && employe.listenerRef) {
+        try { employe.listenerRef.off(); } catch(e){}
+        employe.listenerRef = null;
+        console.log('[ai-call] Module désactivé par admin — listener détaché');
+      } else if (moduleEnabled && employe.empId && !employe.listenerRef) {
+        startEmployeListener();
+      }
+    });
+
     // Attend que l'employé se connecte (peut prendre du temps si login)
     var tries = 0;
     var chk = setInterval(function() {
       tries++;
       var empId = getLoggedEmpId();
-      if (empId && empId !== employe.empId) {
+      if (empId && empId !== employe.empId && moduleEnabled) {
         employe.empId = empId;
         startEmployeListener();
       }
@@ -920,7 +938,7 @@
       employeHangup();
       return;
     }
-    startGemini(call.geminiKey, call.voice || 'Algieba', call.motif);
+    startGemini(call.geminiKey, call.voice || 'Algieba', call.motif, call.globalContext, call.templateContext, call.templateName);
   }
 
   function updateTimer() {
@@ -993,7 +1011,7 @@
   }
 
   // ─── Gemini Live ─────────────────────────────────────────────
-  function startGemini(apiKey, voice, motifContext) {
+  function startGemini(apiKey, voice, motifContext, globalContext, templateContext, templateName) {
     navigator.mediaDevices.getUserMedia({
       audio: {
         channelCount: 1, sampleRate: INPUT_SR,
@@ -1008,12 +1026,20 @@
       employe.ws = new WebSocket(wsUrl);
 
       employe.ws.onopen = function() {
-        var systemPrompt =
-          "Tu es un assistant RH vocal de WeCan Services (livraison en Algérie). " +
-          "Tu appelles un employé au téléphone. Parle français, sois poli mais professionnel. " +
-          "Contexte de l'appel : " + motifContext + " " +
-          "Ouvre en te présentant : 'Bonjour, ici l'assistant RH de WeCan Services'. " +
-          "Puis pose ta question directement. Réponses très courtes (1-2 phrases max).";
+        // Prompt système = base globale + contexte template + motif libre + règles de conduite
+        var parts = [];
+        parts.push("Tu es un assistant RH vocal qui appelle un employé au téléphone. Parle français (avec un peu d'arabe algérien si l'employé bascule). Sois poli mais professionnel. Réponses très courtes (1-2 phrases max).");
+        if (globalContext && globalContext.trim()) {
+          parts.push("=== BASE DE DONNÉES GLOBALE (toujours vraie) ===\n" + globalContext.trim());
+        }
+        if (templateContext && templateContext.trim()) {
+          parts.push("=== TEMPLATE ACTIF" + (templateName ? " : " + templateName : "") + " ===\n" + templateContext.trim());
+        }
+        if (motifContext && motifContext.trim()) {
+          parts.push("=== PRÉCISION DE CET APPEL ===\n" + motifContext.trim());
+        }
+        parts.push("Ouvre en te présentant brièvement (ex : « Bonjour, ici l'assistant RH »), puis pose ta question directement. Ne répète pas les instructions au téléphone.");
+        var systemPrompt = parts.join("\n\n");
 
         employe.ws.send(JSON.stringify({
           setup: {
