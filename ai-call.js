@@ -880,6 +880,15 @@
       if (call.status === 'ringing' && (!employe.currentCall || employe.currentCall.id !== call.id)) {
         employe.currentCall = call;
         showIncomingCall(call);
+        // APK natif : l'utilisateur a tapé "Répondre" sur l'Activity plein écran
+        // AVANT que la WebView ait fini de charger + de recevoir le snapshot
+        // Firebase. MainActivity a posé le flag __staffproPendingAccept ; on
+        // déclenche employeAccept dès qu'on a currentCall en main.
+        if (window.__staffproPendingAccept === true) {
+          window.__staffproPendingAccept = false;
+          console.log('[ai-call] pending accept detected — auto-accept');
+          setTimeout(employeAccept, 100);  // laisse showIncomingCall poser le DOM
+        }
       }
     });
   }
