@@ -825,6 +825,15 @@
   }
 
   function buildEmployeScreens() {
+    // FIX : STAFF PRO fait des document.body.innerHTML = ... lors de la navigation SPA,
+    // ce qui détruit les écrans d'appel injectés. On rend cette fonction idempotente :
+    // - supprime les anciens s'ils existent (pour éviter les doublons)
+    // - re-crée systématiquement
+    var oldInc = document.getElementById('aiIncoming');
+    if (oldInc) oldInc.remove();
+    var oldInCall = document.getElementById('aiInCall');
+    if (oldInCall) oldInCall.remove();
+
     // Écran d'appel entrant
     var inc = document.createElement('div');
     inc.id = 'aiIncoming';
@@ -893,6 +902,11 @@
   }
 
   function showIncomingCall(call) {
+    // FIX : si STAFF PRO a détruit nos écrans par navigation SPA, on les recrée
+    if (!document.getElementById('aiIncoming')) {
+      console.log('[ai-call] aiIncoming absent (SPA nav), reconstruction');
+      buildEmployeScreens();
+    }
     document.getElementById('aicReason').textContent = call.motif
       ? call.motif.slice(0, 90) + (call.motif.length > 90 ? '...' : '')
       : '';
@@ -934,6 +948,11 @@
     firebase.database().ref(CALL_PATH + '/' + call.empId + '/status').set('accepted')
       .catch(function(e){ console.warn('[ai-call] set accepted failed:', e); });
 
+    // FIX : garantir que l'écran en communication existe (SPA nav peut l'avoir détruit)
+    if (!document.getElementById('aiInCall')) {
+      console.log('[ai-call] aiInCall absent, reconstruction');
+      buildEmployeScreens();
+    }
     document.getElementById('aiInCall').classList.add('open');
     document.getElementById('aicCallStatus').textContent = '🎙️ Connexion...';
     document.getElementById('aicCallStatus').className = 'aic-status-badge';
@@ -1070,8 +1089,34 @@
         }
       };
     }).catch(function(e) {
-      toast('❌ Micro refusé : ' + e.message);
-      employeHangup();
+      // FIX : afficher une erreur PERSISTANTE au lieu du toast qui disparaît en 3s.
+      // C'est le bug "sa coupe au décroché" : sur APK/mobile sans permission micro,
+      // getUserMedia rejette → hangup silencieux → user ne comprend pas ce qui s'est passé.
+      console.error('[ai-call] getUserMedia FAILED:', e.name, e.message);
+      var errName = e.name || 'Erreur';
+      var msg = 'Micro non autorisé';
+      if (errName === 'NotAllowedError' || errName === 'PermissionDeniedError') {
+        msg = 'Micro refusé — autorise le micro dans les paramètres de l\'app puis rappelle';
+      } else if (errName === 'NotFoundError' || errName === 'DevicesNotFoundError') {
+        msg = 'Aucun micro détecté sur cet appareil';
+      } else if (errName === 'NotReadableError' || errName === 'TrackStartError') {
+        msg = 'Micro déjà utilisé par une autre app — ferme et réessaie';
+      } else if (errName === 'SecurityError') {
+        msg = 'Micro bloqué (HTTPS requis)';
+      }
+      // Garder l'écran d'appel ouvert avec l'erreur bien visible
+      var st = document.getElementById('aicCallStatus');
+      if (st) {
+        st.textContent = '❌ ' + msg;
+        st.className = 'aic-status-badge';
+        st.style.background = '#e74c3c';
+        st.style.opacity = '1';
+        st.style.fontSize = '13px';
+        st.style.padding = '10px 16px';
+      }
+      // Laisse 6 secondes pour lire, puis hangup
+      toast('❌ ' + msg, 6000);
+      setTimeout(function(){ try { employeHangup(); } catch(_){} }, 6000);
     });
   }
 
