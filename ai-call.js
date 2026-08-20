@@ -480,6 +480,8 @@
     // FIX: remplir le dropdown IMMÉDIATEMENT depuis localStorage (synchrone).
     // Ne pas attendre Firebase — sinon dropdown reste vide si timeout/erreur.
     sel.innerHTML = '<option value="">— Sélectionne un employé —</option>';
+    // FIX 2 : filtrer les entrées null AVANT le sort (sinon TypeError plante tout)
+    emps = emps.filter(function(e) { return e && (e.id !== undefined && e.id !== null); });
     emps.sort(function(a, b) {
       var na = ((a.prenom||'') + ' ' + (a.nom||'')).trim().toLowerCase();
       var nb = ((b.prenom||'') + ' ' + (b.nom||'')).trim().toLowerCase();
