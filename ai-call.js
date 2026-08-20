@@ -476,32 +476,29 @@
         emps = Array.isArray(parsed) ? parsed : Object.values(parsed || {});
       }
     } catch(e) {}
-    // Charger aussi les IDs actuellement connectés depuis Firebase pour badge ✅
-    firebase.database().ref(CALL_PATH).once('value').then(function(snap) {
-      var activeCalls = snap.val() || {};
-      sel.innerHTML = '<option value="">— Sélectionne un employé —</option>';
-      // Trier par prénom+nom
-      emps.sort(function(a, b) {
-        var na = ((a.prenom||'') + ' ' + (a.nom||'')).trim().toLowerCase();
-        var nb = ((b.prenom||'') + ' ' + (b.nom||'')).trim().toLowerCase();
-        return na.localeCompare(nb);
-      });
-      emps.forEach(function(e) {
-        if (!e || e.id === undefined || e.id === null) return;
-        var id = String(e.id);
-        var name = ((e.prenom||'') + ' ' + (e.nom||'')).trim() || ('Employé ' + id);
-        var poste = e.poste ? ' — ' + e.poste : '';
-        var phone = normalizePhone(e.tel || e.telephone || e.phone || '');
-        var opt = document.createElement('option');
-        opt.value = id;
-        opt.setAttribute('data-name', name);
-        opt.setAttribute('data-phone', phone);
-        opt.textContent = '#' + id + ' — ' + name + poste + (phone ? ' 📞' : '');
-        sel.appendChild(opt);
-      });
-    }).catch(function(e) {
-      console.warn('[ai-call] Firebase check failed:', e);
+
+    // FIX: remplir le dropdown IMMÉDIATEMENT depuis localStorage (synchrone).
+    // Ne pas attendre Firebase — sinon dropdown reste vide si timeout/erreur.
+    sel.innerHTML = '<option value="">— Sélectionne un employé —</option>';
+    emps.sort(function(a, b) {
+      var na = ((a.prenom||'') + ' ' + (a.nom||'')).trim().toLowerCase();
+      var nb = ((b.prenom||'') + ' ' + (b.nom||'')).trim().toLowerCase();
+      return na.localeCompare(nb);
     });
+    emps.forEach(function(e) {
+      if (!e || e.id === undefined || e.id === null) return;
+      var id = String(e.id);
+      var name = ((e.prenom||'') + ' ' + (e.nom||'')).trim() || ('Employé ' + id);
+      var poste = e.poste ? ' — ' + e.poste : '';
+      var phone = normalizePhone(e.tel || e.telephone || e.phone || '');
+      var opt = document.createElement('option');
+      opt.value = id;
+      opt.setAttribute('data-name', name);
+      opt.setAttribute('data-phone', phone);
+      opt.textContent = '#' + id + ' — ' + name + poste + (phone ? ' 📞' : '');
+      sel.appendChild(opt);
+    });
+    console.log('[ai-call] Dropdown employés rempli:', emps.length, 'entrées');
   }
 
   function adminOnEmpChange() {
