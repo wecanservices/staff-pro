@@ -21,6 +21,7 @@
   const OUTPUT_SR = 24000;
   const CALL_PATH = 'wecan/aiCalls';
   const CONFIG_PATH = 'wecan/aiConfig';
+  const TEMPLATES_PATH = 'wecan/aiTemplates';
   const CALL_TIMEOUT_MS = 30000;
   const DEFAULT_COUNTRY_CODE = '213';   // Algérie
 
@@ -266,17 +267,43 @@
   // ═════════════════════════════════════════════════════════════
   //  ADMIN MODE : bouton flottant + modal
   // ═════════════════════════════════════════════════════════════
+
+  // Cache config admin (rempli par le listener Firebase ci-dessous)
+  var _aicCfg = { enabled: null, geminiKey: '', voice: 'Algieba', globalContext: '', mode: 'inapp', webhookUrl: '', webhookToken: '' };
+  var _aicTemplates = [];
+
+  function applyAdminEnabled() {
+    var fab = document.getElementById('aiCallFab');
+    if (_aicCfg.enabled === false) {
+      if (fab) fab.remove();
+      return;
+    }
+    if (!fab) {
+      var b = document.createElement('button');
+      b.id = 'aiCallFab';
+      b.title = 'Appel IA';
+      b.innerHTML = '📞';
+      b.onclick = openAdminModal;
+      document.body.appendChild(b);
+    }
+  }
+
   function initAdmin() {
     console.log('[ai-call] Mode ADMIN activé');
     injectCSS();
 
-    // Bouton flottant
-    var fab = document.createElement('button');
-    fab.id = 'aiCallFab';
-    fab.title = 'Appel IA';
-    fab.innerHTML = '📞';
-    fab.onclick = openAdminModal;
-    document.body.appendChild(fab);
+    // Le FAB est géré par applyAdminEnabled() — piloté par wecan/aiConfig/enabled
+    firebase.database().ref(CONFIG_PATH).on('value', function(snap) {
+      var cfg = snap.val() || {};
+      _aicCfg.enabled       = cfg.enabled !== false; // activé par défaut si absent
+      _aicCfg.geminiKey     = cfg.geminiKey || '';
+      _aicCfg.voice         = cfg.voice || 'Algieba';
+      _aicCfg.globalContext = cfg.globalContext || '';
+      _aicCfg.mode          = cfg.mode || 'inapp';
+      _aicCfg.webhookUrl    = cfg.webhookUrl || '';
+      _aicCfg.webhookToken  = cfg.webhookToken || '';
+      applyAdminEnabled();
+    });
 
     // Modal
     var modal = document.createElement('div');
@@ -305,8 +332,15 @@
             '<input type="hidden" id="aicEmpName" />' +
           '</div>' +
           '<div class="aic-field">' +
-            '<label>Motif / Contexte pour l\'IA</label>' +
-            '<textarea id="aicMotif">Tu appelles cet employé qui est en retard de 15 minutes ce matin. Demande-lui poliment mais fermement la raison de son retard. Sois compréhensif si c\'est justifié. Reste court : 2-3 échanges maximum.</textarea>' +
+            '<label>Template d\'appel</label>' +
+            '<select id="aicTplSelect" onchange="window._aicOnTplChange()">' +
+              '<option value="">— Aucun (motif libre) —</option>' +
+            '</select>' +
+            '<div class="aic-hint">Depuis Paramètres → 🤖 Appel IA. L\'IA reçoit : base globale + contexte du template + motif ci-dessous.</div>' +
+          '</div>' +
+          '<div class="aic-field">' +
+            '<label>Motif / Contexte additionnel</label>' +
+            '<textarea id="aicMotif" placeholder="Ex : Retard de 22 min ce matin. Facultatif si un template est choisi."></textarea>' +
           '</div>' +
           '<button class="aic-btn primary" id="aicCallBtn" onclick="window._aicTriggerCall()">📞 Déclencher l\'appel IA</button>' +
           '<div class="aic-status" id="aicStatus"></div>' +
@@ -368,6 +402,35 @@
     window._aicTriggerCall = adminTriggerCall;
     window._aicOnEmpChange = adminOnEmpChange;
     window._aicOnModeChange = adminOnModeChange;
+    window._aicOnTplChange = adminOnTplChange;
+    window._aicOpenModal   = openAdminModal;
+  }
+
+  function populateTemplateSelect() {
+    var sel = document.getElementById('aicTplSelect');
+    if (!sel) return;
+    firebase.database().ref(TEMPLATES_PATH).once('value').then(function(snap) {
+      var data = snap.val() || {};
+      _aicTemplates = Object.keys(data).map(function(k){ var t = data[k]||{}; t.id = k; return t; });
+      _aicTemplates.sort(function(a,b){ return (a.name||'').localeCompare(b.name||''); });
+      sel.innerHTML = '<option value="">— Aucun (motif libre) —</option>';
+      _aicTemplates.forEach(function(t) {
+        var opt = document.createElement('option');
+        opt.value = t.id;
+        opt.textContent = (t.icon || '📞') + ' ' + (t.name || 'Sans nom');
+        sel.appendChild(opt);
+      });
+    }).catch(function(e){ console.warn('[ai-call] templates load failed:', e); });
+  }
+
+  function adminOnTplChange() {
+    var sel = document.getElementById('aicTplSelect');
+    var t = null;
+    for (var i = 0; i < _aicTemplates.length; i++) {
+      if (_aicTemplates[i].id === sel.value) { t = _aicTemplates[i]; break; }
+    }
+    var motifEl = document.getElementById('aicMotif');
+    if (t && motifEl && !motifEl.value.trim()) motifEl.value = t.motif || '';
   }
 
   function adminOnModeChange() {
@@ -398,6 +461,8 @@
     }).catch(function(){});
     // Remplir la liste des employés depuis STAFF PRO (localStorage wecan_employees)
     populateEmpSelect();
+    // Remplir la liste des templates depuis wecan/aiTemplates
+    populateTemplateSelect();
   }
 
   function populateEmpSelect() {
@@ -488,26 +553,44 @@
     var empNom = document.getElementById('aicEmpName').value.trim() || 'Employé ' + empId;
     var empPhone = normalizePhone(document.getElementById('aicEmpPhone').value.trim());
     var motif = document.getElementById('aicMotif').value.trim();
-    var key = document.getElementById('aicKey').value.trim();
-    var voice = document.getElementById('aicVoice').value;
-    var mode = document.getElementById('aicMode').value;
-    var webhookUrl = document.getElementById('aicWebhookUrl').value.trim();
-    var webhookToken = document.getElementById('aicWebhookToken').value.trim();
+    // La clé et la voix viennent en priorité de Paramètres → Appel IA ; fallback sur la modale
+    var key   = _aicCfg.geminiKey || document.getElementById('aicKey').value.trim();
+    var voice = _aicCfg.voice     || document.getElementById('aicVoice').value;
+    var mode  = document.getElementById('aicMode').value;
+    var webhookUrl   = _aicCfg.webhookUrl   || document.getElementById('aicWebhookUrl').value.trim();
+    var webhookToken = _aicCfg.webhookToken || document.getElementById('aicWebhookToken').value.trim();
+    var globalContext = _aicCfg.globalContext || '';
+
+    // Template sélectionné (optionnel)
+    var tplId = document.getElementById('aicTplSelect').value;
+    var tpl = null;
+    for (var i = 0; i < _aicTemplates.length; i++) {
+      if (_aicTemplates[i].id === tplId) { tpl = _aicTemplates[i]; break; }
+    }
+    var tplContext = tpl ? (tpl.context || '') : '';
 
     if (!empId) { toast('❌ Sélectionne un employé'); return; }
-    if (!motif) { toast('❌ Saisis un motif'); return; }
-    if (!key) { toast('❌ Configure d\'abord la clé Gemini (⚙️ Paramètres)'); return; }
+    if (!motif && !tplContext && !globalContext) { toast('❌ Choisis un template ou saisis un motif'); return; }
+    if (!key) { toast('❌ Configure d\'abord la clé Gemini (Paramètres → Appel IA)'); return; }
+
+    var extras = {
+      templateId: tpl ? tpl.id : '',
+      templateName: tpl ? (tpl.name || '') : '',
+      templateContext: tplContext,
+      globalContext: globalContext
+    };
 
     if (mode === 'gsm') {
       if (!webhookUrl) { toast('❌ URL webhook non configurée (⚙️ Paramètres)'); return; }
       if (!empPhone) { toast('❌ Numéro de téléphone requis en mode GSM'); return; }
-      triggerGsmCall(empId, empNom, empPhone, motif, key, voice, webhookUrl, webhookToken);
+      triggerGsmCall(empId, empNom, empPhone, motif, key, voice, webhookUrl, webhookToken, extras);
     } else {
-      triggerInAppCall(empId, empNom, motif, key, voice);
+      triggerInAppCall(empId, empNom, motif, key, voice, extras);
     }
   }
 
-  function triggerInAppCall(empId, empNom, motif, key, voice) {
+  function triggerInAppCall(empId, empNom, motif, key, voice, extras) {
+    extras = extras || {};
     var status = document.getElementById('aicStatus');
     var btn = document.getElementById('aicCallBtn');
     btn.disabled = true;
@@ -518,6 +601,10 @@
       empId: empId,
       empNom: empNom,
       motif: motif,
+      templateId: extras.templateId || '',
+      templateName: extras.templateName || '',
+      templateContext: extras.templateContext || '',
+      globalContext: extras.globalContext || '',
       geminiKey: key,
       voice: voice,
       from: 'admin',
