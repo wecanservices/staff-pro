@@ -533,6 +533,9 @@
       status.innerHTML = '📞 Sonnerie in-app vers ' + empNom + '...';
       btn.textContent = '🔄 Nouvel appel';
       btn.disabled = false;
+      // Push FCM : faire sonner le tel de l'employé MÊME APP FERMÉE / verrouillée
+      // (le tap ouvre l'app → startEmployeListener détecte l'appel 'ringing' et affiche l'écran d'appel).
+      try{ if(typeof _sendPush==='function') _sendPush(empId, '📞 Appel entrant', (empNom ? empNom + ' — ' : '') + 'l\'assistant IA vous appelle', {action:'aicall'}); }catch(e){}
 
       var ref = firebase.database().ref(CALL_PATH + '/' + empId);
       var handler = ref.on('value', function(snap) {
