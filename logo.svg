@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 500">
+  <!-- Red swoosh arc behind the circle -->
+  <path d="M 60 320 Q 160 420 280 340 Q 370 280 440 300" fill="none" stroke="url(#swoosh)" stroke-width="18" stroke-linecap="round"/>
+  <defs>
+    <linearGradient id="swoosh" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#8B1A1A" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#E84040" stop-opacity="0.9"/>
+    </linearGradient>
+    <linearGradient id="plane1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#5a0808"/>
+      <stop offset="100%" stop-color="#8B1A1A"/>
+    </linearGradient>
+    <linearGradient id="plane2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#C0392B"/>
+      <stop offset="100%" stop-color="#E84040"/>
+    </linearGradient>
+  </defs>
+  <!-- Clock circle outline -->
+  <circle cx="250" cy="210" r="115" fill="none" stroke="#1a1a1a" stroke-width="16"/>
+  <!-- Clock tick marks -->
+  <line x1="250" y1="104" x2="250" y2="122" stroke="#1a1a1a" stroke-width="8" stroke-linecap="round"/>
+  <line x1="250" y1="298" x2="250" y2="316" stroke="#1a1a1a" stroke-width="8" stroke-linecap="round"/>
+  <line x1="143" y1="210" x2="161" y2="210" stroke="#1a1a1a" stroke-width="8" stroke-linecap="round"/>
+  <line x1="339" y1="210" x2="357" y2="210" stroke="#1a1a1a" stroke-width="8" stroke-linecap="round"/>
+  <!-- Red checkmark / V inside clock -->
+  <polyline points="185,215 225,262 320,162" fill="none" stroke="#C0392B" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Paper plane / arrow at top-right of circle -->
+  <!-- Wing 1 (dark, left) -->
+  <polygon points="255,70 310,118 275,122" fill="url(#plane1)"/>
+  <!-- Wing 2 (red, right) -->
+  <polygon points="255,70 330,100 310,118" fill="url(#plane2)"/>
+  <!-- Body center -->
+  <polygon points="255,70 285,140 275,122" fill="url(#plane2)" opacity="0.85"/>
+  <!-- WeCheckin text -->
+  <text x="250" y="398" text-anchor="middle" font-family="Arial, sans-serif" font-size="68" font-weight="900" font-style="italic">
+    <tspan fill="#C0392B">We</tspan><tspan fill="#1a1a1a">Check</tspan><tspan fill="#C0392B">in</tspan>
+  </text>
+  <!-- BY WECAN SERVICES -->
+  <line x1="80" y1="420" x2="170" y2="420" stroke="#8B1A1A" stroke-width="1.5"/>
+  <text x="250" y="432" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" fill="#555" letter-spacing="3" font-weight="600">BY WECAN SERVICES</text>
+  <line x1="330" y1="420" x2="420" y2="420" stroke="#8B1A1A" stroke-width="1.5"/>
+</svg>
