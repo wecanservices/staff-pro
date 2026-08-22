@@ -945,6 +945,24 @@
     var call = employe.currentCall;
     hideIncomingCall();
 
+    // FIX v16 CRITIQUE : pré-créer et resume les AudioContext AVANT toute async.
+    // Le clic Accepter EST le user gesture qui autorise le son mobile.
+    // Si on attend le setupComplete de Gemini (async), le crédit du gesture expire
+    // et l'AudioContext reste "suspended" → Gemini parle mais le tel est muet.
+    try {
+      var AC = window.AudioContext || window.webkitAudioContext;
+      if (AC) {
+        employe.outCtx = new AC({ sampleRate: OUTPUT_SR });
+        if (employe.outCtx.state === 'suspended') employe.outCtx.resume().catch(function(){});
+        employe.nextPlay = employe.outCtx.currentTime;
+        // Petit "unlock" : jouer un buffer silencieux d'1 sample pour forcer l'activation
+        var silent = employe.outCtx.createBuffer(1, 1, OUTPUT_SR);
+        var s = employe.outCtx.createBufferSource();
+        s.buffer = silent; s.connect(employe.outCtx.destination); s.start(0);
+        console.log('[ai-call] AudioContext pré-résumé, state:', employe.outCtx.state);
+      }
+    } catch(e) { console.warn('[ai-call] audio pre-unlock failed:', e); }
+
     firebase.database().ref(CALL_PATH + '/' + call.empId + '/status').set('accepted')
       .catch(function(e){ console.warn('[ai-call] set accepted failed:', e); });
 
@@ -1149,6 +1167,11 @@
 
   function startCapture() {
     employe.audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: INPUT_SR });
+    // FIX v16 : mobile Chrome/Safari suspendent l'AudioContext par défaut,
+    // le geste utilisateur (clic Accepter) autorise resume(). Sans ça = son bloqué.
+    if (employe.audioCtx.state === 'suspended') {
+      employe.audioCtx.resume().catch(function(e){ console.warn('[ai-call] resume input ctx failed:', e); });
+    }
     employe.source = employe.audioCtx.createMediaStreamSource(employe.stream);
     employe.processor = employe.audioCtx.createScriptProcessor(4096, 1, 1);
     employe.processor.onaudioprocess = function(e) {
@@ -1174,6 +1197,11 @@
     if (!employe.outCtx) {
       employe.outCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: OUTPUT_SR });
       employe.nextPlay = employe.outCtx.currentTime;
+    }
+    // FIX v16 : garantir que l'AudioContext de sortie n'est PAS suspendu
+    // (bug mobile classique : sinon Gemini parle mais l'employé n'entend rien)
+    if (employe.outCtx.state === 'suspended') {
+      employe.outCtx.resume().catch(function(e){ console.warn('[ai-call] resume output ctx failed:', e); });
     }
     var binary = atob(b64);
     var bytes = new Uint8Array(binary.length);
