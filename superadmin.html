@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="app-version" content="20260822-162623">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<title>STAFF PRO — Console SaaS (Super-Admin)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0b1120; --bg-2:#111827; --card:#1e293b; --card-2:#293548;
+  --border:#334155; --text:#e2e8f0; --text-2:#94a3b8; --text-3:#64748b;
+  --accent:#6366f1; --accent-2:#818cf8; --accent-soft:rgba(99,102,241,.12);
+  --ok:#22c55e; --warn:#f59e0b; --err:#ef4444; --info:#06b6d4;
+}
+body{font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
+input,select,textarea{font-family:inherit;background:var(--bg-2);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:14px;width:100%}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+
+/* ── LOGIN ── */
+#login-scr{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;background:radial-gradient(circle at 30% 20%,#1e293b 0%,#0b1120 70%)}
+.login-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:40px 36px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.login-badge{display:inline-flex;align-items:center;gap:6px;background:var(--accent-soft);color:var(--accent-2);font-size:11px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:5px 12px;border-radius:20px;margin-bottom:14px}
+.login-title{font-size:24px;font-weight:800;margin-bottom:4px;letter-spacing:-.5px}
+.login-sub{font-size:13px;color:var(--text-2);margin-bottom:24px}
+.login-field{margin-bottom:14px}
+.login-label{display:block;font-size:12px;font-weight:600;color:var(--text-2);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.login-btn{width:100%;padding:13px;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;border-radius:10px;font-size:14px;font-weight:700;margin-top:8px;transition:.15s;letter-spacing:.3px}
+.login-btn:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(99,102,241,.35)}
+.login-btn:disabled{opacity:.5;cursor:wait}
+.login-err{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#fca5a5;padding:10px;border-radius:8px;font-size:12.5px;margin-top:12px;display:none}
+.login-err.on{display:block}
+
+/* ── APP LAYOUT ── */
+#app-scr{display:none;min-height:100vh}
+#app-scr.on{display:flex;flex-direction:column}
+.topbar{height:56px;background:var(--bg-2);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:20px;position:sticky;top:0;z-index:50}
+.brand-mark{display:flex;align-items:center;gap:10px;font-weight:800;font-size:16px;letter-spacing:-.3px}
+.brand-dot{width:10px;height:10px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));box-shadow:0 0 12px rgba(99,102,241,.5)}
+.brand-pill{background:var(--accent-soft);color:var(--accent-2);font-size:10px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:.5px}
+.tabs{display:flex;gap:4px;flex:1;margin-left:24px}
+.tab{padding:8px 14px;border-radius:8px;font-size:13px;font-weight:600;color:var(--text-2);transition:.15s}
+.tab:hover{background:var(--card);color:var(--text)}
+.tab.on{background:var(--accent-soft);color:var(--accent-2)}
+.user-chip{display:flex;align-items:center;gap:8px;padding:6px 12px 6px 6px;background:var(--card);border:1px solid var(--border);border-radius:20px;font-size:12.5px}
+.user-avatar{width:26px;height:26px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent-2));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff}
+.logout-btn{padding:6px 10px;border-radius:6px;color:var(--text-3);font-size:12px}
+.logout-btn:hover{background:var(--card);color:var(--err)}
+
+.page{padding:28px 32px;max-width:1400px;margin:0 auto;width:100%}
+.page-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px}
+.page-title{font-size:24px;font-weight:800;letter-spacing:-.5px}
+.page-sub{font-size:13px;color:var(--text-2);margin-top:4px}
+.primary-btn{display:inline-flex;align-items:center;gap:6px;padding:10px 16px;background:linear-gradient(135deg,var(--accent),var(--accent-2));color:#fff;border-radius:9px;font-size:13px;font-weight:600;transition:.15s}
+.primary-btn:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(99,102,241,.3)}
+.ghost-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 14px;background:transparent;border:1px solid var(--border);color:var(--text);border-radius:9px;font-size:13px;font-weight:500}
+.ghost-btn:hover{background:var(--card)}
+
+/* ── KPI GRID ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-bottom:24px}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px}
+.kpi-label{font-size:11.5px;color:var(--text-2);text-transform:uppercase;font-weight:600;letter-spacing:.7px;margin-bottom:8px}
+.kpi-value{font-size:28px;font-weight:800;letter-spacing:-.5px;line-height:1}
+.kpi-sub{font-size:12px;color:var(--text-3);margin-top:6px;font-weight:500}
+.kpi-accent{color:var(--accent-2)}
+.kpi-ok{color:var(--ok)}
+.kpi-warn{color:var(--warn)}
+.kpi-err{color:var(--err)}
+
+/* ── TABLE ── */
+.table-card{background:var(--card);border:1px solid var(--border);border-radius:14px;overflow:hidden}
+.table-head{padding:16px 20px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border)}
+.table-title{font-size:15px;font-weight:700}
+.table{width:100%;border-collapse:collapse}
+.table th{text-align:left;font-size:11px;text-transform:uppercase;color:var(--text-3);font-weight:600;padding:12px 20px;letter-spacing:.5px;background:var(--bg-2);border-bottom:1px solid var(--border)}
+.table td{padding:14px 20px;font-size:13.5px;border-bottom:1px solid var(--border)}
+.table tr:last-child td{border-bottom:none}
+.table tr:hover td{background:var(--card-2)}
+.badge{display:inline-block;padding:3px 9px;border-radius:12px;font-size:11px;font-weight:700}
+.badge-ok{background:rgba(34,197,94,.15);color:#4ade80}
+.badge-warn{background:rgba(245,158,11,.15);color:#fbbf24}
+.badge-err{background:rgba(239,68,68,.15);color:#f87171}
+.badge-info{background:rgba(6,182,212,.15);color:#22d3ee}
+.badge-neutral{background:rgba(148,163,184,.15);color:var(--text-2)}
+.row-actions{display:flex;gap:6px;justify-content:flex-end}
+.row-btn{padding:5px 10px;border-radius:6px;background:var(--bg-2);border:1px solid var(--border);color:var(--text-2);font-size:11.5px;font-weight:600;transition:.12s}
+.row-btn:hover{color:var(--text);border-color:var(--accent);background:var(--accent-soft)}
+.row-btn.danger:hover{color:#fca5a5;border-color:var(--err);background:rgba(239,68,68,.1)}
+
+/* ── MODAL ── */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;z-index:100;padding:20px}
+.modal-backdrop.on{display:flex}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:28px;max-width:560px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.modal-title{font-size:19px;font-weight:800;margin-bottom:6px}
+.modal-sub{font-size:13px;color:var(--text-2);margin-bottom:20px}
+.modal-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:20px}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-full{grid-column:1/-1}
+.color-swatch{display:inline-block;width:24px;height:24px;border-radius:6px;border:1px solid var(--border);vertical-align:middle;margin-right:8px}
+
+/* ── EMPTY / LOAD ── */
+.empty{padding:56px 20px;text-align:center;color:var(--text-2)}
+.empty-emoji{font-size:44px;margin-bottom:12px;opacity:.5}
+.spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spn .8s linear infinite;vertical-align:middle}
+@keyframes spn{to{transform:rotate(360deg)}}
+
+.toast{position:fixed;bottom:24px;right:24px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 18px;font-size:13px;font-weight:600;box-shadow:0 12px 30px rgba(0,0,0,.4);display:none;z-index:200}
+.toast.on{display:block;animation:tst .3s ease}
+.toast.ok{border-color:var(--ok);color:#4ade80}
+.toast.err{border-color:var(--err);color:#f87171}
+@keyframes tst{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+@media (max-width:820px){
+  .topbar{padding:0 14px;gap:10px}
+  .tabs{margin-left:8px;overflow-x:auto}
+  .page{padding:18px 14px}
+  .form-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- ═════════════════════ LOGIN SCREEN ═════════════════════ -->
+<div id="login-scr">
+  <div class="login-card">
+    <div class="login-badge">🔒 Super-Admin</div>
+    <div class="login-title">STAFF PRO Console</div>
+    <div class="login-sub">Accès réservé — gestion des entreprises clientes</div>
+    <form id="login-form" onsubmit="return doLogin(event)">
+      <div class="login-field">
+        <label class="login-label">Email</label>
+        <input type="email" id="login-email" required autocomplete="username" placeholder="superadmin@wecheckin.dz">
+      </div>
+      <div class="login-field">
+        <label class="login-label">Mot de passe</label>
+        <input type="password" id="login-pwd" required autocomplete="current-password" placeholder="••••••••">
+      </div>
+      <button type="submit" class="login-btn" id="login-btn">Se connecter</button>
+      <div class="login-err" id="login-err"></div>
+    </form>
+  </div>
+</div>
+
+<!-- ═════════════════════ APP SCREEN ═════════════════════ -->
+<div id="app-scr">
+  <div class="topbar">
+    <div class="brand-mark"><span class="brand-dot"></span> STAFF PRO <span class="brand-pill">CONSOLE</span></div>
+    <div class="tabs">
+      <button class="tab on" data-tab="dashboard" onclick="showTab(this)">Dashboard</button>
+      <button class="tab" data-tab="tenants" onclick="showTab(this)">Entreprises clientes</button>
+      <button class="tab" data-tab="admins" onclick="showTab(this)">Super-admins</button>
+      <button class="tab" data-tab="config" onclick="showTab(this)">Config globale</button>
+    </div>
+    <div class="user-chip">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <span id="user-email">…</span>
+    </div>
+    <button class="logout-btn" onclick="doLogout()" title="Se déconnecter">↪ Sortir</button>
+  </div>
+
+  <!-- Dashboard -->
+  <div class="page" data-page="dashboard">
+    <div class="page-head">
+      <div>
+        <div class="page-title">Dashboard</div>
+        <div class="page-sub">Vue d'ensemble de la plateforme</div>
+      </div>
+      <button class="ghost-btn" onclick="refreshDashboard()">↻ Rafraîchir</button>
+    </div>
+    <div class="kpi-grid" id="kpi-grid">
+      <div class="kpi"><div class="kpi-label">Chargement</div><div class="kpi-value"><span class="spinner"></span></div></div>
+    </div>
+    <div class="table-card">
+      <div class="table-head"><div class="table-title">Activité récente par entreprise</div></div>
+      <div id="activity-list"><div class="empty"><span class="spinner"></span></div></div>
+    </div>
+  </div>
+
+  <!-- Tenants -->
+  <div class="page" data-page="tenants" style="display:none">
+    <div class="page-head">
+      <div>
+        <div class="page-title">Entreprises clientes</div>
+        <div class="page-sub">Chaque entreprise = un tenant isolé (données, admins, employés)</div>
+      </div>
+      <button class="primary-btn" onclick="openTenantModal()">＋ Nouvelle entreprise</button>
+    </div>
+    <div class="table-card">
+      <table class="table" id="tenants-table">
+        <thead><tr>
+          <th>Entreprise</th><th>Slug</th><th>Plan</th><th>Statut</th><th>Employés</th><th>Créée</th><th style="text-align:right">Actions</th>
+        </tr></thead>
+        <tbody id="tenants-tbody"><tr><td colspan="7"><div class="empty"><span class="spinner"></span></div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Super-admins -->
+  <div class="page" data-page="admins" style="display:none">
+    <div class="page-head">
+      <div>
+        <div class="page-title">Super-admins</div>
+        <div class="page-sub">Comptes qui ont accès à cette console. Créés via Firebase Auth.</div>
+      </div>
+      <button class="primary-btn" onclick="openAdminInfoModal()">ℹ Comment ajouter un compte</button>
+    </div>
+    <div class="table-card">
+      <table class="table" id="sa-table">
+        <thead><tr>
+          <th>Email</th><th>Ajouté</th><th>Dernière connexion</th><th style="text-align:right">Actions</th>
+        </tr></thead>
+        <tbody id="sa-tbody"><tr><td colspan="4"><div class="empty"><span class="spinner"></span></div></td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Config -->
+  <div class="page" data-page="config" style="display:none">
+    <div class="page-head">
+      <div>
+        <div class="page-title">Configuration globale de la plateforme</div>
+        <div class="page-sub">Paramètres qui s'appliquent à tous les tenants</div>
+      </div>
+    </div>
+    <div class="table-card" style="padding:20px">
+      <div style="font-size:14px;line-height:1.7;color:var(--text-2)">
+        <div style="color:var(--text);font-weight:700;font-size:15px;margin-bottom:12px">Firebase</div>
+        <div>Project ID : <code style="background:var(--bg-2);padding:2px 6px;border-radius:4px">wecheckin-rh</code></div>
+        <div>Realtime DB : <code style="background:var(--bg-2);padding:2px 6px;border-radius:4px">wecheckin-rh-default-rtdb</code></div>
+        <div style="margin-top:16px;color:var(--text);font-weight:700;font-size:15px;margin-bottom:12px">FCM Relay (Cloudflare)</div>
+        <div>URL : <code style="background:var(--bg-2);padding:2px 6px;border-radius:4px">black-rice-486f.wecanservices-suivi.workers.dev</code></div>
+        <div style="margin-top:22px;color:var(--warn);font-size:12.5px">💡 L'édition en direct de ces valeurs sera ajoutée en Phase 6.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════════════════ MODAL — CRÉER / ÉDITER TENANT ═════════════════════ -->
+<div class="modal-backdrop" id="tenant-modal">
+  <div class="modal">
+    <div class="modal-title" id="tenant-modal-title">Nouvelle entreprise cliente</div>
+    <div class="modal-sub">L'entreprise aura son propre espace admin white-label et son propre pool d'employés.</div>
+    <form id="tenant-form" onsubmit="return saveTenant(event)">
+      <div class="form-grid">
+        <div class="form-full">
+          <label class="login-label">Nom commercial</label>
+          <input type="text" id="tf-name" required placeholder="Ex : Acme Corp">
+        </div>
+        <div class="form-full">
+          <label class="login-label">Slug (URL, sans espaces)</label>
+          <input type="text" id="tf-slug" required pattern="[a-z0-9-]+" placeholder="acme-corp" oninput="this.value=this.value.toLowerCase().replace(/[^a-z0-9-]/g,'')">
+        </div>
+        <div>
+          <label class="login-label">Plan</label>
+          <select id="tf-plan">
+            <option value="trial">Essai (30j)</option>
+            <option value="starter">Starter</option>
+            <option value="pro" selected>Pro</option>
+            <option value="enterprise">Enterprise</option>
+          </select>
+        </div>
+        <div>
+          <label class="login-label">Statut</label>
+          <select id="tf-status">
+            <option value="active" selected>Actif</option>
+            <option value="suspended">Suspendu</option>
+          </select>
+        </div>
+        <div>
+          <label class="login-label">Email du contact</label>
+          <input type="email" id="tf-owner-email" placeholder="contact@acme.com">
+        </div>
+        <div>
+          <label class="login-label">Nom du contact</label>
+          <input type="text" id="tf-owner-name" placeholder="Ex : John Doe">
+        </div>
+        <div class="form-full" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border)">
+          <div style="font-size:12px;font-weight:700;color:var(--text-2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">White-label (identité visuelle)</div>
+        </div>
+        <div>
+          <label class="login-label">Nom de l'app</label>
+          <input type="text" id="tf-app-name" placeholder="STAFF PRO" value="STAFF PRO">
+        </div>
+        <div>
+          <label class="login-label">Couleur principale</label>
+          <input type="color" id="tf-primary" value="#C0392B" style="height:42px;padding:4px">
+        </div>
+        <div>
+          <label class="login-label">Couleur sombre (sidebar)</label>
+          <input type="color" id="tf-sidebar" value="#8B1A1A" style="height:42px;padding:4px">
+        </div>
+        <div>
+          <label class="login-label">URL du logo</label>
+          <input type="url" id="tf-logo" placeholder="https://…/logo.png">
+        </div>
+      </div>
+      <div class="modal-actions">
+        <button type="button" class="ghost-btn" onclick="closeTenantModal()">Annuler</button>
+        <button type="submit" class="primary-btn" id="tf-save-btn">Créer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ═════════════════════ MODAL — INFO AJOUT SUPER-ADMIN ═════════════════════ -->
+<div class="modal-backdrop" id="admin-info-modal">
+  <div class="modal">
+    <div class="modal-title">Ajouter un super-admin</div>
+    <div class="modal-sub">Pour des raisons de sécurité, la création d'un compte super-admin se fait dans la <b>Firebase Console</b>, pas ici.</div>
+    <ol style="font-size:14px;line-height:1.9;padding-left:20px;color:var(--text-2)">
+      <li>Ouvre <b>Firebase Console → Authentication → Users</b></li>
+      <li>Clique <b>Add user</b>, saisis email + mot de passe fort (16+ caractères)</li>
+      <li>Reviens ici, connecte-toi avec ce compte au moins une fois — il apparaîtra automatiquement dans la liste ci-dessous</li>
+      <li>Optionnel : ajoute manuellement à <code style="background:var(--bg-2);padding:2px 6px;border-radius:4px">platform/superAdmins/&lt;uid&gt;</code> les métadonnées (rôle, permissions)</li>
+    </ol>
+    <div style="background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);color:#fbbf24;padding:12px;border-radius:8px;font-size:12.5px;margin-top:16px">
+      ⚠ N'active PAS l'auto-inscription publique dans Firebase Auth — sinon n'importe qui peut créer un compte super-admin.
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="primary-btn" onclick="closeAdminInfoModal()">Compris</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// SUPER-ADMIN CONSOLE — STAFF PRO SaaS
+// Auth : Firebase Auth (email/password) — pas de mdp en clair
+// Data : platform/tenants/<tid>/, platform/superAdmins/<uid>/
+// ═══════════════════════════════════════════════════════════════
+const firebaseConfig = {
+  apiKey: "AIzaSyC0BZURTAwpVqMbvp8HOpn4_MnOUtBNXoY",
+  authDomain: "wecheckin-rh.firebaseapp.com",
+  databaseURL: "https://wecheckin-rh-default-rtdb.firebaseio.com",
+  projectId: "wecheckin-rh",
+  storageBucket: "wecheckin-rh.firebasestorage.app",
+  messagingSenderId: "425142344185",
+  appId: "1:425142344185:web:712d2d1c5e577dca314528"
+};
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+const auth = firebase.auth();
+
+let CURRENT_USER = null;
+let TENANTS = [];   // cache
+let EDIT_TID  = null; // slug du tenant en édition, null = création
+
+// ── UI helpers ─────────────────────────────────────────────
+function toast(msg, kind){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast on ' + (kind==='err' ? 'err' : (kind==='ok' ? 'ok' : ''));
+  clearTimeout(window._tstT);
+  window._tstT = setTimeout(function(){ t.className = 'toast'; }, 3500);
+}
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); }
+function fmtDate(ts){
+  if(!ts) return '—';
+  try{
+    var d = new Date(typeof ts==='number' ? ts : Date.parse(ts));
+    if(isNaN(d.getTime())) return '—';
+    return d.toLocaleDateString('fr-FR', {day:'2-digit',month:'short',year:'numeric'});
+  }catch(e){ return '—'; }
+}
+function planLabel(p){ return {trial:'Essai',starter:'Starter',pro:'Pro',enterprise:'Enterprise'}[p] || p || '—'; }
+function planPrice(p){ return {trial:0,starter:29,pro:79,enterprise:199}[p] || 0; }
+
+// ── AUTH ───────────────────────────────────────────────────
+function doLogin(e){
+  e && e.preventDefault();
+  const email = document.getElementById('login-email').value.trim();
+  const pwd   = document.getElementById('login-pwd').value;
+  const btn   = document.getElementById('login-btn');
+  const err   = document.getElementById('login-err');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Connexion…';
+  err.className = 'login-err';
+  auth.signInWithEmailAndPassword(email, pwd)
+    .then(function(cred){
+      // enregistre / met à jour le compte sous platform/superAdmins/<uid>
+      const uid = cred.user.uid;
+      db.ref('platform/superAdmins/' + uid).transaction(function(cur){
+        var now = Date.now();
+        return {
+          email: cred.user.email,
+          createdAt: (cur && cur.createdAt) || now,
+          lastLoginAt: now
+        };
+      });
+    })
+    .catch(function(e){
+      err.textContent = 'Échec : ' + (e && e.message ? e.message : 'Identifiants invalides');
+      err.className = 'login-err on';
+    })
+    .finally(function(){
+      btn.disabled = false; btn.textContent = 'Se connecter';
+    });
+  return false;
+}
+function doLogout(){
+  auth.signOut().then(function(){ location.reload(); });
+}
+auth.onAuthStateChanged(function(u){
+  if(!u){ showLogin(); return; }
+  // SÉCURITÉ : refuser les sessions anonymes (héritées d'un autre onglet admin/employe
+  // ouvert sur la même origine). Cette console exige un compte email/password.
+  if(u.isAnonymous || !u.email){
+    auth.signOut();
+    showLogin();
+    return;
+  }
+  // Filtre : le compte doit être connu comme super-admin
+  db.ref('platform/superAdmins/' + u.uid).once('value').then(function(snap){
+    if(!snap.exists()){
+      // Bootstrap : le tout premier compte email/password crée le premier super-admin.
+      // Fenêtre ouverte UNIQUEMENT tant que platform/superAdmins est vide.
+      db.ref('platform/superAdmins').once('value').then(function(all){
+        if(!all.exists() || Object.keys(all.val()||{}).length===0){
+          db.ref('platform/superAdmins/' + u.uid).set({
+            email: u.email, createdAt: Date.now(), lastLoginAt: Date.now()
+          });
+          bootApp(u);
+        } else {
+          auth.signOut();
+          alert("Ce compte Firebase Auth n'est pas déclaré comme super-admin. Ajoute-le d'abord depuis un compte existant.");
+          showLogin();
+        }
+      });
+      return;
+    }
+    db.ref('platform/superAdmins/' + u.uid + '/lastLoginAt').set(Date.now());
+    bootApp(u);
+  });
+});
+function showLogin(){
+  document.getElementById('login-scr').style.display = 'flex';
+  document.getElementById('app-scr').classList.remove('on');
+}
+function bootApp(u){
+  CURRENT_USER = u;
+  document.getElementById('login-scr').style.display = 'none';
+  document.getElementById('app-scr').classList.add('on');
+  document.getElementById('user-email').textContent = u.email;
+  document.getElementById('user-avatar').textContent = (u.email||'?').charAt(0).toUpperCase();
+  loadTenants();
+  refreshDashboard();
+}
+
+// ── TABS ───────────────────────────────────────────────────
+function showTab(btn){
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('on'); });
+  btn.classList.add('on');
+  const tab = btn.getAttribute('data-tab');
+  document.querySelectorAll('.page').forEach(function(p){ p.style.display = 'none'; });
+  document.querySelector('[data-page="'+tab+'"]').style.display = 'block';
+  if(tab==='tenants') renderTenants();
+  else if(tab==='admins') loadSuperAdmins();
+  else if(tab==='dashboard') refreshDashboard();
+}
+
+// ── TENANTS : load / render / CRUD ────────────────────────
+function loadTenants(){
+  return db.ref('platform/tenants').once('value').then(function(snap){
+    const v = snap.val() || {};
+    TENANTS = Object.keys(v).map(function(k){
+      return Object.assign({slug:k}, v[k]);
+    });
+    return TENANTS;
+  });
+}
+function renderTenants(){
+  const tb = document.getElementById('tenants-tbody');
+  if(!TENANTS.length){
+    tb.innerHTML = '<tr><td colspan="7"><div class="empty"><div class="empty-emoji">🏢</div>Aucune entreprise cliente encore. Clique « Nouvelle entreprise » pour commencer.</div></td></tr>';
+    return;
+  }
+  tb.innerHTML = TENANTS.map(function(t){
+    const status = t.status || 'active';
+    const badge = status==='active' ? '<span class="badge badge-ok">Actif</span>'
+                : status==='trial' ? '<span class="badge badge-info">Essai</span>'
+                : status==='suspended' ? '<span class="badge badge-err">Suspendu</span>'
+                : '<span class="badge badge-neutral">'+esc(status)+'</span>';
+    const brand = t.brand || {};
+    const primary = brand.primaryColor || '#C0392B';
+    return '<tr>'
+      + '<td><span class="color-swatch" style="background:'+esc(primary)+'"></span><b>'+esc(t.name||t.slug)+'</b></td>'
+      + '<td><code style="background:var(--bg-2);padding:2px 8px;border-radius:4px;font-size:12px">'+esc(t.slug)+'</code></td>'
+      + '<td>'+esc(planLabel(t.plan))+'</td>'
+      + '<td>'+badge+'</td>'
+      + '<td>'+(t._empCount!=null?t._empCount:'—')+'</td>'
+      + '<td>'+fmtDate(t.createdAt)+'</td>'
+      + '<td><div class="row-actions">'
+        + '<button class="row-btn" onclick="impersonate(\''+esc(t.slug)+'\')" title="Ouvrir l&#39;admin de ce tenant">👁 Voir</button>'
+        + '<button class="row-btn" onclick="editTenant(\''+esc(t.slug)+'\')">Éditer</button>'
+        + (status==='suspended'
+            ? '<button class="row-btn" onclick="setTenantStatus(\''+esc(t.slug)+'\',\'active\')">Réactiver</button>'
+            : '<button class="row-btn danger" onclick="setTenantStatus(\''+esc(t.slug)+'\',\'suspended\')">Suspendre</button>')
+      + '</div></td>'
+    + '</tr>';
+  }).join('');
+}
+function openTenantModal(){
+  EDIT_TID = null;
+  document.getElementById('tenant-modal-title').textContent = 'Nouvelle entreprise cliente';
+  document.getElementById('tf-save-btn').textContent = 'Créer';
+  ['tf-name','tf-slug','tf-owner-email','tf-owner-name','tf-logo'].forEach(function(id){ document.getElementById(id).value = ''; });
+  document.getElementById('tf-plan').value = 'pro';
+  document.getElementById('tf-status').value = 'active';
+  document.getElementById('tf-app-name').value = 'STAFF PRO';
+  document.getElementById('tf-primary').value = '#C0392B';
+  document.getElementById('tf-sidebar').value = '#8B1A1A';
+  document.getElementById('tf-slug').disabled = false;
+  document.getElementById('tenant-modal').classList.add('on');
+}
+function closeTenantModal(){ document.getElementById('tenant-modal').classList.remove('on'); }
+function editTenant(slug){
+  const t = TENANTS.find(function(x){ return x.slug===slug; });
+  if(!t){ toast('Tenant introuvable','err'); return; }
+  EDIT_TID = slug;
+  document.getElementById('tenant-modal-title').textContent = 'Éditer ' + t.name;
+  document.getElementById('tf-save-btn').textContent = 'Enregistrer';
+  document.getElementById('tf-name').value = t.name || '';
+  document.getElementById('tf-slug').value = t.slug;
+  document.getElementById('tf-slug').disabled = true; // slug immuable
+  document.getElementById('tf-plan').value = t.plan || 'pro';
+  document.getElementById('tf-status').value = t.status || 'active';
+  document.getElementById('tf-owner-email').value = (t.owner && t.owner.email) || '';
+  document.getElementById('tf-owner-name').value = (t.owner && t.owner.name) || '';
+  const b = t.brand || {};
+  document.getElementById('tf-app-name').value = b.appName || 'STAFF PRO';
+  document.getElementById('tf-primary').value = b.primaryColor || '#C0392B';
+  document.getElementById('tf-sidebar').value = b.sidebarColor || '#8B1A1A';
+  document.getElementById('tf-logo').value = b.logoUrl || '';
+  document.getElementById('tenant-modal').classList.add('on');
+}
+function hexToRgb(hex){
+  var m = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex||'');
+  if(!m) return '0, 0, 0';
+  return parseInt(m[1],16) + ', ' + parseInt(m[2],16) + ', ' + parseInt(m[3],16);
+}
+function saveTenant(e){
+  e && e.preventDefault();
+  const slug = document.getElementById('tf-slug').value.trim();
+  if(!slug){ toast('Slug requis','err'); return false; }
+  const primary = document.getElementById('tf-primary').value;
+  const sidebar = document.getElementById('tf-sidebar').value;
+  const payload = {
+    name: document.getElementById('tf-name').value.trim(),
+    slug: slug,
+    plan: document.getElementById('tf-plan').value,
+    status: document.getElementById('tf-status').value,
+    owner: {
+      email: document.getElementById('tf-owner-email').value.trim(),
+      name : document.getElementById('tf-owner-name').value.trim()
+    },
+    brand: {
+      appName: document.getElementById('tf-app-name').value.trim() || 'STAFF PRO',
+      orgName: document.getElementById('tf-name').value.trim(),
+      primaryColor: primary,
+      primaryColorRgb: hexToRgb(primary),
+      sidebarColor: sidebar,
+      sidebarColorRgb: hexToRgb(sidebar),
+      logoUrl: document.getElementById('tf-logo').value.trim()
+    },
+    updatedAt: Date.now()
+  };
+  const btn = document.getElementById('tf-save-btn');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>';
+  const ref = db.ref('platform/tenants/' + slug);
+  const isCreate = (EDIT_TID === null);
+  ref.once('value').then(function(snap){
+    if(isCreate && snap.exists()){ throw new Error('Un tenant avec ce slug existe déjà'); }
+    if(isCreate) payload.createdAt = Date.now();
+    return ref.update(payload);
+  }).then(function(){
+    toast(isCreate ? 'Entreprise créée ✓' : 'Enregistré ✓','ok');
+    closeTenantModal();
+    return loadTenants();
+  }).then(function(){
+    renderTenants();
+    refreshDashboard();
+  }).catch(function(err){
+    toast('Erreur : ' + (err.message || err), 'err');
+  }).finally(function(){
+    btn.disabled = false;
+    btn.textContent = isCreate ? 'Créer' : 'Enregistrer';
+  });
+  return false;
+}
+function setTenantStatus(slug, status){
+  const t = TENANTS.find(function(x){ return x.slug===slug; });
+  if(!t) return;
+  const verb = status==='suspended' ? 'suspendre' : 'réactiver';
+  if(!confirm('Confirmer : ' + verb + ' « ' + t.name + ' » ?')) return;
+  db.ref('platform/tenants/' + slug).update({ status: status, updatedAt: Date.now() })
+    .then(function(){ toast(verb.charAt(0).toUpperCase()+verb.slice(1)+' ✓','ok'); return loadTenants(); })
+    .then(renderTenants)
+    .then(refreshDashboard)
+    .catch(function(e){ toast('Erreur : ' + e.message, 'err'); });
+}
+function impersonate(slug){
+  // Ouvre l'admin white-label du tenant dans un nouvel onglet.
+  // Le tenant est passé via query ?t=slug — admin.html lit ce paramètre au boot.
+  const url = 'admin.html?t=' + encodeURIComponent(slug) + '&_sa=1';
+  window.open(url, '_blank');
+}
+
+// ── SUPER-ADMINS ───────────────────────────────────────────
+function loadSuperAdmins(){
+  db.ref('platform/superAdmins').once('value').then(function(snap){
+    const v = snap.val() || {};
+    const rows = Object.keys(v).map(function(uid){ return Object.assign({uid:uid}, v[uid]); });
+    const tb = document.getElementById('sa-tbody');
+    if(!rows.length){
+      tb.innerHTML = '<tr><td colspan="4"><div class="empty">Aucun super-admin enregistré.</div></td></tr>';
+      return;
+    }
+    tb.innerHTML = rows.map(function(r){
+      const me = CURRENT_USER && r.uid === CURRENT_USER.uid;
+      return '<tr>'
+        + '<td><b>'+esc(r.email||r.uid)+'</b>'+(me?' <span class="badge badge-info">Vous</span>':'')+'</td>'
+        + '<td>'+fmtDate(r.createdAt)+'</td>'
+        + '<td>'+fmtDate(r.lastLoginAt)+'</td>'
+        + '<td><div class="row-actions">'
+          + (me ? '<span style="color:var(--text-3);font-size:12px">Compte courant</span>'
+                : '<button class="row-btn danger" onclick="revokeSuperAdmin(\''+esc(r.uid)+'\',\''+esc(r.email)+'\')">Révoquer</button>')
+        + '</div></td>'
+      + '</tr>';
+    }).join('');
+  });
+}
+function revokeSuperAdmin(uid, email){
+  if(!confirm("Révoquer l'accès de " + email + " ?\n\n(Le compte Firebase Auth reste, mais l'accès à cette console est refusé.)")) return;
+  db.ref('platform/superAdmins/' + uid).remove()
+    .then(function(){ toast('Accès révoqué ✓','ok'); loadSuperAdmins(); })
+    .catch(function(e){ toast('Erreur : '+e.message,'err'); });
+}
+function openAdminInfoModal(){ document.getElementById('admin-info-modal').classList.add('on'); }
+function closeAdminInfoModal(){ document.getElementById('admin-info-modal').classList.remove('on'); }
+
+// ── DASHBOARD (KPI) ────────────────────────────────────────
+function refreshDashboard(){
+  // Charge tenants + agrège les employés
+  loadTenants().then(function(){
+    // Compte employés par tenant (en parallèle)
+    const jobs = TENANTS.map(function(t){
+      const path = (t.slug === 'wecan') ? 'wecan/employees' : ('tenants/'+t.slug+'/employees');
+      return db.ref(path).once('value').then(function(s){
+        const v = s.val();
+        var n = 0;
+        if(Array.isArray(v)) n = v.filter(Boolean).length;
+        else if(v && typeof v==='object') n = Object.keys(v).length;
+        t._empCount = n;
+        return n;
+      }).catch(function(){ t._empCount = 0; return 0; });
+    });
+    return Promise.all(jobs);
+  }).then(function(counts){
+    // KPI cards
+    const total = TENANTS.length;
+    const active = TENANTS.filter(function(t){ return (t.status||'active')==='active'; }).length;
+    const suspended = TENANTS.filter(function(t){ return t.status==='suspended'; }).length;
+    const trial = TENANTS.filter(function(t){ return t.plan==='trial'; }).length;
+    const mrr = TENANTS.reduce(function(sum, t){
+      return sum + ((t.status||'active')==='active' ? planPrice(t.plan) : 0);
+    }, 0);
+    const empTotal = counts.reduce(function(a,b){ return a+b; }, 0);
+    document.getElementById('kpi-grid').innerHTML = ''
+      + kpi('MRR estimé', mrr.toLocaleString('fr-FR')+' €', 'accent', 'somme des plans actifs')
+      + kpi('Entreprises clientes', total, '', active+' actives · '+suspended+' suspendues')
+      + kpi('Essais gratuits', trial, 'warn', 'à convertir en payantes')
+      + kpi('Employés (total)', empTotal.toLocaleString('fr-FR'), 'ok', 'tous tenants confondus');
+    // Activity
+    const rows = TENANTS.slice().sort(function(a,b){ return (b._empCount||0) - (a._empCount||0); }).slice(0,10);
+    const list = document.getElementById('activity-list');
+    if(!rows.length){
+      list.innerHTML = '<div class="empty"><div class="empty-emoji">📊</div>Aucune activité à afficher (aucun tenant).</div>';
+      return;
+    }
+    list.innerHTML = '<table class="table"><thead><tr><th>Entreprise</th><th>Plan</th><th>Statut</th><th>Employés</th><th>Créée</th></tr></thead><tbody>'
+      + rows.map(function(t){
+        const st = t.status || 'active';
+        const badge = st==='active' ? '<span class="badge badge-ok">Actif</span>'
+                    : st==='suspended' ? '<span class="badge badge-err">Suspendu</span>'
+                    : '<span class="badge badge-neutral">'+esc(st)+'</span>';
+        return '<tr><td><b>'+esc(t.name||t.slug)+'</b></td><td>'+esc(planLabel(t.plan))+'</td><td>'+badge+'</td><td>'+(t._empCount||0)+'</td><td>'+fmtDate(t.createdAt)+'</td></tr>';
+      }).join('')
+      + '</tbody></table>';
+  });
+}
+function kpi(label, value, kind, sub){
+  const cls = kind==='accent' ? 'kpi-accent' : kind==='ok' ? 'kpi-ok' : kind==='warn' ? 'kpi-warn' : kind==='err' ? 'kpi-err' : '';
+  return '<div class="kpi"><div class="kpi-label">'+label+'</div>'
+       + '<div class="kpi-value '+cls+'">'+value+'</div>'
+       + (sub ? '<div class="kpi-sub">'+sub+'</div>' : '')
+       + '</div>';
+}
+</script>
+</body>
+</html>
