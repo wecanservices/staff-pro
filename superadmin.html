@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="app-version" content="20260822-181053">
+<meta name="app-version" content="20260822-191634">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <title>STAFF PRO — Console SaaS (Super-Admin)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -196,9 +196,9 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);
     <div class="table-card">
       <table class="table" id="tenants-table">
         <thead><tr>
-          <th>Entreprise</th><th>Slug</th><th>Plan</th><th>Statut</th><th>Employés</th><th>Créée</th><th style="text-align:right">Actions</th>
+          <th>Entreprise</th><th>Slug</th><th>Liens directs</th><th>Plan</th><th>Statut</th><th>Employés</th><th>Créée</th><th style="text-align:right">Actions</th>
         </tr></thead>
-        <tbody id="tenants-tbody"><tr><td colspan="7"><div class="empty"><span class="spinner"></span></div></td></tr></tbody>
+        <tbody id="tenants-tbody"><tr><td colspan="8"><div class="empty"><span class="spinner"></span></div></td></tr></tbody>
       </table>
     </div>
   </div>
@@ -500,9 +500,10 @@ function loadTenants(){
 function renderTenants(){
   const tb = document.getElementById('tenants-tbody');
   if(!TENANTS.length){
-    tb.innerHTML = '<tr><td colspan="7"><div class="empty"><div class="empty-emoji">🏢</div>Aucune entreprise cliente encore. Clique « Nouvelle entreprise » pour commencer.</div></td></tr>';
+    tb.innerHTML = '<tr><td colspan="8"><div class="empty"><div class="empty-emoji">🏢</div>Aucune entreprise cliente encore. Clique « Nouvelle entreprise » pour commencer.</div></td></tr>';
     return;
   }
+  var appOrigin = location.origin + '/staff-pro';
   tb.innerHTML = TENANTS.map(function(t){
     const status = t.status || 'active';
     const badge = status==='active' ? '<span class="badge badge-ok">Actif</span>'
@@ -511,15 +512,21 @@ function renderTenants(){
                 : '<span class="badge badge-neutral">'+esc(status)+'</span>';
     const brand = t.brand || {};
     const primary = brand.primaryColor || '#C0392B';
+    const adminUrl = appOrigin + '/admin.html?t=' + encodeURIComponent(t.slug);
+    const empUrl   = appOrigin + '/employe.html?t=' + encodeURIComponent(t.slug);
     return '<tr>'
       + '<td><span class="color-swatch" style="background:'+esc(primary)+'"></span><b>'+esc(t.name||t.slug)+'</b></td>'
       + '<td><code style="background:var(--bg-2);padding:2px 8px;border-radius:4px;font-size:12px">'+esc(t.slug)+'</code></td>'
+      + '<td><div style="display:flex;flex-direction:column;gap:4px">'
+        + '<a href="'+esc(adminUrl)+'" target="_blank" class="row-btn" style="text-decoration:none;font-size:11px" title="Ouvrir dans un nouvel onglet">🧑‍💼 Admin</a>'
+        + '<a href="'+esc(empUrl)+'" target="_blank" class="row-btn" style="text-decoration:none;font-size:11px" title="Ouvrir dans un nouvel onglet">📱 Employé</a>'
+        + '<button class="row-btn" style="font-size:10.5px" onclick="copyTenantLinks(\''+esc(t.slug)+'\')" title="Copier les 2 liens">📋 Copier liens</button>'
+        + '</div></td>'
       + '<td>'+esc(planLabel(t.plan))+'</td>'
       + '<td>'+badge+'</td>'
       + '<td>'+(t._empCount!=null?t._empCount:'—')+'</td>'
       + '<td>'+fmtDate(t.createdAt)+'</td>'
       + '<td><div class="row-actions">'
-        + '<button class="row-btn" onclick="impersonate(\''+esc(t.slug)+'\')" title="Ouvrir l&#39;admin de ce tenant">👁 Voir</button>'
         + '<button class="row-btn" onclick="editTenant(\''+esc(t.slug)+'\')">Éditer</button>'
         + (status==='suspended'
             ? '<button class="row-btn" onclick="setTenantStatus(\''+esc(t.slug)+'\',\'active\')">Réactiver</button>'
@@ -527,6 +534,22 @@ function renderTenants(){
       + '</div></td>'
     + '</tr>';
   }).join('');
+}
+function copyTenantLinks(slug){
+  var t = TENANTS.find(function(x){ return x.slug===slug; });
+  if(!t) return;
+  var appOrigin = location.origin + '/staff-pro';
+  var lines = [
+    t.name + ' — Liens STAFF PRO',
+    'Admin  : ' + appOrigin + '/admin.html?t='   + encodeURIComponent(slug),
+    'Employé: ' + appOrigin + '/employe.html?t=' + encodeURIComponent(slug)
+  ].join('\n');
+  try {
+    navigator.clipboard.writeText(lines);
+    toast('Liens copiés dans le presse-papiers ✓','ok');
+  } catch(e){
+    toast('Impossible de copier — '+e.message,'err');
+  }
 }
 function _genPwd(len){
   var c = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789abcdefghjkmnpqrstuvwxyz';
